@@ -60,16 +60,28 @@ export default {
   },
   methods: {
     // 开始收集 按钮触发函数
-    startCollectData() {
-
+    async startCollectData() {
+      try {
+        const res = await axios.post('/api/start_collect');
+      } catch (e) {
+        console.log("开始收集函数出错：", e);
+      }
     },
     // 结束收集 按钮触发函数
-    endCollectData() {
-
+    async endCollectData() {
+      try {
+        const res = await axios.post('/api/end_collect');
+      } catch (e) {
+        console.log("结束收集函数出错：", e);
+      }
     },
     // 下载数据 按钮触发函数
-    loadCollectData() {
-
+    async loadCollectData() {
+      try {
+        const res = await axios.post('/api/load_collect');
+      } catch (e) {
+        console.log("下载函数出错：", e);
+      }
     },
     // 获取数据定时器
     faultDataRefreh() {

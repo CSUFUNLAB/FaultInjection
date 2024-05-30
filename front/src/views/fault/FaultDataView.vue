@@ -108,8 +108,12 @@ export default {
   },
   methods: {
     // 功能测试按钮触发函数
-    functionalTest() {
-
+    async functionalTest() {
+      try {
+        const res = await axios.post('/api/functional_test');
+      } catch (e) {
+        console.log("功能测试函数出错：", e);
+      }
     },
     // 获取后端发送的输出表单数据
     async getDataStreamForServer() {

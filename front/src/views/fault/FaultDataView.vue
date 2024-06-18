@@ -19,6 +19,7 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submitForm('faultDataForm')">提交</el-button>
+          <el-button type="warning" @click="scanNodes()">扫描节点</el-button>
           <el-button @click="resetForm('faultDataForm')">重置</el-button>
         </el-form-item>
       </el-form>
@@ -47,6 +48,10 @@ export default {
 
   },
   methods: {
+    // 扫描接口
+    scanNodes() {
+
+    },
     resetForm(formName) {
       this.$refs[formName].resetFields();
     },

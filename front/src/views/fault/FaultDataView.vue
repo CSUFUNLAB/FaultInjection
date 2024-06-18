@@ -54,14 +54,25 @@ export default {
       this.$refs[formName].validate(async (valid) => {
         if (valid) {
           // 校验通过，注入故障
+          // 将 bandWith 转换为字符串类型
+          this.faultDataForm.bandWidth = String(this.faultDataForm.bandWidth);
+
+          // 将 nodeA、nodeB 和 sendTime 转换为整数类型
+          this.faultDataForm.nodeA = parseInt(this.faultDataForm.nodeA);
+          this.faultDataForm.nodeB = parseInt(this.faultDataForm.nodeB);
+          this.faultDataForm.sendTime = parseInt(this.faultDataForm.sendTime);
+          console.log(this.faultDataForm);
           const res = await axios.post("/api/data_insert", this.faultDataForm, {});
           if (res.data.code === 200) {
             await this.$router.push({
               name: 'FaultDataView',
             })
+          } else {
+            this.$notify.error("注入错误");
+            console.log(res.data.message);
           }
         } else {
-          console.log('error submit!!');
+          this.$notify.error("error submit!!")
           return false;
         }
       });

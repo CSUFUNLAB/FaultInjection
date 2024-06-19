@@ -29,17 +29,17 @@ export default {
     // 故障检测触发函数
     async faultDiagnosis() {
       // 测试数据
-      const data = "\t这是第一行\n" +
-          "\t这是第二行\n\t这是第三行";
-      this.faultDiagnosisResult = data;
+      // const data = "\t这是第一行\n" +
+      //     "\t这是第二行\n\t这是第三行";
+      // this.faultDiagnosisResult = data;
       // 从后端接口获取数据:url = /api/get_diagnosis_result
-      // const res = await axios.post("/api/get_diagnosis_result", {}, {});
-      // if (res.data.code === 200) {
-      //   this.faultDiagnosisResult = res.data.message;
-      // } else {
-      //   this.$notify.error('获取结果出错');
-      //   console.log(res.data.message);
-      // }
+      const res = await axios.post("/api/get_diagnosis_result", {}, {});
+      if (res.data.code === 200) {
+        this.faultDiagnosisResult = res.data.message;
+      } else {
+        this.$notify.error('获取结果出错');
+        console.log(res.data.message);
+      }
     },
   }
 }

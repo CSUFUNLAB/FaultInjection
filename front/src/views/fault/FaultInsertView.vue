@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-card>
-      <p style="text-align: center"> 故障注入界面</p>
+      <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px"> 故障注入界面</p>
       <el-form :model="faultDataInsertForm" ref="faultDataInsertForm" label-width="100px" class="demo-dynamic">
         <el-form-item label="故障类型" prop="faultType">
           <el-select v-model="faultDataInsertForm.faultType" placeholder="请选择故障类型">

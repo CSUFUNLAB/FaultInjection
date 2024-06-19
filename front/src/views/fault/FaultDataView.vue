@@ -72,8 +72,16 @@ export default {
 
     },
     // 检测节点触发函数
-    detectNodes() {
-
+    async detectNodes() {
+      // 检测节点后端url:/api/detect_nodes
+      const res = await axios.post("/api/detect_nodes", {}, {});
+      if (res.data.code === 200) {
+        const data = JSON.parse(res.data.message);
+        this.nodeInfoData = data;
+      } else {
+        this.$notify.error("检测节点失败");
+        console.log(res.data.message);
+      }
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();

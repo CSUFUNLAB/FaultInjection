@@ -34,6 +34,10 @@
               <i class="el-icon-s-home"></i>
               <span slot="title">故障数据</span>
             </el-menu-item>
+            <el-menu-item index="/faultDiagnosisView">
+              <i class="el-icon-s-home"></i>
+              <span slot="title">故障诊断</span>
+            </el-menu-item>
           </el-menu>
         </el-aside>
         <el-main style="flex-grow: 1;">

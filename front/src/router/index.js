@@ -26,6 +26,11 @@ const routes = [
         path: 'faultInsertView',
         name: 'FaultInsertView',
         component: () => import('@/views/fault/FaultInsertView.vue')
+      },
+      {
+        path: 'faultDiagnosisView',
+        name: 'FaultDiagnosisView',
+        component: () => import('@/views/fault/FaultDiagnosisView.vue')
       }
 
     ]

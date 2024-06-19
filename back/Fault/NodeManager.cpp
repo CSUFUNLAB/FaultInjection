@@ -20,22 +20,21 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
     {
         1,
         string("antsdr"),
-        string("ap"),
-        string("sdr0"),
-        string("66:55:44:33:22:09"),
-        string("192.168.13.1"),
-        true,
-        nullptr,
-    },
-    {
-        2,
-        string("antsdr"),
         string("eth"),
         string("eth0"),
         string("00:0a:35:00:01:22"),
         string("192.168.3.10"),
         true,
         nullptr,
+    },
+    {
+        2,
+        string("antsdr"),
+        string("ap"),
+        string("sdr0"),
+        string("66:55:44:33:22:09"),
+        string("192.168.13.1"),
+        true,
     },
     {
         3,
@@ -245,6 +244,18 @@ int32_t NodeManager::get_sta_ip(NodeInfo &info)
 
 void NodeManager::get_all_sta_ip(void)
 {
+    m_node_info_list[0].up_linked = &m_node_info_list[0];
+    m_node_info_list[1].up_linked = &m_node_info_list[0];
+    m_node_info_list[2].up_linked = &m_node_info_list[1];
+
+    for (auto& node : NodeManager::m_node_info_list) {
+        node.detected = false;
+    }
+    // TODO:  π”√ping¿¥ºÏ≤‚ap
+    m_node_info_list[0].detected = true;
+    m_node_info_list[1].detected = true;
+    m_node_info_list[2].detected = true;
+
     int32_t ret;
     for (auto& node : NodeManager::m_node_info_list) {
         if (node.type == "ap") {

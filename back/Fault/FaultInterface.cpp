@@ -1,6 +1,8 @@
 #include "FaultInterface.h"
 #include <comutil.h>
 
+#include "Log.h"
+
 http_response FaultInterface::HandleResponse(const HandlerInfo* dataStruct)
 {
 	string msg = dataStruct->msg;

@@ -108,7 +108,4 @@
       <Filter>头文件\Server</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
 </Project>

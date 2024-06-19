@@ -32,7 +32,7 @@
             </el-menu-item>
             <el-menu-item index="/faultDataListView">
               <i class="el-icon-s-home"></i>
-              <span slot="title">故障数据</span>
+              <span slot="title">数据显示</span>
             </el-menu-item>
             <el-menu-item index="/faultDiagnosisView">
               <i class="el-icon-s-home"></i>

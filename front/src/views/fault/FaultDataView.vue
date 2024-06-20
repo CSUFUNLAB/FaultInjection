@@ -10,7 +10,7 @@
               :key="index"
               :prop="item.prop"
               :label="item.label"
-              :width="item.width">
+              style="width: 30%">
           </el-table-column>
         </el-table>
       </el-card>
@@ -35,7 +35,6 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="submitForm('faultDataForm')">提交</el-button>
-            <el-button type="warning" @click="scanNodes()">扫描节点</el-button>
             <el-button @click="resetForm('faultDataForm')">重置</el-button>
           </el-form-item>
         </el-form>
@@ -67,10 +66,6 @@ export default {
 
   },
   methods: {
-    // 扫描接口
-    scanNodes() {
-
-    },
     // 检测节点触发函数
     async detectNodes() {
       // 检测节点后端url:/api/detect_nodes

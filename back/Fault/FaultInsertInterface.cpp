@@ -1,4 +1,5 @@
 #include "FaultInsertInterface.h"
+#include "FaultInjection.h"
 
 HandlerInfo FaultInsertInterface::handlerData(http_request message)
 {
@@ -8,8 +9,7 @@ HandlerInfo FaultInsertInterface::handlerData(http_request message)
 	ucout << "recvDatas:" << recvDatas  << endl; // recvDatas: {"faultParameter":"", "faultType" : "congest", "nodes" : [{"value":"1"}] }
 	// 获取message的Json::Value格式
 	Json::Value recvJsonDatas = HandleJsonData(recvDatas);
-	/*
-	* 数据示例
+	/* 数据示例
 	recvJsonDatas: {
 		"faultParameter" : "",// 故障参数
 		"faultType" : "congest",// 故障类型
@@ -20,6 +20,11 @@ HandlerInfo FaultInsertInterface::handlerData(http_request message)
 				}
 			]
 	}*/
+	string fault_type = recvJsonDatas["faultType"].asString();
+	string fault_para = recvJsonDatas["faultParameter"].asString();
+	int32_t node_num = 0;
+	FaultSsh* ssh = create_faultssh(node_num, fault_type, fault_para);
+
 	cout << "recvJsonDatas: " << recvJsonDatas << endl;
 
 	// 对获取的故障注入数据进行操作

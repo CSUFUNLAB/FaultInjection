@@ -4,4 +4,6 @@
 /back/.vs/
 /back/x64/
 /back/Fault/x64/
+/back/Fault/*.vcxproj
+/back/Fault/*.vcxproj.filters
 /back/packages

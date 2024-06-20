@@ -19,6 +19,7 @@
 #include <thread>
 #include "FaultInsertInterface.h"
 #include "DataInsertInterface.h"
+#include "NodeScanInterface.h"
 
 #pragma comment(lib, "comsuppw.lib")
 
@@ -50,8 +51,12 @@ void CommandHandle::HandlePost(http_request message)
 		DataInsertInterface dataInsertInterface;
 		HandlerInfo resultInfo = dataInsertInterface.handlerData(message);
 		message.reply(dataInsertInterface.HandleResponse(&resultInfo));
+	} else if (recvURI == U("/api/detect_nodes")) {
+		NodeScanInterface nodeScanInterface;
+		HandlerInfo resultInfo = nodeScanInterface.handlerData(message);
+		message.reply(nodeScanInterface.HandleResponse(&resultInfo));
 
-	} 
+	}
 	//else if (recvURI == U("/api/get_fault_data")) {
 	//	// 数据注入后，结果获取接口，采用轮询的方式，前端每10s调用一次，若有数据，code为200，msg为数据内容，code为601，结果传输结束，为其他则报错
 	//	Json::Value recvJson1;

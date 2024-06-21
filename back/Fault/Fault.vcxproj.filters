@@ -118,7 +118,7 @@
     </ClInclude>
     <ClInclude Include="DataFlow.h">
       <Filter>头文件\Data</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClInclude Include="DataInfo.h">
       <Filter>头文件\Data</Filter>
     </ClInclude>

@@ -1,4 +1,4 @@
-/back/.vs/
-/back/x64/
-/back/Fault/x64/
-/back/packages
+.vs/
+x64/
+Fault/x64/
+packages

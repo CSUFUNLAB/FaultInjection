@@ -39,7 +39,7 @@
                       ref="tableInput"
                       v-model="scope.row[item.prop]"
                       @blur="removeClass"
-                      @change="handleEdit(item.prop, scope.$index, scope.row)"
+                      :type='getInputType(item.prop)'
                   ></el-input>
                 </template>
               </el-table-column>
@@ -79,7 +79,7 @@ export default {
       nodeInfoData: [],
       nodeInfoColumn: NodeInfoColumn,
       dataStreamInputData: DataStreamInputData,
-      dataStreamOutputData: DataStreamOutputData,
+      dataStreamOutputData: [],
       dataStreamColumn: DataStreamColumn,
     }
   },
@@ -97,7 +97,13 @@ export default {
     removeClass(){
       document.getElementsByClassName('current-cell')[0].classList.remove('current-cell');
     },
-    handleEdit() {},
+    // 输入约束规则
+    getInputType(prop) {
+      if (["nodeSrc", "nodeDst", "sendTime"].includes(prop)) {
+        return "number";
+      }
+      return "text";
+    },
     // 检测节点触发函数
     async detectNodes() {
       // 检测节点后端url:/api/detect_nodes

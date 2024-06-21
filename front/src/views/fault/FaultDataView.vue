@@ -3,7 +3,7 @@
     <div>
       <el-card>
         <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">节点信息</p>
-        <el-button type="primary" @click="detectNodes()" style="float: right; margin-top: -10px; margin-bottom: 10px">检测节点</el-button>
+        <el-button type="primary" @click="detectNodes()" class="button_class">检测节点</el-button>
         <el-table :data="nodeInfoData" max-height="250" border stripe highlight-current-row>
           <el-table-column
               v-for="(item, index) in nodeInfoColumn"
@@ -17,27 +17,50 @@
     </div>
     <div style="margin-top: 10px">
       <el-card>
-        <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">数据注入界面</p>
-        <el-form :model="faultDataForm" ref="faultDataForm" label-width="100px" class="demo-ruleForm">
-          <el-form-item label="节点A" prop="nodeA">
-            <el-input v-model="faultDataForm.nodeA" autocomplete="off" style="width: 70%"></el-input>
-          </el-form-item>
-          <el-form-item label="节点B" prop="nodeB">
-            <el-input v-model="faultDataForm.nodeB" autocomplete="off" style="width: 70%"></el-input>
-          </el-form-item>
-          <el-form-item label="带宽" prop="nodeData">
-            <el-input v-model.number="faultDataForm.bandWidth" style="width: 70%"></el-input>
-            <span>bps</span>
-          </el-form-item>
-          <el-form-item label="发送时间" prop="nodeData">
-            <el-input v-model.number="faultDataForm.sendTime" style="width: 70%"></el-input>
-            <span>t</span>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="submitForm('faultDataForm')">提交</el-button>
-            <el-button @click="resetForm('faultDataForm')">重置</el-button>
-          </el-form-item>
-        </el-form>
+        <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">数据流</p>
+        <el-button type="primary" @click="detectNodes()" class="button_class">注入数据</el-button>
+        <el-button type="warning" @click="detectNodes()" class="button_class" style="margin-right: 5px">随机注入</el-button>
+        <el-button type="success" @click="detectNodes()" class="button_class">扫描</el-button>
+        <div>
+          <div>
+            <el-table :data="dataStreamInputData"
+                      max-height="250"
+                      stripe highlight-current-row @cell-click="cellClick">
+              <el-table-column
+                  v-for="(item, index) in dataStreamColumn"
+                  :key="index"
+                  :prop="item.prop"
+                  :label="item.label"
+                  style="width: 30%">
+                <template v-slot="scope">
+                  <el-input
+                      v-if="true"
+                      size="small"
+                      ref="tableInput"
+                      v-model="scope.row[item.prop]"
+                      @blur="removeClass"
+                      @change="handleEdit(item.prop, scope.$index, scope.row)"
+                  ></el-input>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div class="other-row-border">
+            <el-table :show-header="false"
+                      :data="dataStreamOutputData"
+                      style="min-height:150px"
+                      max-height="250"
+                      stripe highlight-current-row>
+              <el-table-column
+                  v-for="(item, index) in dataStreamColumn"
+                  :key="index"
+                  :prop="item.prop"
+                  :label="item.label"
+                  style="width: 30%">
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
       </el-card>
     </div>
   </div>
@@ -47,25 +70,34 @@
 
 import axios from "axios";
 import {NodeInfoColumn} from "../../../data/NodeInfoColumn";
+import {DataStreamColumn, DataStreamInputData, DataStreamOutputData} from "../../../data/DataStreamColumn";
 
 export default {
   name: "FaultDataView",
   data() {
     return {
-      faultDataForm: {
-        nodeA: '',
-        nodeB: '',
-        bandWidth: '',
-        sendTime: ''
-      },
       nodeInfoData: [],
       nodeInfoColumn: NodeInfoColumn,
+      dataStreamInputData: DataStreamInputData,
+      dataStreamOutputData: DataStreamOutputData,
+      dataStreamColumn: DataStreamColumn,
     }
   },
   mounted() {
 
   },
   methods: {
+    // 表格对象可编辑处理
+    cellClick(row, column, cell, event) {
+      for(let i=0; i<document.getElementsByClassName('current-cell').length;i++){
+        document.getElementsByClassName('current-cell')[i].classList.remove('current-cell');
+      }
+      cell.classList.add("current-cell");
+    },
+    removeClass(){
+      document.getElementsByClassName('current-cell')[0].classList.remove('current-cell');
+    },
+    handleEdit() {},
     // 检测节点触发函数
     async detectNodes() {
       // 检测节点后端url:/api/detect_nodes
@@ -114,5 +146,17 @@ export default {
 
 
 <style scoped>
+.button_class{
+  float: right;
+  margin-top: -10px;
+  margin-bottom: 10px
+}
 
+.first-row-border {
+  border: 2px solid red;
+}
+.other-row-border {
+  border: 1px solid black;
+  margin-top: 20px;
+}
 </style>

@@ -18,14 +18,14 @@
     <div style="margin-top: 10px">
       <el-card>
         <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">数据流</p>
-        <el-button type="primary" @click="detectNodes()" class="button_class">注入数据</el-button>
-        <el-button type="warning" @click="detectNodes()" class="button_class" style="margin-right: 5px">随机注入</el-button>
-        <el-button type="success" @click="detectNodes()" class="button_class">扫描</el-button>
+        <el-button type="primary" @click="insertData()" class="button_class">注入数据</el-button>
+        <el-button type="warning" @click="randomInsertData()" class="button_class" style="margin-right: 5px">随机注入</el-button>
+        <el-button type="success" @click="scanNodes()" class="button_class">扫描</el-button>
         <div>
           <div>
             <el-table :data="dataStreamInputData"
                       max-height="250"
-                      stripe highlight-current-row @cell-click="cellClick">
+                      stripe highlight-current-row>
               <el-table-column
                   v-for="(item, index) in dataStreamColumn"
                   :key="index"
@@ -38,7 +38,6 @@
                       size="small"
                       ref="tableInput"
                       v-model="scope.row[item.prop]"
-                      @blur="removeClass"
                       :type='getInputType(item.prop)'
                   ></el-input>
                 </template>
@@ -87,16 +86,6 @@ export default {
 
   },
   methods: {
-    // 表格对象可编辑处理
-    cellClick(row, column, cell, event) {
-      for(let i=0; i<document.getElementsByClassName('current-cell').length;i++){
-        document.getElementsByClassName('current-cell')[i].classList.remove('current-cell');
-      }
-      cell.classList.add("current-cell");
-    },
-    removeClass(){
-      document.getElementsByClassName('current-cell')[0].classList.remove('current-cell');
-    },
     // 输入约束规则
     getInputType(prop) {
       if (["nodeSrc", "nodeDst", "sendTime"].includes(prop)) {
@@ -116,36 +105,45 @@ export default {
         console.log(res.data.message);
       }
     },
-    resetForm(formName) {
-      this.$refs[formName].resetFields();
-    },
-    submitForm(formName) {
-      this.$refs[formName].validate(async (valid) => {
-        if (valid) {
-          // 校验通过，注入故障
-          // 将 bandWith 转换为字符串类型
-          this.faultDataForm.bandWidth = String(this.faultDataForm.bandWidth);
 
-          // 将 nodeA、nodeB 和 sendTime 转换为整数类型
-          this.faultDataForm.nodeA = parseInt(this.faultDataForm.nodeA);
-          this.faultDataForm.nodeB = parseInt(this.faultDataForm.nodeB);
-          this.faultDataForm.sendTime = parseInt(this.faultDataForm.sendTime);
-          console.log(this.faultDataForm);
-          const res = await axios.post("/api/data_insert", this.faultDataForm, {});
-          if (res.data.code === 200) {
-            await this.$router.push({
-              name: 'FaultDataView',
-            })
-          } else {
-            this.$notify.error("注入错误");
-            console.log(res.data.message);
-          }
-        } else {
-          this.$notify.error("error submit!!")
-          return false;
-        }
-      });
+    // 数据流：注入数据按钮触发函数
+    // 将dataStreamInputData数据发送给后端：/api/data_insert
+    async insertData() {
+      // 将 nodeA、nodeB 和 sendTime 转换为整数类型
+      const insertData = this.dataStreamInputData[0];
+      insertData.nodeSrc = parseInt(insertData.nodeSrc);
+      insertData.nodeDst = parseInt(insertData.nodeDst);
+      insertData.sendTime = parseInt(insertData.sendTime);
+      console.log(insertData);
+      const res = await axios.post("/api/data_insert",insertData, {});
+      if (res.data.code === 200) {
+        // 注入数据成功：将注入数据写入output表单，同时开始计时
+        // 深拷贝数据并添加到 output 表单
+        this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
+        // 开启倒计时
+        this.startTimer(insertData);
+      } else {
+        this.$notify.error("注入错误");
+        console.log(res.data.message);
+      }
     },
+    startTimer(data) {
+      // 记录该数据在 dataStreamOutputData 中的索引
+      const index = this.dataStreamOutputData.indexOf(data);
+      // 创建定时器
+      setTimeout(() => {
+        // 从 dataStreamOutputData 中移除该数据
+        this.dataStreamOutputData.splice(index, 1);
+      }, data.sendTime * 1000);
+    },
+    // 数据流：随机注入按钮触发函数
+    randomInsertData() {
+
+    },
+    // 数据流：扫描按钮触发函数
+    scanNodes() {
+
+    }
   }
 }
 </script>

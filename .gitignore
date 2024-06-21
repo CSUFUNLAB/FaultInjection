@@ -1,6 +1,7 @@
 /front/.vs/
 /front/.idea/
 /front/node_modules/
+/front/package-lock.json
 /back/.vs/
 /back/x64/
 /back/Fault/x64/

@@ -17,8 +17,8 @@
 #include <codecvt>
 #include <boost/filesystem.hpp>
 #include <thread>
-#include "FaultInsertInterface.h"
-#include "DataInsertInterface.h"
+#include "FaultInjectInterface.h"
+#include "DataInjectInterface.h"
 #include "NodeScanInterface.h"
 
 #pragma comment(lib, "comsuppw.lib")
@@ -42,19 +42,19 @@ void CommandHandle::HandlePost(http_request message)
 	if (recvURI == U("/api/fault_insert"))
 	{
 		// 故障注入接口
-		FaultInsertInterface faultInsertInterface;
-		HandlerInfo resultInfo = faultInsertInterface.handlerData(message);
-		message.reply(faultInsertInterface.HandleResponse(&resultInfo));
+		FaultInjectInterface faultInjectInterface;
+		HandlerInfo resultInfo = faultInjectInterface.handlerData(message);
+		message.reply(faultInjectInterface.HandleResponse(&resultInfo));
 	}
 	else if (recvURI == U("/api/data_insert")) {
 		// 数据注入接口
-		DataInsertInterface dataInsertInterface;
-		HandlerInfo resultInfo = dataInsertInterface.handlerData(message);
-		message.reply(dataInsertInterface.HandleResponse(&resultInfo));
+		DataInjectInterface dataInjectInterface;
+		HandlerInfo resultInfo = dataInjectInterface.handlerData(message);
+		message.reply(dataInjectInterface.HandleResponse(&resultInfo));
 	} else if (recvURI == U("/api/detect_nodes")) {
-		NodeScanInterface nodeScanInterface;
-		HandlerInfo resultInfo = nodeScanInterface.handlerData(message);
-		message.reply(nodeScanInterface.HandleResponse(&resultInfo));
+		DataInjectInterface dataInjectInterface;
+		HandlerInfo resultInfo = dataInjectInterface.scan_node(message);
+		message.reply(dataInjectInterface.HandleResponse(&resultInfo));
 
 	}
 	//else if (recvURI == U("/api/get_fault_data")) {
@@ -63,7 +63,7 @@ void CommandHandle::HandlePost(http_request message)
 	//	recvJson1["bandWidth"] = "8,3,5,12";
 	//	recvJson1["retry"] = "6,15,5,12";
 
-	//	DataInsertInterface dataInsertInterface;
+	//	DataInjectInterface dataInsertInterface;
 	//	HandlerInfo  resultInfo  = dataInsertInterface.faultResult(recvJson1);
 	//	message.reply(dataInsertInterface.HandleResponse(&resultInfo));
 	//	
@@ -71,7 +71,7 @@ void CommandHandle::HandlePost(http_request message)
 	//	HandlerInfo info;
 	//	info.code = 200;
 	//	info.msg = "11111";
-	//	DataInsertInterface dataInsertInterface;
+	//	DataInjectInterface dataInsertInterface;
 	//	message.reply(dataInsertInterface.HandleResponse(&info));
 	//	*/
 	//}

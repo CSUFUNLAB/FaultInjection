@@ -1,7 +1,7 @@
-#include "FaultInsertInterface.h"
+#include "FaultInjectInterface.h"
 #include "FaultInjection.h"
 
-HandlerInfo FaultInsertInterface::handlerData(http_request message)
+HandlerInfo FaultInjectInterface::handlerData(http_request message)
 {
 	json::value recvDatas = json::value::object();
 	recvDatas = message.extract_json().get();

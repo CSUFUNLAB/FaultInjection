@@ -46,6 +46,26 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         false,
         nullptr,
     },
+    {
+        4,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("54:78:c9:07:8b:1c"),
+        string("none"), // ip δ֪
+        false,
+        nullptr,
+    },
+    {
+        5,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("54:78:c9:07:8a:cc"),
+        string("none"), // ip δ֪
+        false,
+        nullptr,
+    },
 };
 
 string NodeManager::m_error_return = "none";

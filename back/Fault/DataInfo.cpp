@@ -176,6 +176,7 @@ int32_t DataInfo::get_info(int32_t index, char* token)
             return 1;
         }
     }
+    return 1;
 }
 
 TcpClientDataInfo::TcpClientDataInfo(struct NodeManager::NodeInfo *node)

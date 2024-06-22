@@ -61,6 +61,7 @@ int32_t DataFlow::delete_data_flow(struct FlowInfo &info)
     it->second.client_ssh->broken_cmd();
     it->second.server_ssh->broken_cmd();
     m_flow_info_map.erase(it);
+    return 0;
 }
 
 // tcp 删除服务端之后似乎无法再发消息了，只有udp才可以继续发送
@@ -73,6 +74,7 @@ int32_t DataFlow::delete_data_flow_server(struct FlowInfo& info)
     LOG_INFO("delete flow server [{}]->[{}][{}]", info.client->ip, info.server->ip, info.port);
     it->second.server_ssh->broken_cmd();
     m_flow_info_map.erase(it);
+    return 0;
 }
 
 void DataFlow::get_all_data_flow(std::vector<struct FlowInfo>& info)

@@ -197,6 +197,7 @@ int32_t NodeManagerSsh::get_sta_ip_read_echo(int32_t cout, char* buff)
     } else if (m_cmd_index == 1) {
         return sta_mac_to_ip(cout, buff);
     }
+    return -1;
 }
 
 void NodeManagerSsh::get_sta_ip(char *buff)

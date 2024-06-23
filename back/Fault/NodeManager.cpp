@@ -42,7 +42,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("f0:23:ae:09:80:bc"),
-        string("none"), // ip δ?
+        string("none"),
         false,
         nullptr,
     },
@@ -52,7 +52,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("54:78:c9:07:8b:1c"),
-        string("none"), // ip δ?
+        string("none"),
         false,
         nullptr,
     },
@@ -62,7 +62,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("54:78:c9:07:8a:cc"),
-        string("none"), // ip δ?
+        string("none"),
         false,
         nullptr,
     },
@@ -145,14 +145,14 @@ public:
 
 private:
     int32_t m_cmd_index = 0;
-    std::string m_station_ip; // arp -n ?????????ip?????
-    std::vector<std::string> m_station_mac; // station dump??????????mac?????
+    std::string m_station_ip; // arp -n 的时候会先读ip，记录
+    std::vector<std::string> m_station_mac; // station dump的时候会获得多个mac，记录
 
 };
 
 int32_t NodeManagerSsh::sta_mac_to_ip(int32_t cout, char* buff)
 {
-    if (cout == 0 && isdigit(buff[0]) == 0) { // ???ip??????????
+    if (cout == 0 && isdigit(buff[0]) == 0) { // 只看ip地址开始的行
         return 1;
     }
     if (cout == 0) {
@@ -179,7 +179,7 @@ int32_t NodeManagerSsh::sta_mac_to_ip(int32_t cout, char* buff)
 
 int32_t NodeManagerSsh::ap_dump_sta_mac(int32_t cout, char* buff)
 {
-    if (cout == 0 && buff[0] != 'S') { // ???Station???????
+    if (cout == 0 && buff[0] != 'S') { // 只看Station开始的行
         return 1;
     }
     if (cout == 1) {
@@ -215,8 +215,8 @@ void NodeManagerSsh::get_sta_ip(char *buff)
         cout = 0;
         while (space_token != nullptr) {
             ret = get_sta_ip_read_echo(cout, space_token);
-            // > 0 ???????????У?????δ??????
-            // = 0 ?????????????????????????
+            // > 0 表示跳过这一行，但是未找到结果
+            // = 0 表示这一行已经看完了，看下一行
             if (ret >= 0) {
                 break;
             }
@@ -226,7 +226,7 @@ void NodeManagerSsh::get_sta_ip(char *buff)
         line_token = strtok_s(nullptr, "\n", &next_line_token);
     }
     if (ret == 0) {
-         // TODO: ?????????????????е????????????????????????read byte = 0??????
+        // TODO: 如果返回结果每次只有一行导致不能一次性处理完，这里加一个read byte = 0的条件
         if (m_cmd_index == 0) {
             send_cmd("arp -n\n");
             m_cmd_index = 1;
@@ -243,15 +243,9 @@ void NodeManagerSsh::read_echo(char* data)
     get_sta_ip(data);
 }
 
-//void NodeManagerSsh::cmd_end(void)
-//{
-//    close();
-//    delete this;
-//}
-
 int32_t NodeManager::get_sta_ip(NodeInfo &info)
 {
-    NodeManagerSsh *ssh = new NodeManagerSsh(&info); // ????cmd_emd??ssh?????????delete
+    NodeManagerSsh *ssh = new NodeManagerSsh(&info);
 
     int32_t ret = ssh->open();
     ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);
@@ -272,7 +266,7 @@ void NodeManager::get_all_sta_ip(void)
     for (auto& node : NodeManager::m_node_info_list) {
         node.detected = false;
     }
-    // TODO: ???ping?????ap
+    // TODO: 使用ping来检测ap
     m_node_info_list[0].detected = true;
     m_node_info_list[1].detected = true;
     m_node_info_list[2].detected = true;

@@ -59,35 +59,35 @@ int32_t SshSession::open(void)
     // 初始化SSH会话
     m_session = ssh_new();
 
-    ERR_RETURN_PRINT(m_session == nullptr, NORMAL_ERR, "create ssh session[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(m_session == nullptr, -NORMAL_ERR, "create ssh session[{}][{}]", m_host, m_username);
 
     // 设置SSH服务器连接信息
     ssh_options_set(m_session, SSH_OPTIONS_HOST, m_host.c_str());
     ssh_options_set(m_session, SSH_OPTIONS_USER, m_username.c_str());
     // 连接SSH服务器
     int32_t rc = ssh_connect(m_session);
-    ERR_RETURN_PRINT(rc != SSH_OK, NORMAL_ERR, "connect ssh server[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "connect ssh server[{}][{}]", m_host, m_username);
 
     // 认证用户
     rc = ssh_userauth_password(m_session, NULL, m_password.c_str());
-    ERR_RETURN_PRINT(rc != SSH_OK, NORMAL_ERR, "authenticate ssh user[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "authenticate ssh user[{}][{}]", m_host, m_username);
 
     m_channel = ssh_channel_new(m_session);
-    ERR_RETURN_PRINT(m_channel == nullptr, NORMAL_ERR, "create ssh channel[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(m_channel == nullptr, -NORMAL_ERR, "create ssh channel[{}][{}]", m_host, m_username);
 
     LOG_INFO("[{}][{}]ssh open", m_host, m_username);
 
     rc = ssh_channel_open_session(m_channel);
-    ERR_RETURN_PRINT(rc != SSH_OK, NORMAL_ERR, "open ssh channel[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}][{}]", m_host, m_username);
 
     rc = ssh_channel_request_pty(m_channel);
-    ERR_RETURN(rc != SSH_OK, NORMAL_ERR, "request ssh pty[{}][{}]", m_host, m_username);
+    ERR_RETURN(rc != SSH_OK, -NORMAL_ERR, "request ssh pty[{}][{}]", m_host, m_username);
 
     rc = ssh_channel_change_pty_size(m_channel, 80, 24);
-    ERR_RETURN(rc != SSH_OK, NORMAL_ERR, "change ssh pty[{}][{}]", m_host, m_username);
+    ERR_RETURN(rc != SSH_OK, -NORMAL_ERR, "change ssh pty[{}][{}]", m_host, m_username);
 
     rc = ssh_channel_request_shell(m_channel);
-    ERR_RETURN_PRINT(rc != SSH_OK, NORMAL_ERR, "request ssh shell[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "request ssh shell[{}][{}]", m_host, m_username);
 
 
     // 读取SSH命令的输出

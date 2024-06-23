@@ -152,6 +152,7 @@
     <ClInclude Include="FaultDiagnosisInterface.h" />
     <ClInclude Include="FaultInjectInterface.h" />
     <ClInclude Include="FaultInjection.h" />
+    <ClInclude Include="FaultInterface.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="NodeManager.h" />
     <ClInclude Include="Server.h" />

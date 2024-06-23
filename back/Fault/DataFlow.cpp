@@ -7,10 +7,12 @@
 
 using namespace std;
 
-DataFlow::FlowInfoMap DataFlow::m_flow_info_map;
+DataFlow::FlowInfoServerMap DataFlow::m_flow_info_map;
 
 int32_t DataFlow::creat_data_flow(struct FlowInfo& info)
 {
+    ERR_RETURN(info.client == nullptr || info.server == nullptr, -NO_NODE, "null node info");
+
     int32_t ret = add_data_flow(info);
     ERR_RETURN(ret != NORMAL_OK, ret, "channel exist");
     string udpcmd = "";
@@ -42,45 +44,75 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& info)
     return 0;
 }
 
-int32_t DataFlow::add_data_flow(struct FlowInfo &info)
+int32_t DataFlow::add_data_flow(struct FlowInfo& info)
 {
-    ERR_RETURN(info.client->detected == false || info.server->detected == false, NO_NODE,
+    ERR_RETURN(info.client == nullptr || info.server == nullptr, -NO_NODE, "node not exist");
+    ERR_RETURN(info.client->detected == false || info.server->detected == false, -NO_NODE,
         "detected client[{}][{}] server[{}][{}]", info.client->ip, info.client->detected, info.server->ip, info.server->detected );
-    string flow_key = info.client->ip + info.server->ip + to_string(info.port);
-    auto it = m_flow_info_map.find(flow_key);
-    ERR_RETURN_PRINT(it != m_flow_info_map.end(), EXIST_CMD, "add flow [{}]->[{}][{}]", info.client->ip, info.server->ip, info.port);
-    m_flow_info_map.insert({flow_key, info});
+
+    info.port = 8081;
+
+    auto server = m_flow_info_map.find(info.server->ip);
+    if (server == m_flow_info_map.end()) {
+        FlowInfoPortMap port_map = {{info.port, info}};
+        m_flow_info_map.insert({info.server->ip, port_map});
+        return 0;
+    }
+    auto client = server->second.find(info.port);
+    while (client == server->second.end()) { // port自动选择的情况下，总能找到可新插入的data flow
+        info.port++;
+        client = server->second.find(info.port);
+    }
+    server->second.insert({info.port, info});
     return 0;
 }
 
 int32_t DataFlow::delete_data_flow(struct FlowInfo &info)
 {
-    string flow_key = info.client->ip + info.server->ip + to_string(info.port);
-    auto it = m_flow_info_map.find(flow_key);
-    ERR_RETURN_PRINT(it == m_flow_info_map.end(), NORMAL_ERR, "delete flow [{}]->[{}][{}]", info.client->ip, info.server->ip, info.port);
-    it->second.client_ssh->broken_cmd();
-    it->second.server_ssh->broken_cmd();
-    m_flow_info_map.erase(it);
+    ERR_RETURN(info.client == nullptr || info.server == nullptr, -NO_NODE, "node not exist");
+    ERR_RETURN(info.client->detected == false || info.server->detected == false, -NO_NODE,
+        "detected client[{}][{}] server[{}][{}]", info.client->ip, info.client->detected, info.server->ip, info.server->detected );
+
+    auto server = m_flow_info_map.find(info.server->ip);
+    ERR_RETURN(server == m_flow_info_map.end(), -NO_EXIST_FLOW,
+        "flow client[{}][{}] server[{}][{}] not exist", info.client->ip, info.client->detected, info.server->ip, info.server->detected);
+
+    auto client = server->second.find(info.port);
+    ERR_RETURN(client == server->second.end(), -NO_EXIST_FLOW,
+        "flow client[{}][{}] server[{}][{}] not exist", info.client->ip, info.client->detected, info.server->ip, info.server->detected);
+
+    client->second.client_ssh->broken_cmd();
+    client->second.server_ssh->broken_cmd();
+    server->second.erase(client);
     return 0;
 }
 
-// tcp 删除服务端之后似乎无法再发消息了，只有udp才可以继续发送
-// tcp udp 一起发？
+// 删除client无法诊断故障，不知道是正常结束还是故障结束
 int32_t DataFlow::delete_data_flow_server(struct FlowInfo& info)
 {
-    string flow_key = info.client->ip + info.server->ip + to_string(info.port);
-    auto it = m_flow_info_map.find(flow_key);
-    ERR_RETURN(it == m_flow_info_map.end(), NORMAL_ERR, "no flow [{}]->[{}][{}]", info.client->ip, info.server->ip, info.port);
-    LOG_INFO("delete flow server [{}]->[{}][{}]", info.client->ip, info.server->ip, info.port);
-    it->second.server_ssh->broken_cmd();
-    m_flow_info_map.erase(it);
+    ERR_RETURN(info.client == nullptr || info.server == nullptr, -NO_NODE, "node not exist");
+    ERR_RETURN(info.client->detected == false || info.server->detected == false, -NO_NODE,
+        "detected client[{}][{}] server[{}][{}]", info.client->ip, info.client->detected, info.server->ip, info.server->detected );
+
+    auto server = m_flow_info_map.find(info.server->ip);
+    ERR_RETURN(server == m_flow_info_map.end(), -NO_EXIST_FLOW,
+        "flow client[{}][{}] server[{}][{}] not exist", info.client->ip, info.client->detected, info.server->ip, info.server->detected);
+
+    auto client = server->second.find(info.port);
+    ERR_RETURN(client == server->second.end(), -NO_EXIST_FLOW,
+        "flow client[{}][{}] server[{}][{}] not exist", info.client->ip, info.client->detected, info.server->ip, info.server->detected);
+
+    client->second.server_ssh->broken_cmd();
+    server->second.erase(client);
     return 0;
 }
 
 void DataFlow::get_all_data_flow(std::vector<struct FlowInfo>& info)
 {
-    for (auto it = m_flow_info_map.begin(); it != m_flow_info_map.end(); it++) {
-        info.push_back(it->second);
+    for (auto server = m_flow_info_map.begin(); server != m_flow_info_map.end(); server++) {
+        auto& server_map = server->second;
+        for (auto client = server_map.begin(); client != server_map.end(); client++)
+        info.push_back(client->second);
     }
 }
 

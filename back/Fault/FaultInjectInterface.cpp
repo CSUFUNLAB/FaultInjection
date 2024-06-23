@@ -1,6 +1,7 @@
 #include "FaultInjectInterface.h"
 #include "FaultInjection.h"
 
+#if 0
 HandlerInfo FaultInjectInterface::handlerData(http_request message)
 {
 	json::value recvDatas = json::value::object();
@@ -38,3 +39,4 @@ HandlerInfo FaultInjectInterface::handlerData(http_request message)
 	handlerInfo.msg = "×¢Èë³É¹¦";
 	return handlerInfo;
 }
+#endif

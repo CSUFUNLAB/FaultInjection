@@ -1,13 +1,8 @@
 #pragma once
 #include "FaultInterface.h"
 
-class FaultInjectInterface:public FaultInterface
-{
-private:
-	HandlerInfo handlerInfo;
-	
+class FaultInjectInterface:public FaultInterface {
 public:
-	HandlerInfo handlerData(http_request message);
-
+	void handlerData(http_request message);
 };
 

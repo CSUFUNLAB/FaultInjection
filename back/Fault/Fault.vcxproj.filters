@@ -122,5 +122,8 @@
     <ClInclude Include="DataInfo.h">
       <Filter>头文件\Data</Filter>
     </ClInclude>
+    <ClInclude Include="FaultInterface.h">
+      <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

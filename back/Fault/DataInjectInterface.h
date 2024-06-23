@@ -1,17 +1,14 @@
 #pragma once
 #include "FaultInterface.h"
+#include <string>
 
-class DataInjectInterface:public FaultInterface
-{
-private:
-	HandlerInfo handlerInfo;
-
+class InjectDataFlow : public FaultInterface {
 public:
-	HandlerInfo handlerData(http_request message);
+	void handlerData(http_request &message) override;
+};
 
-	HandlerInfo scan_node(http_request message);
-
-	// 往前端传递结果
-	HandlerInfo faultResult(Json::Value recvJson);
+class ScanNode : public FaultInterface {
+public:
+	void handlerData(http_request &message) override;
 };
 

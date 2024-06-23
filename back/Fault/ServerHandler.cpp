@@ -3,26 +3,18 @@
 #include "SshSession.h"
 #include "DataFlow.h"
 #include "NodeManager.h"
-
-#include <thread>
-#include <chrono>
-
-#include <comutil.h>
-#pragma comment(lib, "comsuppw.lib")
-
-#include "ServerHandler.h"
-#include <comutil.h>
-#include <locale>
-#include <string>
-#include <codecvt>
-#include <boost/filesystem.hpp>
-#include <thread>
 #include "FaultInjectInterface.h"
 #include "DataInjectInterface.h"
-#include "NodeScanInterface.h"
 
+#include <chrono>
+#include <codecvt>
+#include <boost/filesystem.hpp>
+#include <locale>
+#include <string>
+#include <thread>
+
+#include <comutil.h>
 #pragma comment(lib, "comsuppw.lib")
-
 
 CommandHandle::CommandHandle(string_t url) : myListener(url)
 {
@@ -31,54 +23,22 @@ CommandHandle::CommandHandle(string_t url) : myListener(url)
 	myListener.support(methods::GET, std::bind(&CommandHandle::HandleGet, this, std::placeholders::_1));
 }
 
-
 void CommandHandle::HandlePost(http_request message)
 {
-	ucout << "Method:" << message.method() << endl;
-	ucout << "URI:" << http::uri::decode(message.relative_uri().path()) << endl;
 	// 解码请求的URI
 	utility::string_t recvURI = http::uri::decode(message.relative_uri().path());
+	string uri = utility::conversions::to_utf8string(recvURI);
+	ucout << "Method:" << message.method() << endl;
+	ucout << "URI:" << http::uri::decode(message.relative_uri().path()) << endl;
+	LOG_INFO("conversion URI: {}", uri);
 
-	if (recvURI == U("/api/fault_insert"))
-	{
-		// 故障注入接口
-		FaultInjectInterface faultInjectInterface;
-		HandlerInfo resultInfo = faultInjectInterface.handlerData(message);
-		message.reply(faultInjectInterface.HandleResponse(&resultInfo));
+	FaultInterface *fault_interface = FaultInterface::fault_interface_factory(uri);
+	if (fault_interface == nullptr) {
+		LOG_INFO("this should not happend, check fault_interface_factory code");
+		return;
 	}
-	else if (recvURI == U("/api/data_insert")) {
-		// 数据注入接口
-		DataInjectInterface dataInjectInterface;
-		HandlerInfo resultInfo = dataInjectInterface.handlerData(message);
-		message.reply(dataInjectInterface.HandleResponse(&resultInfo));
-	} else if (recvURI == U("/api/detect_nodes")) {
-		DataInjectInterface dataInjectInterface;
-		HandlerInfo resultInfo = dataInjectInterface.scan_node(message);
-		message.reply(dataInjectInterface.HandleResponse(&resultInfo));
-
-	}
-	//else if (recvURI == U("/api/get_fault_data")) {
-	//	// 数据注入后，结果获取接口，采用轮询的方式，前端每10s调用一次，若有数据，code为200，msg为数据内容，code为601，结果传输结束，为其他则报错
-	//	Json::Value recvJson1;
-	//	recvJson1["bandWidth"] = "8,3,5,12";
-	//	recvJson1["retry"] = "6,15,5,12";
-
-	//	DataInjectInterface dataInsertInterface;
-	//	HandlerInfo  resultInfo  = dataInsertInterface.faultResult(recvJson1);
-	//	message.reply(dataInsertInterface.HandleResponse(&resultInfo));
-	//	
-	//	/*
-	//	HandlerInfo info;
-	//	info.code = 200;
-	//	info.msg = "11111";
-	//	DataInjectInterface dataInsertInterface;
-	//	message.reply(dataInsertInterface.HandleResponse(&info));
-	//	*/
-	//}
-	else
-	{
-		ucout << "接口未定义" << endl;
-	}
+	message.reply(fault_interface->handle(message));
+	delete fault_interface;
 }
 
 void CommandHandle::HandleGet(http_request message)
@@ -131,6 +91,5 @@ void CommandHandle::HandleGet(http_request message)
 		ucout << "接口未定义" << endl;
 	}
 	*/
-
 }
 

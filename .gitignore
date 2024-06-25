@@ -1,9 +1,0 @@
-/front/.vs/
-/front/.idea/
-/front/node_modules/
-/back/.vs/
-/back/x64/
-/back/Fault/x64/
-/back/Fault/*.vcxproj
-/back/Fault/*.vcxproj.filters
-/back/packages

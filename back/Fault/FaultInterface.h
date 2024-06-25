@@ -3,36 +3,36 @@
 #include <cpprest/json.h>
 #include <json/json.h>
 #include <cpprest/http_listener.h>
+#include <map>
+#include <functional>
 
-using namespace std;
 using namespace web;
 using namespace web::json;
 using namespace http;
 
-
-/**
- * 代表一个接口处理函数的抽象，所有接口处理函数都应是其子类
- */
-
-
-// 处理接口数据返回通用信息
-struct HandlerInfo
-{
-	int code;
-	string msg;
-};
-
-class FaultInterface
-{
+class FaultInterface {
 public:
-	// 接口数据处理纯虚函数
-	virtual HandlerInfo handlerData(http_request message) = 0;
-	// 接口返回信息的纯虚函数
-	virtual http_response HandleResponse(const HandlerInfo* dataStruct);
+	http_response handle(http_request &message);
+
+	virtual void handlerData(http_request &message); // 默认处理函数用于返回无操作的错误
+
 	// // web::json:value 转换为 Json:Value （有些版本的cpprest好像不需要）
 	Json::Value HandleJsonData(json::value requestJson);
+	static FaultInterface* fault_interface_factory(std::string &uri);
+
+    struct HandlerInfo {
+        int code;
+        std::string msg;
+    };
+	struct HandlerInfo m_handler_info = {0};
+
 
 private:
+	using InterfaceFunc = std::function<FaultInterface *(void)>;
+	using InterfaceFuncMap = std::map<std::string, InterfaceFunc>;
+	static InterfaceFuncMap m_interface_func_map;
+	static std::map<int, std::string> m_err_code_map;
 
+	http_response HandleResponse(void);
 };
 

@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\Server">
+      <UniqueIdentifier>{3a2a23d1-ba45-4a04-9458-486bc32ce99a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Server">
+      <UniqueIdentifier>{800262d6-e665-4d71-8cb6-6bd0e178f9d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Network">
+      <UniqueIdentifier>{44f39c08-1f43-4c28-be0d-ca31302de36f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Data">
+      <UniqueIdentifier>{a6fd90a0-f5b9-401b-a1c7-8ef31ab7ce4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Network">
+      <UniqueIdentifier>{ffed55d8-6836-4695-8758-38f9b743a5b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Data">
+      <UniqueIdentifier>{a717cff7-362a-40e7-a57a-d2c5b773ca6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Server\interface">
+      <UniqueIdentifier>{16c9edad-2f78-4967-bb02-dec278d7826e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Server\interface">
+      <UniqueIdentifier>{7791bd31-8b00-4e69-8216-d506f69d9c7f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerHandler.cpp">
+      <Filter>源文件\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>源文件\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="DataFlow.cpp">
+      <Filter>源文件\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="DataInfo.cpp">
+      <Filter>源文件\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="NodeManager.cpp">
+      <Filter>源文件\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="SshSession.cpp">
+      <Filter>源文件\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="FaultInjection.cpp">
+      <Filter>源文件\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientHandler.cpp">
+      <Filter>源文件\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="DataDisplayInterface.cpp">
+      <Filter>源文件\Server\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="DataInjectInterface.cpp">
+      <Filter>源文件\Server\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="FaultDiagnosisInterface.cpp">
+      <Filter>源文件\Server\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="FaultInjectInterface.cpp">
+      <Filter>源文件\Server\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="FaultInterface.cpp">
+      <Filter>源文件\Server\interface</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>头文件\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="FaultInjection.h">
+      <Filter>头文件\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="SshSession.h">
+      <Filter>头文件\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NodeManager.h">
+      <Filter>头文件\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientHandler.h">
+      <Filter>头文件\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerHandler.h">
+      <Filter>头文件\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="DataDisplayInterface.h">
+      <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="DataInjectInterface.h">
+      <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="FaultDiagnosisInterface.h">
+      <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="FaultInjectInterface.h">
+      <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="DataFlow.h">
+      <Filter>头文件\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="DataInfo.h">
+      <Filter>头文件\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="FaultInterface.h">
+      <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

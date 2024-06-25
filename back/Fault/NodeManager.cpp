@@ -42,7 +42,27 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("f0:23:ae:09:80:bc"),
-        string("none"), // ip 未知
+        string("none"),
+        false,
+        nullptr,
+    },
+    {
+        4,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("54:78:c9:07:8b:1c"),
+        string("none"),
+        false,
+        nullptr,
+    },
+    {
+        5,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("54:78:c9:07:8a:cc"),
+        string("none"),
         false,
         nullptr,
     },
@@ -64,7 +84,7 @@ bool NodeManager::node_num_exist(int32_t node_num)
 
 bool NodeManager::node_ip_exist(std::string &ip)
 {
-    for (auto& node : m_node_info_list) {
+    for (auto &node : m_node_info_list) {
         if (node.ip == ip) {
             return true;
         }
@@ -177,6 +197,7 @@ int32_t NodeManagerSsh::get_sta_ip_read_echo(int32_t cout, char* buff)
     } else if (m_cmd_index == 1) {
         return sta_mac_to_ip(cout, buff);
     }
+    return -1;
 }
 
 void NodeManagerSsh::get_sta_ip(char *buff)
@@ -205,7 +226,7 @@ void NodeManagerSsh::get_sta_ip(char *buff)
         line_token = strtok_s(nullptr, "\n", &next_line_token);
     }
     if (ret == 0) {
-         // TODO: 如果返回结果每次只有一行导致不能一次性处理完，这里加一个read byte = 0的条件
+        // TODO: 如果返回结果每次只有一行导致不能一次性处理完，这里加一个read byte = 0的条件
         if (m_cmd_index == 0) {
             send_cmd("arp -n\n");
             m_cmd_index = 1;
@@ -222,18 +243,12 @@ void NodeManagerSsh::read_echo(char* data)
     get_sta_ip(data);
 }
 
-//void NodeManagerSsh::cmd_end(void)
-//{
-//    close();
-//    delete this;
-//}
-
 int32_t NodeManager::get_sta_ip(NodeInfo &info)
 {
-    NodeManagerSsh *ssh = new NodeManagerSsh(&info); // 没注册cmd_emd，ssh结束后自动delete
+    NodeManagerSsh *ssh = new NodeManagerSsh(&info);
 
     int32_t ret = ssh->open();
-    ERR_RETURN_PRINT(ret != NORMAL_OK, NORMAL_ERR, "open src ssh[{}]", info.ip);
+    ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);
 
     ssh->m_last_cmd = false;
 

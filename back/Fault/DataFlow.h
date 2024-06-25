@@ -26,28 +26,24 @@ public:
         struct NodeManager::NodeInfo *client;
         struct NodeManager::NodeInfo *server;
         std::string bind; // 带单位 K M G
-        uint32_t port;
+        uint32_t port; // port 自动选择 输入填0即可
         uint32_t time; // s
         std::string type; // tcp or udp 小写
         DataFlowSsh* client_ssh;
         DataFlowSsh* server_ssh;
     };
 
-    DataFlow() {};
-
-    int32_t creat_data_flow(struct FlowInfo& info);
+    static int32_t creat_data_flow(struct FlowInfo& info);
     static void get_all_data_flow(std::vector<struct FlowInfo> &info);
     static int32_t delete_data_flow(struct FlowInfo &info); // 只有永久通道才需要手动删除
     static int32_t delete_data_flow_server(struct FlowInfo &info); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
 
 private:
-    using FlowInfoMap = std::map<std::string, struct FlowInfo>; // 第一个参数为clientip + serverip + port
-    static FlowInfoMap m_flow_info_map;
+    using FlowInfoPortMap = std::map<int32_t, struct FlowInfo>; // 第一个参数为port
+    using FlowInfoServerMap = std::map<std::string, FlowInfoPortMap>; // 第一个参数为serverip
+    static FlowInfoServerMap m_flow_info_map;
 
-    int32_t add_data_flow(struct FlowInfo &info);
-    void delete_client_data_flow();
-    void delete_server_data_flow();
-
+    static int32_t add_data_flow(struct FlowInfo &info);
 };
 
 

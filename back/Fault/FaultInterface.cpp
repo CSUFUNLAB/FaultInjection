@@ -1,17 +1,52 @@
 #include "FaultInterface.h"
+#include "Log.h"
 #include <comutil.h>
 
-#include "Log.h"
+#include "DataInjectInterface.h"
 
-http_response FaultInterface::HandleResponse(const HandlerInfo* dataStruct)
+using namespace std;
+
+template<typename T>
+FaultInterface* create_fault_interface(void)
 {
-	string msg = dataStruct->msg;
-	int code = dataStruct->code;
+	return new T();
+}
 
+FaultInterface::InterfaceFuncMap FaultInterface::m_interface_func_map = {
+	{"/api/data_insert", create_fault_interface<InjectDataFlow>},
+	{"/api/detect_nodes", create_fault_interface<ScanNode>},
+};
+
+std::map<int, std::string> FaultInterface::m_err_code_map {
+	{200, "success"},
+	{300 + NORMAL_ERR, "error, please check log"},
+	{300 + NO_NODE, "operate node not exist"},
+	{300 + NO_EXIST_FLOW, "operate data flow not exist"},
+	{300 + NO_OPERATE, "this operate not exist"},
+	{300 + SSH_ERR, "ssh error, please check network"},
+	{300 + ERR_CODE_BUTT, "not exist error code, please check code"},
+};
+
+FaultInterface* FaultInterface::fault_interface_factory(std::string& uri)
+{
+	auto it = m_interface_func_map.find(uri);
+	if (it == m_interface_func_map.end()) {
+		LOG_INFO("no this operate");
+		return new FaultInterface();
+	}
+	return (it->second)();
+}
+
+http_response FaultInterface::HandleResponse(void)
+{
+	int &code = m_handler_info.code;
+	auto it = m_err_code_map.find(code);
+	string &msg = m_err_code_map[300 + ERR_CODE_BUTT];
+	if (it != m_err_code_map.end()) {
+		msg = it->second;
+	}
 	json::value responseJson;
-
-	const string temp = msg;
-	_bstr_t t = temp.c_str();
+	_bstr_t t = msg.c_str();
 	wchar_t* pwchar = (wchar_t*)t;
 	wstring result = pwchar;
 
@@ -47,4 +82,15 @@ Json::Value FaultInterface::HandleJsonData(json::value requestJson)
 	Json::parseFromStream(builder, stream, &changeJson, &jsonParseErrors);
 
 	return changeJson;
+}
+
+void FaultInterface::handlerData(http_request& message)
+{
+	m_handler_info.code = 300 + NO_OPERATE;
+}
+
+http_response FaultInterface::handle(http_request &message)
+{
+	handlerData(message);
+	return HandleResponse();
 }

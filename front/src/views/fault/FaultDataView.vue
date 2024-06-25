@@ -17,7 +17,7 @@
     </div>
     <div style="margin-top: 10px">
       <el-card>
-        <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">数据流</p>
+        <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">数据流注入</p>
         <el-button type="primary" @click="insertData()" class="button_class">注入数据</el-button>
         <el-button type="warning" @click="randomInsertData()" class="button_class" style="margin-right: 5px">随机注入</el-button>
         <el-button type="success" @click="scanNodes()" class="button_class">扫描</el-button>
@@ -83,9 +83,29 @@ export default {
     }
   },
   mounted() {
-
+    // 在页面加载后从本地存储中恢复数据
+    this.checkAndRemoveExpiredData();
   },
   methods: {
+    // 在页面加载后从本地存储中恢复数据
+    checkAndRemoveExpiredData() {
+      const outputDataJSON = localStorage.getItem('dataStreamOutputData');
+      if (outputDataJSON) {
+        const outputData = JSON.parse(outputDataJSON);
+
+        const currentTime = new Date();
+
+        outputData.forEach((data) => {
+          if (currentTime > new Date(data.laterTime)) {
+            const index = outputData.indexOf(data);
+            if (index!== -1) {
+              outputData.splice(index, 1);
+            }
+          }
+        });
+        localStorage.setItem('dataStreamOutputData', JSON.stringify(outputData));
+      }
+    },
     // 输入约束规则
     getInputType(prop) {
       if (["nodeSrc", "nodeDst", "sendTime"].includes(prop)) {
@@ -105,7 +125,6 @@ export default {
         console.log(res.data.message);
       }
     },
-
     // 数据流：注入数据按钮触发函数
     // 将dataStreamInputData数据发送给后端：/api/data_insert
     async insertData() {
@@ -114,12 +133,20 @@ export default {
       insertData.nodeSrc = parseInt(insertData.nodeSrc);
       insertData.nodeDst = parseInt(insertData.nodeDst);
       insertData.sendTime = parseInt(insertData.sendTime);
-      console.log(insertData);
+
       const res = await axios.post("/api/data_insert",insertData, {});
       if (res.data.code === 200) {
+        // 获取当前时间和 sendTime 秒以后的时间
+        const currentTime = new Date();
+        const laterTime = new Date(currentTime.getTime() + insertData.sendTime * 1000);
+        insertData.currentTime = currentTime;
+        insertData.laterTime = laterTime;
         // 注入数据成功：将注入数据写入output表单，同时开始计时
         // 深拷贝数据并添加到 output 表单
         this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
+        // 将当前的输出数据保存到本地存储
+        localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+
         // 开启倒计时
         this.startTimer(insertData);
       } else {
@@ -134,13 +161,20 @@ export default {
       setTimeout(() => {
         // 从 dataStreamOutputData 中移除该数据
         this.dataStreamOutputData.splice(index, 1);
+        // 更新本地存储的数据，移除已经倒计时结束的行
+        const updatedOutputData = this.dataStreamOutputData.map(item => {
+          if (item!== data) {
+            return item;
+          }
+        });
+        localStorage.setItem('dataStreamOutputData', JSON.stringify(updatedOutputData));
       }, data.sendTime * 1000);
     },
-    // 数据流：随机注入按钮触发函数
+    // 数据流注入：随机注入按钮触发函数
     randomInsertData() {
 
     },
-    // 数据流：扫描按钮触发函数
+    // 数据流注入：扫描按钮触发函数
     scanNodes() {
 
     }

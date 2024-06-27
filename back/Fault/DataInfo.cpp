@@ -5,6 +5,7 @@
 #include <string>
 
 using namespace std;
+using NodeInfo = struct NodeManager::NodeInfo;
 
 static int32_t get_int_num(const char* buff, void* info)
 {
@@ -170,7 +171,7 @@ int32_t DataInfo::get_info(int32_t index, char* token)
     }
     for (i = 0; i < m_info_num; i++) {
         if (m_transfer_str[i].index == index) {
-            if (m_transfer_str[i].func(token, m_info_point[m_info_index]) == 0) {
+            if (m_transfer_str[i].func(token, m_info_point_arry[m_info_index]) == 0) {
                 m_info_index++;
             }
             return 1;
@@ -179,60 +180,59 @@ int32_t DataInfo::get_info(int32_t index, char* token)
     return 1;
 }
 
-TcpClientDataInfo::TcpClientDataInfo(struct NodeManager::NodeInfo *node)
+DataInfo::DataInfo(NodeInfo* node_client, NodeInfo* node_server)
 {
-    m_node = node;
-    m_transfer_str = tcp_client_transfer_str;
+    m_iperf_info.node_src = node_client->index;
+    m_iperf_info.node_dst = node_server->index;
     m_info_point_arry[0] = &m_iperf_info.sec;
     m_info_point_arry[1] = &m_iperf_info.transfer;
     m_info_point_arry[2] = &m_iperf_info.transfer_unit;
     m_info_point_arry[3] = &m_iperf_info.band;
     m_info_point_arry[4] = &m_iperf_info.band_unit;
+}
+
+TcpClientDataInfo::TcpClientDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
+{
+    m_node = node_client;
+    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.trans_type = 0;
+
+    m_transfer_str = tcp_client_transfer_str;
     m_info_point_arry[5] = &m_iperf_info.err;
     m_info_point_arry[6] = &m_iperf_info.rtry;
     m_info_point_arry[7] = &m_iperf_info.rtt;
     m_info_num = 8;
-    m_info_point = m_info_point_arry;
 }
 
-TcpServerDataInfo::TcpServerDataInfo(struct NodeManager::NodeInfo *node)
+TcpServerDataInfo::TcpServerDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
 {
-    m_node = node;
+    m_node = node_server;
+    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.trans_type = 0;
+
     m_transfer_str = tcp_server_transfer_str;
-    m_info_point_arry[0] = &m_iperf_info.sec;
-    m_info_point_arry[1] = &m_iperf_info.transfer;
-    m_info_point_arry[2] = &m_iperf_info.transfer_unit;
-    m_info_point_arry[3] = &m_iperf_info.band;
-    m_info_point_arry[4] = &m_iperf_info.band_unit;
     m_info_num = 5;
-    m_info_point = m_info_point_arry;
 }
 
-UdpClientDataInfo::UdpClientDataInfo(struct NodeManager::NodeInfo *node)
+UdpClientDataInfo::UdpClientDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
 {
-    m_node = node;
+    m_node = node_client;
+    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.trans_type = 1;
+
     m_transfer_str = tcp_server_transfer_str; // 二者一致
-    m_info_point_arry[0] = &m_iperf_info.sec;
-    m_info_point_arry[1] = &m_iperf_info.transfer;
-    m_info_point_arry[2] = &m_iperf_info.transfer_unit;
-    m_info_point_arry[3] = &m_iperf_info.band;
-    m_info_point_arry[4] = &m_iperf_info.band_unit;
     m_info_num = 5;
-    m_info_point = m_info_point_arry;
 }
 
-UdpServerDataInfo::UdpServerDataInfo(struct NodeManager::NodeInfo *node)
+UdpServerDataInfo::UdpServerDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
 {
-    m_node = node;
+    m_node = node_server;
+    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.trans_type = 1;
+
     m_transfer_str = udp_client_transfer_str;
-    m_info_point_arry[0] = &m_iperf_info.sec;
-    m_info_point_arry[1] = &m_iperf_info.transfer;
-    m_info_point_arry[2] = &m_iperf_info.transfer_unit;
-    m_info_point_arry[3] = &m_iperf_info.band;
-    m_info_point_arry[4] = &m_iperf_info.band_unit;
     m_info_point_arry[5] = &m_iperf_info.lost;
     m_info_num = 7; // lost 会找两次
-    m_info_point = m_info_point_arry;
 }
 
 void TcpClientDataInfo::upload_info(void)

@@ -2,6 +2,7 @@
 #include "Log.h"
 #include "SshSession.h"
 
+#include <atomic>
 #include <functional>
 
 using namespace std;
@@ -135,13 +136,15 @@ class NodeManagerSsh : public SshSession {
 public:
     using SshSession::SshSession;
 
-    void read_echo(char* data)  override;
-    //void cmd_end(void)  override;
+    void read_echo(char* data) override;
+    void cmd_end(void) override;
 
     void get_sta_ip(char* buff);
     int32_t get_sta_ip_read_echo(int32_t cout, char *buff);
     int32_t sta_mac_to_ip(int32_t cout, char *buff);
     int32_t ap_dump_sta_mac(int32_t cout, char *buff);
+    static atomic<int> m_count;
+
 
 private:
     int32_t m_cmd_index = 0;
@@ -149,6 +152,8 @@ private:
     std::vector<std::string> m_station_mac; // station dump的时候会获得多个mac，记录
 
 };
+
+atomic<int> NodeManagerSsh::m_count = 0;
 
 int32_t NodeManagerSsh::sta_mac_to_ip(int32_t cout, char* buff)
 {
@@ -225,13 +230,12 @@ void NodeManagerSsh::get_sta_ip(char *buff)
         }
         line_token = strtok_s(nullptr, "\n", &next_line_token);
     }
-    if (ret == 0) {
-        // TODO: 如果返回结果每次只有一行导致不能一次性处理完，这里加一个read byte = 0的条件
+    // 无读取内容时才认为成功
+    if (m_nbytes == 0) {
         if (m_cmd_index == 0) {
             send_cmd("arp -n\n");
             m_cmd_index = 1;
-        }
-        if (m_cmd_index == 1) {
+        } else if (m_cmd_index == 1) {
             LOG_INFO("get all sta of ap[{}]", m_node_info->ip);
             m_last_cmd = true;
         }
@@ -243,6 +247,13 @@ void NodeManagerSsh::read_echo(char* data)
     get_sta_ip(data);
 }
 
+void NodeManagerSsh::cmd_end(void)
+{
+    m_count.fetch_sub(1);
+    close();
+    delete this;
+}
+
 int32_t NodeManager::get_sta_ip(NodeInfo &info)
 {
     NodeManagerSsh *ssh = new NodeManagerSsh(&info);
@@ -251,6 +262,8 @@ int32_t NodeManager::get_sta_ip(NodeInfo &info)
     ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);
 
     ssh->m_last_cmd = false;
+
+    ssh->m_count.fetch_add(1);
 
     ssh->send_cmd(string("iw dev sdr0 station dump | grep Station") + "\n");
 
@@ -275,8 +288,11 @@ void NodeManager::get_all_sta_ip(void)
     for (auto& node : NodeManager::m_node_info_list) {
         if (node.type == "ap") {
             ret = get_sta_ip(node);
-            LOG_INFO("scan node[{}][{}]", node.index, ret);
+            LOG_INFO("scan node[{}]", node.index);
         }
+    }
+    while (NodeManagerSsh::m_count != 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 

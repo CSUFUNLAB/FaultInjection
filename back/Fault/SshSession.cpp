@@ -167,14 +167,14 @@ void SshSession::send_cmd_thread(void)
             LOG_INFO("[{}][{}]send cmd[{}]: {}", m_host, m_username, ret, m_cmd);
             m_send_cmd = false;
         }
-        m_nbytes = ssh_channel_read_timeout(m_channel, buffer, sizeof(buffer) - 1, 0, 1000);
+        m_nbytes = ssh_channel_read_timeout(m_channel, buffer, sizeof(buffer) - 1, 0, 1500);
         if (m_nbytes < 0 || m_nbytes > 1023) {
             LOG_INFO("[{}][{}]ssh cmd read error[{}]", m_host, m_username, m_nbytes);
             break;
         }
         buffer[m_nbytes] = '\0'; // ssh_channel_read_timeout ²»Ìí¼Ó½áÊø·û
         //if (m_host == "192.168.13.5") {
-            LOG_DEBUG("[{}]{}", m_host, buffer);
+            LOG_DEBUG("[{}]{}: {}", m_host, m_nbytes, buffer);
         //}
         read_echo(buffer);
 

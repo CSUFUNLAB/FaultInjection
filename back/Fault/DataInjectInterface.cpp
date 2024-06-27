@@ -16,19 +16,20 @@ void InjectDataFlow::handlerData(http_request &message)
     // 获取message的Json::Value格式
     Json::Value recvJsonDatas = HandleJsonData(recvDatas);
 
-    int32_t node_a = recvJsonDatas["nodeA"].asInt();
-    int32_t node_b = recvJsonDatas["nodeB"].asInt();
+    int32_t node_src = recvJsonDatas["nodeSrc"].asInt();
+    int32_t node_dst = recvJsonDatas["nodeDst"].asInt();
     string band_width = recvJsonDatas["bandWidth"].asString();
+    string type = recvJsonDatas["type"].asString();
     int32_t send_time = recvJsonDatas["sendTime"].asInt();
 
-    LOG_INFO("data flow: {}->{} {} {}s", node_a, node_b, band_width, send_time);
+    LOG_INFO("data flow: {}->{} {} {} {}s", node_src, node_dst, type, band_width, send_time);
     DataFlow::FlowInfo flow_info = {
-        NodeManager::get_node_info(node_a),
-        NodeManager::get_node_info(node_b),
+        NodeManager::get_node_info(node_src),
+        NodeManager::get_node_info(node_dst),
         band_width,
         0,
         send_time,
-        "tcp", // 这个也要传过来
+        type,
         nullptr,
         nullptr,
     };
@@ -63,7 +64,7 @@ void ScanNode::handlerData(http_request &message)
 
     m_handler_info.code = 200;
     m_handler_info.msg = nodes.toStyledString();
-    LOG_INFO("{}", m_handler_info.msg);
+    LOG_DEBUG("{}", m_handler_info.msg);
 }
 
 #if 0

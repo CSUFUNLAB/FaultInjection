@@ -4,5 +4,5 @@
 #include "DataFlow.h"
 
 class DataFile {
-    int32_t serialie_data_info(DataFlow::FlowInfo &flow, DataInfo::IperfInfo);
+    int32_t serialie_data_info(DataInfo::IperfInfo &info);
 };

@@ -18,7 +18,6 @@ FaultInterface::InterfaceFuncMap FaultInterface::m_interface_func_map = {
 };
 
 std::map<int, std::string> FaultInterface::m_err_code_map {
-	{200, "success"},
 	{300 + NORMAL_ERR, "error, please check log"},
 	{300 + NO_NODE, "operate node not exist"},
 	{300 + NO_EXIST_FLOW, "operate data flow not exist"},
@@ -40,10 +39,13 @@ FaultInterface* FaultInterface::fault_interface_factory(std::string& uri)
 http_response FaultInterface::HandleResponse(void)
 {
 	int &code = m_handler_info.code;
-	auto it = m_err_code_map.find(code);
-	string &msg = m_err_code_map[300 + ERR_CODE_BUTT];
-	if (it != m_err_code_map.end()) {
-		msg = it->second;
+    string &msg = m_handler_info.msg;
+	if (code != 200) {
+        auto it = m_err_code_map.find(code);
+        msg = m_err_code_map[300 + ERR_CODE_BUTT];
+        if (it != m_err_code_map.end()) {
+            msg = it->second;
+        }
 	}
 	json::value responseJson;
 	_bstr_t t = msg.c_str();

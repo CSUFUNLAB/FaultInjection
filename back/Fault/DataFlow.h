@@ -10,7 +10,7 @@
 
 class DataFlowSsh : public SshSession {
 public:
-    DataFlowSsh(struct NodeManager::NodeInfo *node, std::string type, std::string protocol);
+    DataFlowSsh(NodeManager::NodeInfo *node, NodeManager::NodeInfo *pair_node, std::string type, std::string protocol);
 
     DataInfo* m_data_info = nullptr;
 

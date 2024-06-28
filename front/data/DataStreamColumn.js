@@ -10,7 +10,7 @@ const DataStreamInputData = [
     {nodeSrc: '', nodeDst: '', type: '', bandWidth: '', sendTime: ''},
 ]
 const DataStreamOutputData = [
-    {nodeA: '11', nodeB: '22', type: '33', bandWidth: '44', sendTime: '2'},
+    {nodeSrc: 11, nodeDst: 22, type: '33', bandWidth: '44', sendTime: 20},
 ]
 export {
     DataStreamColumn, DataStreamInputData, DataStreamOutputData

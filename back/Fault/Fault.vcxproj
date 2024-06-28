@@ -130,6 +130,7 @@
   <ItemGroup>
     <ClCompile Include="ClientHandler.cpp" />
     <ClCompile Include="DataDisplayInterface.cpp" />
+    <ClCompile Include="DataFile.cpp" />
     <ClCompile Include="DataFlow.cpp" />
     <ClCompile Include="DataInfo.cpp" />
     <ClCompile Include="DataInjectInterface.cpp" />
@@ -146,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="ClientHandler.h" />
     <ClInclude Include="DataDisplayInterface.h" />
+    <ClInclude Include="DataFile.h" />
     <ClInclude Include="DataFlow.h" />
     <ClInclude Include="DataInfo.h" />
     <ClInclude Include="DataInjectInterface.h" />

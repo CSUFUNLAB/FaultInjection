@@ -81,6 +81,9 @@
     <ClCompile Include="FaultInterface.cpp">
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
+    <ClCompile Include="DataFile.cpp">
+      <Filter>源文件\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -124,6 +127,9 @@
     </ClInclude>
     <ClInclude Include="FaultInterface.h">
       <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="DataFile.h">
+      <Filter>头文件\Data</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

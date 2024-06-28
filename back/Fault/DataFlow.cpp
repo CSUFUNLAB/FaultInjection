@@ -19,8 +19,8 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& info)
     if (info.type == "udp") {
         udpcmd = " -u";
     }
-    info.client_ssh = new DataFlowSsh(info.client, "client", info.type);
-    info.server_ssh = new DataFlowSsh(info.server, "server", info.type);
+    info.client_ssh = new DataFlowSsh(info.client, info.server, "client", info.type);
+    info.server_ssh = new DataFlowSsh(info.server, info.client, "server", info.type);
 
     ret = info.client_ssh->open();
     ERR_RETURN_PRINT(ret != NORMAL_OK, ret, "open src ssh[{}]", info.client->ip);
@@ -116,19 +116,19 @@ void DataFlow::get_all_data_flow(std::vector<struct FlowInfo>& info)
     }
 }
 
-DataFlowSsh::DataFlowSsh(struct NodeManager::NodeInfo *node, std::string type, std::string protocol) : SshSession(node)
+DataFlowSsh::DataFlowSsh(NodeManager::NodeInfo *node, NodeManager::NodeInfo *pair_node, string type, string protocol) : SshSession(node)
 {
     if (type == "client") {
         if (protocol == "tcp") {
-            m_data_info = new TcpClientDataInfo(node);
+            m_data_info = new TcpClientDataInfo(node, pair_node);
         } else if (protocol == "udp") {
-            m_data_info = new UdpClientDataInfo(node);
+            m_data_info = new UdpClientDataInfo(node, pair_node);
         }
     } else if (type == "server") {
         if (protocol == "tcp") {
-            m_data_info = new TcpServerDataInfo(node);
+            m_data_info = new TcpServerDataInfo(pair_node, node);
         } else if (protocol == "udp") {
-            m_data_info = new UdpServerDataInfo(node);
+            m_data_info = new UdpServerDataInfo(pair_node, node);
         }
     }
 }

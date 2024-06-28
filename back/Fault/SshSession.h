@@ -24,6 +24,7 @@ public:
     virtual void read_echo(char *data); // 覆写使用
 
     struct NodeManager::NodeInfo* m_node_info = nullptr;
+    int32_t m_nbytes; // 读取ssh返回字节数
     bool m_send_cmd = false; // 是否有待发送消息，发送后会置false
     int32_t m_no_data_count = 0; // 没有数据时持续等待次数，如果数据量太大会导致ssh消息堵住
     bool m_last_cmd = true; // 默认只发一条消息
@@ -37,7 +38,6 @@ private:
     ssh_channel m_channel = nullptr;
     std::string m_cmd;
 
-    int32_t m_nbytes;
     char buffer[1024];
     bool m_broken_cmd = false;
 

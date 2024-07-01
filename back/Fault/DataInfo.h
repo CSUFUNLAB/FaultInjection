@@ -6,9 +6,9 @@
 
 class DataInfo {
 public:
-    DataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
+    DataInfo(NodeManager::NodeInfo *self_node, NodeManager::NodeInfo *pair_node);
 
-    virtual void upload_info(void) = 0;
+    virtual void upload_info(void);
     int32_t get_info(int32_t index, char* token);
 	void deal_iperf_echo(char *buffer);
 	void deal_iperf_line_echo(char *buffer);
@@ -17,8 +17,8 @@ public:
 
     struct IperfInfo {
         uint32_t self_node;
-        uint32_t node_src;
-        uint32_t node_dst;
+        uint32_t pair_node; // if is client, it is server node, otherwise
+        uint32_t is_client; // 1 is client, 0 is server
         uint32_t trans_type; // 0: tcp; 1: udp
         uint32_t sec;
         float transfer;
@@ -49,24 +49,20 @@ public:
 class TcpClientDataInfo : public DataInfo {
 public:
     TcpClientDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
-    void upload_info(void) override;
 };
 
 class TcpServerDataInfo : public DataInfo {
 public:
     TcpServerDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
-    void upload_info(void) override;
 };
 
 class UdpClientDataInfo : public DataInfo {
 public:
     UdpClientDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
-    void upload_info(void) override;
 };
 
 class UdpServerDataInfo : public DataInfo {
 public:
     UdpServerDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
-    void upload_info(void) override;
 };
 

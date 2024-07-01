@@ -5,6 +5,8 @@
 #include <libssh/libssh.h>
 #include <functional>
 #include <map>
+#include <queue>
+#include <mutex>
 
 #include "NodeManager.h"
 
@@ -17,6 +19,7 @@ public:
 
     int32_t open(void);
     void send_cmd(const std::string &cmd); // 没有回复消息，不再需要发命令，会自动结束ssh
+    void only_send_cmd(const std::string &cmd); // 用于大量命令发送的场景
     void broken_cmd(void);
     void close(void); // 非阻塞read返回数据时close会崩溃
 
@@ -29,6 +32,7 @@ public:
     int32_t m_no_data_count = 0; // 没有数据时持续等待次数，如果数据量太大会导致ssh消息堵住
     bool m_last_cmd = true; // 默认只发一条消息
     bool m_ssh_end = false; // ssh是否结束
+    bool m_only_send = false; // 切换仅发送线程
 
 private:
     std::string m_host;
@@ -37,6 +41,9 @@ private:
     ssh_session m_session = nullptr;
     ssh_channel m_channel = nullptr;
     std::string m_cmd;
+
+    std::mutex m_mtx;
+    std::queue<std::string> m_cmd_queue;
 
     char buffer[1024];
     bool m_broken_cmd = false;
@@ -53,5 +60,6 @@ private:
     struct Credit &find_credit(const std::string &node_describe);
 
     void send_cmd_thread(void);
+    void only_send_cmd_thread(void);
 };
 

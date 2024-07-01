@@ -1,4 +1,5 @@
 #include "DataInfo.h"
+#include "DataFile.h"
 #include "LOG.h"
 
 #include <cstring>
@@ -180,10 +181,29 @@ int32_t DataInfo::get_info(int32_t index, char* token)
     return 1;
 }
 
-DataInfo::DataInfo(NodeInfo* node_client, NodeInfo* node_server)
+void DataInfo::upload_info(void)
 {
-    m_iperf_info.node_src = node_client->index;
-    m_iperf_info.node_dst = node_server->index;
+    LOG_INFO("[client][{}] time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}] lost[{}]%",
+        m_node->ip,
+        m_iperf_info.sec,
+        m_iperf_info.transfer,
+        m_iperf_info.transfer_unit,
+        m_iperf_info.band,
+        m_iperf_info.band_unit,
+        m_iperf_info.err,
+        m_iperf_info.rtry,
+        m_iperf_info.rtt,
+        m_iperf_info.lost
+    );
+    DataFile::get_instance()->send_data_info(m_iperf_info);
+}
+
+DataInfo::DataInfo(NodeInfo *self_node, NodeInfo *pair_node)
+{
+    m_node = self_node;
+    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.pair_node = pair_node->index;
+
     m_info_point_arry[0] = &m_iperf_info.sec;
     m_info_point_arry[1] = &m_iperf_info.transfer;
     m_info_point_arry[2] = &m_iperf_info.transfer_unit;
@@ -191,10 +211,9 @@ DataInfo::DataInfo(NodeInfo* node_client, NodeInfo* node_server)
     m_info_point_arry[4] = &m_iperf_info.band_unit;
 }
 
-TcpClientDataInfo::TcpClientDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
+TcpClientDataInfo::TcpClientDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
 {
-    m_node = node_client;
-    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.is_client = 1;
     m_iperf_info.trans_type = 0;
 
     m_transfer_str = tcp_client_transfer_str;
@@ -204,30 +223,27 @@ TcpClientDataInfo::TcpClientDataInfo(NodeInfo *node_client, NodeInfo *node_serve
     m_info_num = 8;
 }
 
-TcpServerDataInfo::TcpServerDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
+TcpServerDataInfo::TcpServerDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
 {
-    m_node = node_server;
-    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.is_client = 0;
     m_iperf_info.trans_type = 0;
 
     m_transfer_str = tcp_server_transfer_str;
     m_info_num = 5;
 }
 
-UdpClientDataInfo::UdpClientDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
+UdpClientDataInfo::UdpClientDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
 {
-    m_node = node_client;
-    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.is_client = 1;
     m_iperf_info.trans_type = 1;
 
     m_transfer_str = tcp_server_transfer_str; // 二者一致
     m_info_num = 5;
 }
 
-UdpServerDataInfo::UdpServerDataInfo(NodeInfo *node_client, NodeInfo *node_server) : DataInfo(node_client, node_server)
+UdpServerDataInfo::UdpServerDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
 {
-    m_node = node_server;
-    m_iperf_info.self_node = m_node->index;
+    m_iperf_info.is_client = 1;
     m_iperf_info.trans_type = 1;
 
     m_transfer_str = udp_client_transfer_str;
@@ -235,6 +251,7 @@ UdpServerDataInfo::UdpServerDataInfo(NodeInfo *node_client, NodeInfo *node_serve
     m_info_num = 7; // lost 会找两次
 }
 
+#if 0
 void TcpClientDataInfo::upload_info(void)
 {
     LOG_INFO("[client][{}] time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}]",
@@ -282,6 +299,7 @@ void UdpServerDataInfo::upload_info(void)
         m_iperf_info.band_unit,
         m_iperf_info.lost);
 }
+#endif
 
 void DataInfo::deal_iperf_line_echo(char* buffer)
 {

@@ -110,8 +110,13 @@ int32_t SshSession::open(void)
     }
     LOG_INFO("[{}][{}]ssh ready", m_host, m_username);
 
-    std::thread channel_chread(&SshSession::send_cmd_thread, this);
-    channel_chread.detach();
+    if (m_only_send) {
+        std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
+        channel_chread.detach();
+    } else {
+        std::thread channel_chread(&SshSession::send_cmd_thread, this);
+        channel_chread.detach();
+    }
 
     return 0;
 }
@@ -197,6 +202,35 @@ void SshSession::send_cmd_thread(void)
 
     m_ssh_end = true;
 
+    cmd_end();
+
+    return;
+}
+
+void SshSession::only_send_cmd(const std::string &cmd)
+{
+    m_mtx.lock();
+    m_cmd_queue.push(cmd);
+    m_mtx.unlock();
+}
+
+void SshSession::only_send_cmd_thread(void)
+{
+    while (1) {
+        m_mtx.lock();
+        while (!m_cmd_queue.empty()) {
+            LOG_INFO("{}", m_cmd_queue.front());
+            ssh_channel_write(m_channel, m_cmd_queue.front().c_str(), m_cmd_queue.front().size());
+            m_cmd_queue.pop();
+        }
+        m_mtx.unlock();
+        if (m_broken_cmd) {
+            LOG_INFO("[{}][{}]ssh cmd force end", m_host, m_username);
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    m_ssh_end = true;
     cmd_end();
 
     return;

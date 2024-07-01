@@ -126,9 +126,9 @@ DataFlowSsh::DataFlowSsh(NodeManager::NodeInfo *node, NodeManager::NodeInfo *pai
         }
     } else if (type == "server") {
         if (protocol == "tcp") {
-            m_data_info = new TcpServerDataInfo(pair_node, node);
+            m_data_info = new TcpServerDataInfo(node, pair_node);
         } else if (protocol == "udp") {
-            m_data_info = new UdpServerDataInfo(pair_node, node);
+            m_data_info = new UdpServerDataInfo(node, pair_node);
         }
     }
 }

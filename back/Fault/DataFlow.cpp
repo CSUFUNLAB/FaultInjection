@@ -15,9 +15,15 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& info)
 
     int32_t ret = add_data_flow(info);
     ERR_RETURN(ret != NORMAL_OK, ret, "channel exist");
-    string udpcmd = "";
+    string udp_cmd = "";
+    string len_cmd = "";
     if (info.type == "udp") {
-        udpcmd = " -u";
+        udp_cmd = " -u";
+    } else { // tcp 过低的带宽要减小缓冲区
+        if (info.bind.c_str()[info.bind.size() - 1] == 'K') {
+            uint32_t bind_val = atoi(info.bind.c_str());
+            len_cmd = string(" -l ") + to_string(bind_val * 128);
+        }
     }
     info.client_ssh = new DataFlowSsh(info.client, info.server, "client", info.type);
     info.server_ssh = new DataFlowSsh(info.server, info.client, "server", info.type);
@@ -31,7 +37,7 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& info)
     info.server_ssh->m_no_data_count = info.time * 3 / 2;
     info.client_ssh->m_no_data_count = info.time * 3 / 2;
 
-    info.server_ssh->send_cmd("iperf -se -i 1 -p " + to_string(info.port) + udpcmd + "\n");
+    info.server_ssh->send_cmd("iperf -se -i 1 -p " + to_string(info.port) + udp_cmd + "\n");
     while (info.server_ssh->m_send_cmd) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -39,7 +45,7 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& info)
         + string(" -i 1 -p ") + to_string(info.port)
         + string(" -t ") + to_string(info.time)
         + string(" -b ") + info.bind
-        + udpcmd + "\n");
+        + len_cmd + udp_cmd + "\n");
 
     return 0;
 }

@@ -166,7 +166,7 @@ export default {
             const lines = text.split('\n');
             for (const line of lines) {
               if(line) {
-                const [begin,nodeSrc,nodeDst,type,bandWidth,sendTime] = line.split(', ');
+                const [begin,nodeSrc,nodeDst,type,bandWidth,sendTime] = line.split(',');
                 await new Promise(resolve => {
                   setTimeout(() => {
                     const result = {

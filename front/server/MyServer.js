@@ -1,3 +1,4 @@
+const fs = require('fs');
 const http = require('http');
 
 // 创建服务器
@@ -5,17 +6,24 @@ http.createServer(function (request, response) {
     // 根据请求路径处理不同的接口
     if (request.url === '/api/fault_result') {
         // 获取请求体中的 JSON 数据
-        let body = '';
+        let body = [];
         request.on('data', chunk => {
-            body += chunk;
+            body.push(chunk)
         });
         request.on('end', () => {
             try {
                 // 将 JSON 数据解析为对象
                 const data = JSON.parse(body);
-                console.log(data); // 在控制台打印获取到的 data 对象
                 response.statusCode = 200;
-                // 在此处处理获取到的数
+
+                console.log(data)
+                // 处理写入文件的逻辑
+                // 创建一个可以写入的流，写入到文件 newJs.txt 中
+                const writerStream = fs.createWriteStream('faultData.json');
+                // 使用 utf8 编码写入数据
+                writerStream.write(JSON.stringify(data),'UTF8');
+                // 标记文件末尾
+                writerStream.end();
                 response.end("SUCCESS");
             } catch (err) {
                 // 如果解析出现错误，返回错误信息

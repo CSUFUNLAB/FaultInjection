@@ -19,7 +19,8 @@
       <el-card>
         <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">数据流注入</p>
         <el-button type="primary" @click="insertData()" class="button_class">注入数据</el-button>
-        <el-button type="warning" @click="randomInsertData()" class="button_class" style="margin-right: 5px">随机注入</el-button>
+        <el-button type="info" @click="insertDataFromFile()" class="button_class" style="margin-right: 10px">导入数据</el-button>
+        <el-button type="warning" @click="randomInsertData()" class="button_class">随机注入</el-button>
         <el-button type="success" @click="scanNodes()" class="button_class">扫描</el-button>
         <div>
           <div>
@@ -148,10 +149,53 @@ export default {
       insertData.nodeSrc = parseInt(insertData.nodeSrc);
       insertData.nodeDst = parseInt(insertData.nodeDst);
       insertData.sendTime = parseInt(insertData.sendTime);
-
-      // 注入数据成功：将注入数据写入output表单，同时开始计时
-      // 深拷贝数据并添加到 output 表单
-      const res = await axios.post("/api/data_insert",insertData, {});
+      console.log(insertData);
+      await this.sendInsertData(insertData);
+    },
+    // 从csv文件中读取数据发送给后端
+    insertDataFromFile() {
+      // 打开文件选择器
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".csv";
+      input.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          try {
+            const text = await this.readFileText(file);
+            const lines = text.split('\n');
+            for (const line of lines) {
+              if(line) {
+                const [begin,nodeSrc,nodeDst,type,bandWidth,sendTime] = line.split(', ');
+                await new Promise(resolve => {
+                  setTimeout(() => {
+                    const result = {
+                      "nodeSrc":  parseInt(nodeSrc),
+                      "nodeDst":  parseInt(nodeDst),
+                      "type": type,
+                      "bandWidth": bandWidth,
+                      "sendTime": parseInt(sendTime)
+                    };
+                    // 将数据发送到后端的操作
+                    this.sendInsertData(result);
+                    resolve();
+                  }, parseInt(begin) * 1000);
+                });
+              }
+            }
+            this.$notify.success(file.name + "文件数据读取发送完毕！");
+          } catch (error) {
+            console.error("读取文件出错", error);
+          }
+        }
+      })
+      input.click();
+    },
+    //  将注入数据发送至后端
+    async sendInsertData(insertData) {
+      // insertData.sendTime = Date.now() + 1000 * insertData.sendTime;
+      // this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
+      const res = await axios.post("/api/data_insert", insertData, {});
       if (res.data.code === 200) {
         // 获取当前时间和 sendTime 秒以后的时间
         // const currentTime = new Date();
@@ -160,7 +204,7 @@ export default {
         // insertData.laterTime = laterTime;
         // 注入数据成功：将注入数据写入output表单，同时开始计时
         // 深拷贝数据并添加到 output 表单
-        insertData.sendTime =  Date.now() + 1000 * insertData.sendTime;
+        insertData.sendTime = Date.now() + 1000 * insertData.sendTime;
         this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
         // 将当前的输出数据保存到本地存储
         // localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
@@ -168,6 +212,15 @@ export default {
         this.$notify.error("注入错误");
         console.log(res.data.message);
       }
+    },
+    // 读取文件内容
+    async readFileText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsBinaryString(file);
+      });
     },
     // 数据流注入：随机注入按钮触发函数
     randomInsertData() {

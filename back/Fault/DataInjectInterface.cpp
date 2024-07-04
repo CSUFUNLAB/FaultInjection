@@ -22,7 +22,7 @@ void InjectDataFlow::handlerData(http_request &message)
     string type = recvJsonDatas["type"].asString();
     int32_t send_time = recvJsonDatas["sendTime"].asInt();
 
-    LOG_INFO("data flow: {}->{} {} {} {}s", node_src, node_dst, type, band_width, send_time);
+    LOG_INFO("data flow: {} -> {} {} {} {}s", node_src, node_dst, type, band_width, send_time);
     DataFlow::FlowInfo flow_info = {
         NodeManager::get_node_info(node_src),
         NodeManager::get_node_info(node_dst),

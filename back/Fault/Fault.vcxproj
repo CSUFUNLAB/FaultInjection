@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BeginTime.cpp" />
     <ClCompile Include="ClientHandler.cpp" />
     <ClCompile Include="DataDisplayInterface.cpp" />
     <ClCompile Include="DataFile.cpp" />
@@ -145,6 +146,7 @@
     <ClCompile Include="SshSession.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BeginTime.h" />
     <ClInclude Include="ClientHandler.h" />
     <ClInclude Include="DataDisplayInterface.h" />
     <ClInclude Include="DataFile.h" />

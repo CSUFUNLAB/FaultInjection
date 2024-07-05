@@ -183,8 +183,11 @@ int32_t DataInfo::get_info(int32_t index, char* token)
 
 void DataInfo::upload_info(void)
 {
-    LOG_INFO("[client][{}] time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}] lost[{}]%",
+    LOG_DEBUG("[{}] {} -> {} {} time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}] lost[{}]%",
         m_node->ip,
+        m_iperf_info.self_node,
+        m_iperf_info.pair_node,
+        m_iperf_info.is_client,
         m_iperf_info.sec,
         m_iperf_info.transfer,
         m_iperf_info.transfer_unit,
@@ -195,6 +198,7 @@ void DataInfo::upload_info(void)
         m_iperf_info.rtt,
         m_iperf_info.lost
     );
+    m_iperf_info.sec += m_begin_time;
     DataFile::get_instance()->send_data_info(m_iperf_info);
 }
 
@@ -250,56 +254,6 @@ UdpServerDataInfo::UdpServerDataInfo(NodeInfo *self_node, NodeInfo *pair_node) :
     m_info_point_arry[5] = &m_iperf_info.lost;
     m_info_num = 7; // lost »áÕÒÁ½´Î
 }
-
-#if 0
-void TcpClientDataInfo::upload_info(void)
-{
-    LOG_INFO("[client][{}] time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}]",
-        m_node->ip,
-        m_iperf_info.sec,
-        m_iperf_info.transfer,
-        m_iperf_info.transfer_unit,
-        m_iperf_info.band,
-        m_iperf_info.band_unit,
-        m_iperf_info.err,
-        m_iperf_info.rtry,
-        m_iperf_info.rtt);
-}
-
-void TcpServerDataInfo::upload_info(void)
-{
-    LOG_INFO("[server][{}] time[{}] transfer[{}*{}] band[{}*{}]",
-        m_node->ip,
-        m_iperf_info.sec,
-        m_iperf_info.transfer,
-        m_iperf_info.transfer_unit,
-        m_iperf_info.band,
-        m_iperf_info.band_unit);
-}
-
-void UdpClientDataInfo::upload_info(void)
-{
-    LOG_INFO("[client][{}] time[{}] transfer[{}*{}] band[{}*{}]",
-        m_node->ip,
-        m_iperf_info.sec,
-        m_iperf_info.transfer,
-        m_iperf_info.transfer_unit,
-        m_iperf_info.band,
-        m_iperf_info.band_unit);
-}
-
-void UdpServerDataInfo::upload_info(void)
-{
-    LOG_INFO("[server][{}] time[{}] transfer[{}*{}] band[{}*{}] lost[{}%]",
-        m_node->ip,
-        m_iperf_info.sec,
-        m_iperf_info.transfer,
-        m_iperf_info.transfer_unit,
-        m_iperf_info.band,
-        m_iperf_info.band_unit,
-        m_iperf_info.lost);
-}
-#endif
 
 void DataInfo::deal_iperf_line_echo(char* buffer)
 {

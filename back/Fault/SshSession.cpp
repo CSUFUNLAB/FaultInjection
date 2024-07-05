@@ -80,21 +80,34 @@ int32_t SshSession::open(void)
     rc = ssh_channel_open_session(m_channel);
     ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}][{}]", m_host, m_username);
 
+    if (m_only_send) {
+        std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
+        channel_chread.detach();
+    } else {
+        std::thread channel_chread(&SshSession::send_cmd_thread, this);
+        channel_chread.detach();
+    }
+
+    return 0;
+}
+
+void SshSession::ssh_begin_read(void)
+{
+    int32_t rc;
+
     rc = ssh_channel_request_pty(m_channel);
-    ERR_RETURN(rc != SSH_OK, -NORMAL_ERR, "request ssh pty[{}][{}]", m_host, m_username);
+    ERR_RETURN(rc != SSH_OK, , "request ssh pty[{}][{}]", m_host, m_username);
 
     rc = ssh_channel_change_pty_size(m_channel, 80, 24);
-    ERR_RETURN(rc != SSH_OK, -NORMAL_ERR, "change ssh pty[{}][{}]", m_host, m_username);
+    ERR_RETURN(rc != SSH_OK, , "change ssh pty[{}][{}]", m_host, m_username);
 
     rc = ssh_channel_request_shell(m_channel);
-    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "request ssh shell[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(rc != SSH_OK, , "request ssh shell[{}][{}]", m_host, m_username);
 
-
-    // 读取SSH命令的输出
     char buffer[128];
     int32_t m_nbytes;
     while (1) {
-        m_nbytes = ssh_channel_read_timeout(m_channel, buffer, sizeof(buffer), 0, 2000);
+        m_nbytes = ssh_channel_read_timeout(m_channel, buffer, sizeof(buffer), 0, 1500);
         if (m_nbytes <= 1) {
             break;
         }
@@ -109,16 +122,6 @@ int32_t SshSession::open(void)
         }
     }
     LOG_INFO("[{}][{}]ssh ready", m_host, m_username);
-
-    if (m_only_send) {
-        std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
-        channel_chread.detach();
-    } else {
-        std::thread channel_chread(&SshSession::send_cmd_thread, this);
-        channel_chread.detach();
-    }
-
-    return 0;
 }
 
 void SshSession::close(void)
@@ -162,6 +165,8 @@ void SshSession::send_cmd_thread(void)
 {
     int32_t ret;
 
+    ssh_begin_read();
+
     while (!m_send_cmd) { // 必须等待一条消息
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -181,18 +186,13 @@ void SshSession::send_cmd_thread(void)
         //if (m_host == "192.168.13.5") {
             LOG_DEBUG("[{}]{}: {}", m_host, m_nbytes, buffer);
         //}
-        read_echo(buffer);
-
-        if (m_last_cmd && m_nbytes == 0 && m_no_data_count <= 0) {
+        if (m_always_read || m_nbytes > 0) {
+            read_echo(buffer);
+        }
+        // 如果带宽占满，可能会导致ssh消息堵住，从而直接结束，但是这也算一个故障
+        if (m_last_cmd && m_nbytes == 0) {
             LOG_INFO("[{}][{}]ssh cmd nature end", m_host, m_username);
             break;
-        }
-        if (m_no_data_count > 0) {
-            //LOG_DEBUG("[{}]keep{}", m_host, m_keep_read);
-            m_no_data_count--;
-            if (m_nbytes != 0) { // 如果有回复表示数据正常，快速减少额外等待
-                m_no_data_count--; // 可能会减到-1
-            }
         }
         if (m_broken_cmd) {
             LOG_INFO("[{}][{}]ssh cmd force end", m_host, m_username);
@@ -216,10 +216,12 @@ void SshSession::only_send_cmd(const std::string &cmd)
 
 void SshSession::only_send_cmd_thread(void)
 {
+    ssh_begin_read();
+
     while (1) {
         m_mtx.lock();
         while (!m_cmd_queue.empty()) {
-            LOG_INFO("{}", m_cmd_queue.front());
+            LOG_DEBUG("{}", m_cmd_queue.front());
             ssh_channel_write(m_channel, m_cmd_queue.front().c_str(), m_cmd_queue.front().size());
             m_cmd_queue.pop();
         }

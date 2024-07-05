@@ -44,6 +44,7 @@ public:
     int32_t m_info_num = 0;
     struct IperfInfo m_iperf_info = { 0 };
     void* m_info_point_arry[8]; // 不同类型消息大小不一样，按照最大的设计
+    uint32_t m_begin_time = 0;
 };
 
 class TcpClientDataInfo : public DataInfo {

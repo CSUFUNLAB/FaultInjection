@@ -84,6 +84,9 @@
     <ClCompile Include="DataFile.cpp">
       <Filter>源文件\Data</Filter>
     </ClCompile>
+    <ClCompile Include="BeginTime.cpp">
+      <Filter>源文件\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -129,6 +132,9 @@
       <Filter>头文件\Server\interface</Filter>
     </ClInclude>
     <ClInclude Include="DataFile.h">
+      <Filter>头文件\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="BeginTime.h">
       <Filter>头文件\Data</Filter>
     </ClInclude>
   </ItemGroup>

@@ -257,6 +257,7 @@ void NodeManagerSsh::cmd_end(void)
 int32_t NodeManager::get_sta_ip(NodeInfo &info)
 {
     NodeManagerSsh *ssh = new NodeManagerSsh(&info);
+    ssh->m_always_read = true;
 
     int32_t ret = ssh->open();
     ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);

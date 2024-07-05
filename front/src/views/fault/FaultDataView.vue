@@ -57,7 +57,7 @@
                   :prop="item.prop"
                   :label="item.label"
                   style="width: 30%">
-                <template v-slot="scope" >
+                <template v-slot="scope" v-if="item.prop === 'sendTime'">
                   <el-statistic
                       v-if="item.prop === 'sendTime'"
                       @finish="hilarity(scope)"
@@ -101,6 +101,14 @@ export default {
     // 计时结束
     hilarity(scope) {
       // 计时结束，从输出框中删除数据
+      // console.log(scope);
+      const temp = JSON.parse(JSON.stringify(this.dataStreamOutputData))
+      temp.splice(scope.index, 1);
+      if (temp.length === 2) {
+        // 表单数据从3条变为2条时，倒计时值一致，解决方法：再次为倒计时赋值
+        this.dataStreamOutputData[1].sendTime = new Date(temp[0].laterTime).getTime();
+        this.dataStreamOutputData[2].sendTime = new Date(temp[1].laterTime).getTime();
+      }
       this.dataStreamOutputData.splice(scope.index, 1);
     },
     // 在页面加载后从本地存储中恢复数据
@@ -149,7 +157,7 @@ export default {
       insertData.nodeSrc = parseInt(insertData.nodeSrc);
       insertData.nodeDst = parseInt(insertData.nodeDst);
       insertData.sendTime = parseInt(insertData.sendTime);
-      console.log(insertData);
+      // 测试代码
       await this.sendInsertData(insertData);
     },
     // 从csv文件中读取数据发送给后端
@@ -193,18 +201,20 @@ export default {
     },
     //  将注入数据发送至后端
     async sendInsertData(insertData) {
-      // insertData.sendTime = Date.now() + 1000 * insertData.sendTime;
+      // const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
+      // insertData.laterTime = laterTime;
+      // insertData.sendTime = laterTime.getTime();
       // this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
       const res = await axios.post("/api/data_insert", insertData, {});
       if (res.data.code === 200) {
         // 获取当前时间和 sendTime 秒以后的时间
         // const currentTime = new Date();
-        // const laterTime = new Date(currentTime.getTime() + insertData.sendTime * 1000);
-        // insertData.currentTime = currentTime;
-        // insertData.laterTime = laterTime;
+        const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
+        insertData.laterTime = laterTime;
         // 注入数据成功：将注入数据写入output表单，同时开始计时
         // 深拷贝数据并添加到 output 表单
-        insertData.sendTime = Date.now() + 1000 * insertData.sendTime;
+
+        insertData.sendTime = laterTime.getTime();
         this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
         // 将当前的输出数据保存到本地存储
         // localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));

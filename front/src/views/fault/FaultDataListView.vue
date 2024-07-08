@@ -128,22 +128,20 @@ export default {
         let chartDom = document.getElementById('fault');
         this.faultChart = echarts.init(chartDom);
       }
-      let legendData = Object.keys(groupedData); // 获取 "1" 和 "2" 作为 legend 数据
+      let legendData = Object.keys(groupedData);
       let seriesData = [];
 
       for (let key in groupedData) {
         let innerData = groupedData[key];
         for (let subKey in innerData) {
-          if (subKey!== '4' && subKey!== '5') {
-            continue;
-          }
           seriesData.push({
-            name: subKey,
+            name: key,
             type:'line',
             data: innerData[subKey]
           });
         }
       }
+      console.log(seriesData);
 
       let option;
       option = {
@@ -163,6 +161,9 @@ export default {
         },
         // 横坐标
         xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         },
         // 纵坐标
         yAxis: {

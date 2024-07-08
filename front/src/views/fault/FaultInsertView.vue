@@ -102,7 +102,7 @@ export default {
           }
           // console.log(newFaultDataInsertForm);
           // 校验通过，注入故障
-          const res = await axios.post("/api/data_insert", this.faultDataInsertForm, {});
+          const res = await axios.post("/api/fault_data_insert", this.faultDataInsertForm, {});
           if (res.data.code === 200) {
             this.$notify.success("注入成功");
           }

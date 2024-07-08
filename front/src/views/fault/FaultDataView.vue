@@ -233,12 +233,25 @@ export default {
       });
     },
     // 数据流注入：随机注入按钮触发函数
-    randomInsertData() {
-
+    async randomInsertData() {
+      // 随机注入按钮
+      const res = await axios.post("/api/random_insert", {}, {});
+      if (res.data.code === 200) {
+        this.$notify.success("随机注入成功")
+      } else {
+        this.$notify.error("随机注入失败");
+        console.log(res.data.message);
+      }
     },
     // 数据流注入：扫描按钮触发函数
-    scanNodes() {
-
+    async scanNodes() {
+      const res = await axios.post("/api/scan_node", {}, {});
+      if (res.data.code === 200) {
+        this.$notify.success("扫描成功")
+      } else {
+        this.$notify.error("扫描失败");
+        console.log(res.data.message);
+      }
     }
   }
 }

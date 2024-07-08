@@ -1,9 +1,9 @@
 <template>
   <div>
     <el-card>
-      <p style="text-align: center">故障数据显示界面</p>
-      <div style="float: right">
-        <span>故障类型：</span>
+      <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">故障数据显示界面</p>
+      <div style="float: right; ">
+        <span>数据类型：</span>
         <el-select v-model="optionsValue" placeholder="请选择">
           <el-option
               v-for="item in options"
@@ -13,7 +13,7 @@
           </el-option>
         </el-select>
       </div>
-      <div id="fault" style="width: 80%; height: 400px">
+      <div id="fault" style="width: 100%; height: 400px; margin-top: 60px">
       </div>
     </el-card>
   </div>
@@ -28,145 +28,147 @@ export default {
     return {
       faultChart: '',
       faultDataArry: [],
-      faultResultData: {
-        "bandWidth": "",
-        "retry": "6,"
-      },
+      faultResultData: [],
       intervalId: null,
       options: [{
-        value: 'bandwidth',
-        label: 'bandwidth'
-      }, {
-        value: 'retry',
-        label: 'retry'
+        value: 'transfer',
+      },{
+        value: 'band',
+      },{
+        value: 'err',
+      },{
+        value: 'rtry',
+      },{
+        value: 'rtt',
+      },{
+        value: 'lost',
       },],
-      optionsValue: 'bandwidth',
+      optionsValue: 'transfer',
     }
   },
   mounted() {
-    this.initFaultChart(this.faultDataArry);
-    this.getFaultResult();
+    // this.getChartData();
+    // this.initFaultChart(this.faultDataArry);
   },
   watch: {
-    optionsValue(newValue) {
-      // 根据选项值，更新曲线数据
-      if (newValue === 'bandwidth') {
-        const bandwidthData = this.faultResultData.bandWidth.split(',');
-        this.faultDataArry = bandwidthData;
-        this.initFaultChart(bandwidthData);
-      } else if (newValue ==='retry') {
-        const retryData = this.faultResultData.retry.split(',');
-        this.faultDataArry = retryData;
-        this.initFaultChart(retryData);
-      }
-    },
-    faultResultData: {
-      handler(newValue) {
-        // 每隔 10 秒调用 getFaultResult 方法
-        this.intervalId = setInterval(() => this.getFaultResult(), 10000);
-        // 更新数据
-        let currentBandWidth = [];
-        if (this.optionsValue === 'bandwidth') {
-          currentBandWidth = this.faultResultData.bandWidth.split(',');
-        } else if (this.optionsValue ==='retry') {
-          currentBandWidth = this.faultResultData.retry.split(',');
-        }
-        this.updateFaultChart(currentBandWidth);
-      },
-      deep: true
-    }
-  },
-  methods: {
-    // sse() {
-    //   // 检查浏览器是否支持SSE
-    //   if ("EventSource" in window) {
-    //     // 创建EventSource对象并指定SSE服务器的路径
-    //     let source = new EventSource("http://127.0.0.1:8888/api/sse");
-    //     console.log('ss:', source);
-    //     // 监听消息的传输
-    //     source.onmessage = function(e) {
-    //       // 对接收到的数据进行处理
-    //       console.log('接收消息：', e.data);
-    //     };
-    //
-    //     // 连接建立成功时触发
-    //     source.onclose = function() {
-    //       console.log("连接关闭.");
-    //     };
-    //
-    //     // 连接发生错误时触发
-    //     source.onerror = function(e) {
-    //       console.log("链接出错：", e);
-    //     };
-    //   } else {
-    //     console.log("浏览器不支持SSE");
+    // optionsValue(newValue) {
+    //   // 根据选项值，更新曲线数据
+    //   if (newValue === 'bandwidth') {
+    //     const bandwidthData = this.faultResultData.bandWidth.split(',');
+    //     this.faultDataArry = bandwidthData;
+    //     this.initFaultChart(bandwidthData);
+    //   } else if (newValue ==='retry') {
+    //     const retryData = this.faultResultData.retry.split(',');
+    //     this.faultDataArry = retryData;
+    //     this.initFaultChart(retryData);
     //   }
     // },
-    async getFaultResult() {
+    // faultResultData: {
+    //   handler(newValue) {
+    //     // 每隔 10 秒调用 getFaultResult 方法
+    //     this.intervalId = setInterval(() => this.getFaultResult(), 10000);
+    //     // 更新数据
+    //     let currentBandWidth = [];
+    //     if (this.optionsValue === 'bandwidth') {
+    //       currentBandWidth = this.faultResultData.bandWidth.split(',');
+    //     } else if (this.optionsValue ==='retry') {
+    //       currentBandWidth = this.faultResultData.retry.split(',');
+    //     }
+    //     this.updateFaultChart(currentBandWidth);
+    //   },
+    //   deep: true
+    // }
+  },
+  methods: {
+    async getChartData() {
       try {
-        // 发送请求
-        const res = await axios.post("/api/get_fault_data", {}, {});
-        if (res.data.code === 200) {
-          const message = JSON.parse(res.data.message);
-          this.faultResultData.bandWidth += message.bandWidth + ',';
-          this.faultResultData.retry += message.retry + ',';
-          console.log(this.faultResultData);
-        }  else if (res.data.code === 601) {
-          // 当 code 为 601 时，取消定时函数，停止循环调用
-          clearInterval(this.intervalId);
+        const response = await axios.get('/front/get_fault_result');
+
+        const dataRows = response.data.data.split('\n').filter(row => row!== '');
+        const fiveData = [];
+
+        dataRows.forEach(row => {
+          const columns = row.split(',');
+          fiveData.push({
+            selfNode: columns[0],
+            pairNode: columns[1],
+            isClient: columns[2],
+            myPort: columns[3],
+            transType: columns[4],
+            sec: columns[5],
+            transfer: columns[6],
+            band: columns[7],
+            error: columns[8],
+            rtry: columns[9],
+            rtt: columns[10],
+            lost: columns[11],
+          })
+        });
+        // 在这里根据第一列的值进行分组和进一步处理
+        if (this.optionsValue === 'transfer') {
+          const groupedData = {};
+          fiveData.forEach(item => {
+            if (!groupedData[item.selfNode]) {
+              groupedData[item.selfNode] = {};
+            }
+            if (!groupedData[item.selfNode][item.pairNode]) {
+              groupedData[item.selfNode][item.pairNode] = [];
+            }
+            groupedData[item.selfNode][item.pairNode].push(item.transfer);
+          });
+          console.log(groupedData);
+          this.initFaultChart(groupedData);
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.error(error);
       }
     },
-    initFaultChart(faultDataArray) {
+    initFaultChart(groupedData) {
       if (!this.faultChart) {
         let chartDom = document.getElementById('fault');
         this.faultChart = echarts.init(chartDom);
       }
+      let legendData = Object.keys(groupedData); // 获取 "1" 和 "2" 作为 legend 数据
+      let seriesData = [];
+
+      for (let key in groupedData) {
+        let innerData = groupedData[key];
+        for (let subKey in innerData) {
+          if (subKey!== '4' && subKey!== '5') {
+            continue;
+          }
+          seriesData.push({
+            name: subKey,
+            type:'line',
+            data: innerData[subKey]
+          });
+        }
+      }
+
       let option;
       option = {
-        title: {
-          text: '故障数据图'
-        },
         // 数据显示
         tooltip: {
           trigger: 'axis'
         },
         // 图示例
-        // legend: {
-        //   data: ['Email', 'Union Ads', 'Video Ads', 'Direct', 'Search Engine']
-        // },
+        legend: {
+          data: legendData // 将对象的键作为 legend 数据
+        },
         grid: {
           left: '1%',
           right: '4%',
           bottom: '3%',
           containLabel: true
         },
-        // 图表下载按钮
-        // toolbox: {
-        //   feature: {
-        //     saveAsImage: {}
-        //   }
-        // },
         // 横坐标
         xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: Array.from({ length: faultDataArray.length }, (_, i) => i + 1)
         },
         // 纵坐标
         yAxis: {
           type: 'value'
         },
-        series: [
-          {
-            name: 'Data',
-            type: 'line',
-            stack: 'Total',
-            data: faultDataArray
-          },
-        ]
+        series: seriesData
       };
       option && this.faultChart.setOption(option);
     },

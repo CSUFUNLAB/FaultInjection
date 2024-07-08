@@ -20,7 +20,7 @@ http.createServer(function (request, response) {
                 // 创建一个可以写入的流，追加方式写入
                 const writerStream = fs.createWriteStream('faultData.csv', {flags: 'a'});
                 // 写入数据
-                writerStream.write(`${data.self_node},${data.pair_node},${data.is_client},${data.port},${data.trans_type},${data.sec},${data.transfer},${data.err},${data.rtry},${data.rtt},${data.lost}\n`);
+                writerStream.write(`${data.self_node},${data.pair_node},${data.is_client},${data.port},${data.trans_type},${data.sec},${data.err},${data.band},${data.transfer},${data.rtry},${data.rtt},${data.lost}\n`);
                 // 标记文件末尾
                 writerStream.end();
                 response.end("SUCCESS");

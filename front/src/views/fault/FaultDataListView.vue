@@ -4,7 +4,7 @@
       <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">故障数据显示界面</p>
       <div style="float: right; ">
         <span>数据类型：</span>
-        <el-select v-model="optionsValue" placeholder="请选择">
+        <el-select v-model="optionsValue" placeholder="请选择" @change="changeDataType">
           <el-option
               v-for="item in options"
               :key="item.value"
@@ -47,40 +47,15 @@ export default {
     }
   },
   mounted() {
-    // this.getChartData();
-    // this.initFaultChart(this.faultDataArry);
-  },
-  watch: {
-    // optionsValue(newValue) {
-    //   // 根据选项值，更新曲线数据
-    //   if (newValue === 'bandwidth') {
-    //     const bandwidthData = this.faultResultData.bandWidth.split(',');
-    //     this.faultDataArry = bandwidthData;
-    //     this.initFaultChart(bandwidthData);
-    //   } else if (newValue ==='retry') {
-    //     const retryData = this.faultResultData.retry.split(',');
-    //     this.faultDataArry = retryData;
-    //     this.initFaultChart(retryData);
-    //   }
-    // },
-    // faultResultData: {
-    //   handler(newValue) {
-    //     // 每隔 10 秒调用 getFaultResult 方法
-    //     this.intervalId = setInterval(() => this.getFaultResult(), 10000);
-    //     // 更新数据
-    //     let currentBandWidth = [];
-    //     if (this.optionsValue === 'bandwidth') {
-    //       currentBandWidth = this.faultResultData.bandWidth.split(',');
-    //     } else if (this.optionsValue ==='retry') {
-    //       currentBandWidth = this.faultResultData.retry.split(',');
-    //     }
-    //     this.updateFaultChart(currentBandWidth);
-    //   },
-    //   deep: true
-    // }
+    this.getChartData(this.optionsValue);
+    this.initFaultChart(this.faultDataArry);
   },
   methods: {
-    async getChartData() {
+    changeDataType(value) {
+      console.log(value);
+      this.getChartData(value);
+    },
+    async getChartData(selectedValue) {
       try {
         const response = await axios.get('/front/get_fault_result');
 
@@ -96,29 +71,41 @@ export default {
             myPort: columns[3],
             transType: columns[4],
             sec: columns[5],
-            transfer: columns[6],
+            err: columns[6],
             band: columns[7],
-            error: columns[8],
+            transfer: columns[8],
             rtry: columns[9],
             rtt: columns[10],
             lost: columns[11],
           })
         });
         // 在这里根据第一列的值进行分组和进一步处理
-        if (this.optionsValue === 'transfer') {
-          const groupedData = {};
-          fiveData.forEach(item => {
-            if (!groupedData[item.selfNode]) {
-              groupedData[item.selfNode] = {};
-            }
-            if (!groupedData[item.selfNode][item.pairNode]) {
-              groupedData[item.selfNode][item.pairNode] = [];
-            }
-            groupedData[item.selfNode][item.pairNode].push(item.transfer);
-          });
-          console.log(groupedData);
-          this.initFaultChart(groupedData);
-        }
+        const groupedData = {};
+        fiveData.forEach(item => {
+          if (!groupedData[item.selfNode]) {
+            groupedData[item.selfNode] = {};
+          }
+          const key = `${item.pairNode}-${item.isClient}-${item.myPort}`;
+          if (!groupedData[item.selfNode][key]) {
+            groupedData[item.selfNode][key] = [];
+          }
+          if (selectedValue === 'transfer') {
+            groupedData[item.selfNode][key].push(item.transfer);
+          } else if (selectedValue === 'band') {
+            groupedData[item.selfNode][key].push(item.band);
+          } else if (selectedValue === 'err') {
+            groupedData[item.selfNode][key].push(item.err);
+          } else if (selectedValue === 'rtry') {
+            groupedData[item.selfNode][key].push(item.rtry);
+          } else if (selectedValue === 'rtt') {
+            groupedData[item.selfNode][key].push(item.rtt);
+          } else if (selectedValue === 'lost') {
+            groupedData[item.selfNode][key].push(item.lost);
+          }
+        });
+        // 在这里可以对分组后的数据进行进一步分析处理
+        console.log(groupedData);
+        this.initFaultChart(groupedData);
       } catch (error) {
         console.error(error);
       }
@@ -137,6 +124,7 @@ export default {
           seriesData.push({
             name: key,
             type:'line',
+            smooth: true,
             data: innerData[subKey]
           });
         }
@@ -172,19 +160,6 @@ export default {
         series: seriesData
       };
       option && this.faultChart.setOption(option);
-    },
-    updateFaultChart(currentBandWidth) {
-      // 更新曲线数据
-      this.faultChart.setOption({
-        xAxis: {
-          data: Array.from({ length: currentBandWidth.length }, (_, i) => i + 1)
-        },
-        series: [
-          {
-            data: currentBandWidth,
-          },
-        ],
-      });
     },
   }
 }

@@ -13,7 +13,7 @@
           </el-option>
         </el-select>
       </div>
-      <div id="fault" style="width: 100%; height: 400px; margin-top: 60px">
+      <div id="fault" style="width: 100%; height: 500px; margin-top: 60px;">
       </div>
     </el-card>
   </div>
@@ -46,16 +46,36 @@ export default {
       optionsValue: 'transfer',
     }
   },
-  mounted() {
-    this.getChartData(this.optionsValue);
-    this.initFaultChart(this.faultDataArry);
+  created() {
+    this.faultDataRefreh();
+    // this.getChartData();
+  },
+  destroyed() {
+    // 页面销毁后，清除计时器
+    this.clear();
   },
   methods: {
-    changeDataType(value) {
-      console.log(value);
-      this.getChartData(value);
+    // 获取数据定时器
+    faultDataRefreh() {
+      if (this.intervalId != null) {
+        return;
+      }
+      // 计时器为空，获取数据
+      this.intervalId = setInterval(() => {
+        this.getChartData();
+      }, 1000);
     },
-    async getChartData(selectedValue) {
+    // 停止定时器
+    clear() {
+      clearInterval(this.intervalId); // 清楚计时器
+      this.intervalId = null;
+    },
+    // 数据类型改变
+    changeDataType(value) {
+      this.getChartData();
+    },
+    // 获取数据
+    async getChartData() {
       try {
         const response = await axios.get('/front/get_fault_result');
 
@@ -79,38 +99,48 @@ export default {
             lost: columns[11],
           })
         });
-        // 在这里根据第一列的值进行分组和进一步处理
-        const groupedData = {};
-        fiveData.forEach(item => {
-          if (!groupedData[item.selfNode]) {
-            groupedData[item.selfNode] = {};
-          }
-          const key = `${item.pairNode}-${item.isClient}-${item.myPort}`;
-          if (!groupedData[item.selfNode][key]) {
-            groupedData[item.selfNode][key] = [];
-          }
-          if (selectedValue === 'transfer') {
-            groupedData[item.selfNode][key].push(item.transfer);
-          } else if (selectedValue === 'band') {
-            groupedData[item.selfNode][key].push(item.band);
-          } else if (selectedValue === 'err') {
-            groupedData[item.selfNode][key].push(item.err);
-          } else if (selectedValue === 'rtry') {
-            groupedData[item.selfNode][key].push(item.rtry);
-          } else if (selectedValue === 'rtt') {
-            groupedData[item.selfNode][key].push(item.rtt);
-          } else if (selectedValue === 'lost') {
-            groupedData[item.selfNode][key].push(item.lost);
-          }
-        });
-        // 在这里可以对分组后的数据进行进一步分析处理
-        console.log(groupedData);
-        this.initFaultChart(groupedData);
+        this.updateFaultChart(fiveData);
       } catch (error) {
         console.error(error);
       }
     },
-    initFaultChart(groupedData) {
+    // 更新表格
+    updateFaultChart(fiveData) {
+      // 在这里根据第一列的值进行分组和进一步处理
+      const groupedData = {};
+      let unit = '';
+      fiveData.forEach(item => {
+        if (!groupedData[item.selfNode]) {
+          groupedData[item.selfNode] = {};
+        }
+        const key = `${item.pairNode}-${item.isClient}-${item.myPort}`;
+        if (!groupedData[item.selfNode][key]) {
+          groupedData[item.selfNode][key] = [];
+        }
+        if (this.optionsValue === 'transfer') {
+          groupedData[item.selfNode][key].push([new Date(item.sec * 1000 / 1000).toLocaleString(), item.transfer]);
+          unit = "transfer/(byte)";
+        } else if (this.optionsValue === 'band') {
+          groupedData[item.selfNode][key].push([new Date(item.sec * 1000 / 1000).toLocaleString(),item.band]);
+          unit = "band/(byte/s)";
+        } else if (this.optionsValue === 'err') {
+          unit = "err/(个)";
+          groupedData[item.selfNode][key].push([new Date(item.sec * 1000 / 1000).toLocaleString(),item.err]);
+        } else if (this.optionsValue === 'rtry') {
+          unit = "rtry/(个)";
+          groupedData[item.selfNode][key].push([new Date(item.sec * 1000 / 1000).toLocaleString(),item.rtry]);
+        } else if (this.optionsValue === 'rtt') {
+          unit = "rtt/(us)";
+          groupedData[item.selfNode][key].push([new Date(item.sec * 1000 / 1000).toLocaleString(),item.rtt]);
+        } else if (this.optionsValue === 'lost') {
+          unit = "lost/(%)";
+          groupedData[item.selfNode][key].push([new Date(item.sec * 1000 / 1000).toLocaleString(),item.lost]);
+        }
+      });
+      // 更新曲线
+      this.initFaultChart(groupedData, unit);
+    },
+    initFaultChart(groupedData, unit) {
       if (!this.faultChart) {
         let chartDom = document.getElementById('fault');
         this.faultChart = echarts.init(chartDom);
@@ -129,8 +159,6 @@ export default {
           });
         }
       }
-      console.log(seriesData);
-
       let option;
       option = {
         // 数据显示
@@ -149,13 +177,41 @@ export default {
         },
         // 横坐标
         xAxis: {
-          type: 'category',
+          name: '时间',
+          type: 'time',
+          axisLine: {
+            show: true,
+            symbol: ['none', 'arrow']
+          },
           boundaryGap: false,
-          data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+          max: function (value) {
+            if ((new Date(value.max).getTime() - new Date(value.min).getTime()) <= 120000) {
+              return new Date(value.min + 120000)
+            } else {
+              return value.max;
+            }
+          },
+          min: function (value) {
+            if ((new Date(value.max).getTime() - new Date(value.min).getTime()) <= 120000) {
+              return value.min;
+            } else {
+              return new Date(value.max - 2*60*1000);
+            }
+          }
         },
         // 纵坐标
-        yAxis: {
-          type: 'value'
+        yAxis:{
+          name: unit,
+          nameRotate: '0.1',
+          type: 'value',
+          nameLocation: "end",
+          axisLine: {
+            show: true,
+            symbol: ['none', 'arrow']
+          },
+          // grid: {
+          //   left:
+          // },
         },
         series: seriesData
       };

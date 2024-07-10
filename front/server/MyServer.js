@@ -2,6 +2,13 @@ const fs = require('fs');
 const http = require('http');
 
 let readPosition = 0; // 记录读取位置
+function handleWrite(data) {
+    const writerStream = fs.createWriteStream('faultData.csv', { flags: 'a' });
+    // 写入数据
+    writerStream.write(`${data.self_node},${data.pair_node},${data.is_client},${data.port},${data.trans_type},${data.sec},${data.err},${data.band},${data.transfer},${data.rtry},${data.rtt},${data.lost},${data.flag}\n`);
+    // 标记文件末尾
+    writerStream.end();
+}
 // 创建服务器
 http.createServer(function (request, response) {
     // 根据请求路径处理不同的接口
@@ -17,13 +24,40 @@ http.createServer(function (request, response) {
                 const data = JSON.parse(body);
                 response.statusCode = 200;
                 console.log(data)
-                // 创建一个可以写入的流，追加方式写入
-                const writerStream = fs.createWriteStream('faultData.csv', {flags: 'a'});
-                // 写入数据
-                writerStream.write(`${data.self_node},${data.pair_node},${data.is_client},${data.port},${data.trans_type},${data.sec},${data.err},${data.band},${data.transfer},${data.rtry},${data.rtt},${data.lost}\n`);
-                // 标记文件末尾
-                writerStream.end();
-                response.end("SUCCESS");
+
+                fs.readFile('faultData.csv', 'utf8', (err, fileContent) => {
+                    if (err) {
+                        // 文件不存在或读取错误，直接处理
+                        // 创建一个可以写入的流，追加方式写入
+                        handleWrite(data);
+                        response.end("SUCCESS");
+                    } else {
+                        const lines  = fileContent.split('\n');
+                        const secondLastLine = lines[lines.length - 2];
+                        if (secondLastLine) {
+                            const lastNumber = secondLastLine.split(',').pop();
+                            if (data.flag === 1 && lastNumber === '0') {
+                                handleWrite(data);
+                                response.end("SUCCESS");
+                                // 清空文件后写入
+                                // fs.writeFile('faultData.csv', '', (clearErr) => {
+                                //     if (clearErr) {
+                                //         console.error('清空文件出错:', clearErr);
+                                //     } else {
+                                //         handleWrite(data);
+                                //         response.end("SUCCESS");
+                                //     }
+                                // });
+                            } else {
+                                handleWrite(data);
+                                response.end("SUCCESS");
+                            }
+                        } else {
+                            handleWrite(data);
+                            response.end("SUCCESS");
+                        }
+                    }
+                });
             } catch (err) {
                 // 如果解析出现错误，返回错误信息
                 response.statusCode = 400;

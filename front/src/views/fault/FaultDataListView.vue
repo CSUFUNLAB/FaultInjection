@@ -48,8 +48,8 @@ export default {
     }
   },
   created() {
-    // this.faultDataRefreh();
-    this.getChartData();
+    this.faultDataRefreh();
+    // this.getChartData();
   },
   destroyed() {
     // 页面销毁后，清除计时器
@@ -161,11 +161,27 @@ export default {
       for (let key in groupedData) {
         let innerData = groupedData[key];
         for (let subKey in innerData) {
+          let tip = '';
+          if (tipsData[key][subKey][0][0] === '1') {
+            tip += '->'
+          } else {
+            tip += '<-'
+          }
+          if (tipsData[key][subKey][0][2] === '0') {
+            tip = tip + tipsData[key][subKey][0][1] + ':tcp';
+          } else {
+            tip = tip + tipsData[key][subKey][0][1] + ':udp';
+          }
           seriesData.push({
             name: key,
             type:'line',
             smooth: true,
             data: innerData[subKey],
+            endLabel: {
+              show: true,
+              fontSize: 15,
+              formatter: tip,
+            },
           });
         }
       }
@@ -240,6 +256,7 @@ export default {
           let minDiffBelow = Infinity;
           let aboveData = null;
           let belowData = null;
+          let yValue = '';
 
           for (let item of lineData) {
             let timeInMillis = new Date(item[0]).getTime();
@@ -256,59 +273,55 @@ export default {
               belowData = item;
             }
           }
-          const belowTime = new Date(belowData[0]).getTime();
-          let yValue = '';
-          if (belowTime === xMin) {
-            yValue = belowData[1];
-          } else {
-            const aboveTime = new Date(aboveData[0]).getTime();
-            const range = aboveTime - belowTime;
-            const ratio = (xMin - belowTime) / range;
-            yValue = (parseFloat(belowData[1]) + (parseFloat(aboveData[1]) - parseFloat(belowData[1])) * ratio);
-          }
-
-          let tip = '';
-          if (tipsData[key][subKey][0][0] === '1') {
-            tip += '->'
-          } else {
-            tip += '<-'
-          }
-          if (tipsData[key][subKey][0][2] === '0') {
-            tip = tip + tipsData[key][subKey][0][1] + ':tcp';
-          } else {
-            tip = tip + tipsData[key][subKey][0][1] + ':udp';
-          }
-
-          this.globalOption.series.push({
-            name: key,
-            type:'line',
-            smooth: true,
-            data: innerData[subKey],
-            endLabel: {
-              show: true,
-              fontSize: 15,
-              formatter: tip,
-            },
-            markPoint: {
-              data: [
-                {
-                  x: '6%',
-                  yAxis: yValue,
-                  symbol: "pin",
-                  symbolRotate: 90,
-                  symbolSize: 50,
-                  value: tip,
-                  animation: true,
-                  label: {
-                    fontSize: 15,
-                    show: true,
-                    color: '#000'
-                  },
-
-                  itemStyle: { color: '#ffffff' }
-                }],
+          if (belowData) {
+            const belowTime = new Date(belowData[0]).getTime();
+            if (belowTime === xMin) {
+              yValue = belowData[1];
             }
-          });
+            else {
+              const aboveTime = new Date(aboveData[0]).getTime();
+              const range = aboveTime - belowTime;
+              const ratio = (xMin - belowTime) / range;
+              yValue = (parseFloat(belowData[1]) + (parseFloat(aboveData[1]) - parseFloat(belowData[1])) * ratio);
+            }
+          }
+          if (yValue !== '') {
+            let tip = '';
+            if (tipsData[key][subKey][0][0] === '1') {
+              tip += '->'
+            } else {
+              tip += '<-'
+            }
+            if (tipsData[key][subKey][0][2] === '0') {
+              tip = tip + tipsData[key][subKey][0][1] + ':tcp';
+            } else {
+              tip = tip + tipsData[key][subKey][0][1] + ':udp';
+            }
+            this.globalOption.series.push({
+              name: key,
+              type:'line',
+              smooth: true,
+              data: innerData[subKey],
+              markPoint: {
+                data: [
+                  {
+                    x: '6%',
+                    yAxis: yValue,
+                    symbol: "pin",
+                    symbolRotate: 90,
+                    symbolSize: 50,
+                    value: tip,
+                    animation: true,
+                    label: {
+                      fontSize: 15,
+                      show: true,
+                      color: '#000'
+                    },
+                    itemStyle: { color: '#ffffff' }
+                  }],
+              }
+            });
+          }
         }
       }
       this.faultChart.setOption(this.globalOption);

@@ -101,6 +101,7 @@ export default {
             newFaultDataInsertForm[`node${node.key}`] = node.value;
           }
           // console.log(newFaultDataInsertForm);
+          // console.log(this.faultDataInsertForm);
           // 校验通过，注入故障
           const res = await axios.post("/api/fault_data_insert", this.faultDataInsertForm, {});
           if (res.data.code === 200) {

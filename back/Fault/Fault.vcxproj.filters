@@ -87,6 +87,9 @@
     <ClCompile Include="BeginTime.cpp">
       <Filter>源文件\Data</Filter>
     </ClCompile>
+    <ClCompile Include="RandomDataFlow.cpp">
+      <Filter>源文件\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -135,6 +138,9 @@
       <Filter>头文件\Data</Filter>
     </ClInclude>
     <ClInclude Include="BeginTime.h">
+      <Filter>头文件\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomDataFlow.h">
       <Filter>头文件\Data</Filter>
     </ClInclude>
   </ItemGroup>

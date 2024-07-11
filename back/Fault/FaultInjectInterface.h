@@ -1,8 +1,8 @@
 #pragma once
 #include "FaultInterface.h"
 
-class FaultInjectInterface:public FaultInterface {
+class FaultInject : public FaultInterface {
 public:
-	void handlerData(http_request message);
+	void handlerData(http_request &message) override;
 };
 

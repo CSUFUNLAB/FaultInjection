@@ -17,12 +17,17 @@
 #endif
 
 #define ERR_RETURN(condition, err_return, log, ...) if(condition) {LOG_ERR(log, ##__VA_ARGS__); return err_return;}
+
+#define ERR_RETURN_DEBUG_PRINT(condition, err_return, log, ...) \
+	if(condition) {LOG_ERR(log, ##__VA_ARGS__); return err_return;} else {LOG_DEBUG("[success]" log, ##__VA_ARGS__);}
+
 #define ERR_RETURN_PRINT(condition, err_return, log, ...) \
 	if(condition) {LOG_ERR(log, ##__VA_ARGS__); return err_return;} else {LOG_INFO("[success]" log, ##__VA_ARGS__);}
 
 enum FAULT_INJECT_ERR_CODE {
     NORMAL_OK = 0 ,
     NORMAL_ERR, // 一般错误
+    DEFINE_ERR, // 自定义错误，手动写入m_handler_info.msg
     NO_NODE, // 不存在此节点
     NO_EXIST_FLOW, // 不存在次数据流
     NO_OPERATE, // 不存在次操作

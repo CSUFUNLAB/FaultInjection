@@ -73,7 +73,7 @@ string NodeManager::m_error_return = "none";
 
 bool NodeManager::node_num_exist(int32_t node_num)
 {
-    if (node_num < 0 || node_num > m_node_info_list.size()) {
+    if (node_num < 0 || node_num >= m_node_info_list.size()) {
         LOG_ERR("no node[{}]", node_num);
         return false;
     }

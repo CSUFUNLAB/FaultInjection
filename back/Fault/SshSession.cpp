@@ -59,26 +59,26 @@ int32_t SshSession::open(void)
     // 初始化SSH会话
     m_session = ssh_new();
 
-    ERR_RETURN_PRINT(m_session == nullptr, -NORMAL_ERR, "create ssh session[{}][{}]", m_host, m_username);
+    ERR_RETURN_DEBUG_PRINT(m_session == nullptr, -NORMAL_ERR, "create ssh session[{}][{}]", m_host, m_username);
 
     // 设置SSH服务器连接信息
     ssh_options_set(m_session, SSH_OPTIONS_HOST, m_host.c_str());
     ssh_options_set(m_session, SSH_OPTIONS_USER, m_username.c_str());
     // 连接SSH服务器
     int32_t rc = ssh_connect(m_session);
-    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "connect ssh server[{}][{}]", m_host, m_username);
+    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "connect ssh server[{}][{}]", m_host, m_username);
 
     // 认证用户
     rc = ssh_userauth_password(m_session, NULL, m_password.c_str());
-    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "authenticate ssh user[{}][{}]", m_host, m_username);
+    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "authenticate ssh user[{}][{}]", m_host, m_username);
 
     m_channel = ssh_channel_new(m_session);
-    ERR_RETURN_PRINT(m_channel == nullptr, -NORMAL_ERR, "create ssh channel[{}][{}]", m_host, m_username);
+    ERR_RETURN_DEBUG_PRINT(m_channel == nullptr, -NORMAL_ERR, "create ssh channel[{}][{}]", m_host, m_username);
 
-    LOG_INFO("[{}][{}]ssh open", m_host, m_username);
+    LOG_DEBUG("[{}][{}]ssh open", m_host, m_username);
 
     rc = ssh_channel_open_session(m_channel);
-    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}][{}]", m_host, m_username);
+    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}][{}]", m_host, m_username);
 
     if (m_only_send) {
         std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
@@ -102,7 +102,7 @@ void SshSession::ssh_begin_read(void)
     ERR_RETURN(rc != SSH_OK, , "change ssh pty[{}][{}]", m_host, m_username);
 
     rc = ssh_channel_request_shell(m_channel);
-    ERR_RETURN_PRINT(rc != SSH_OK, , "request ssh shell[{}][{}]", m_host, m_username);
+    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, , "request ssh shell[{}][{}]", m_host, m_username);
 
     char buffer[128];
     int32_t m_nbytes;
@@ -121,12 +121,12 @@ void SshSession::ssh_begin_read(void)
             }
         }
     }
-    LOG_INFO("[{}][{}]ssh ready", m_host, m_username);
+    LOG_DEBUG("[{}][{}]ssh ready", m_host, m_username);
 }
 
 void SshSession::close(void)
 {
-    LOG_INFO("close ssh[{}]", m_host);
+    LOG_DEBUG("close ssh[{}]", m_host);
     if (m_channel != nullptr) {
         ssh_channel_send_eof(m_channel);
         ssh_channel_close(m_channel);
@@ -179,7 +179,7 @@ void SshSession::send_cmd_thread(void)
         }
         m_nbytes = ssh_channel_read_timeout(m_channel, buffer, sizeof(buffer) - 1, 0, 1500);
         if (m_nbytes < 0 || m_nbytes > 1023) {
-            LOG_INFO("[{}][{}]ssh cmd read error[{}]", m_host, m_username, m_nbytes);
+            LOG_ERR("[{}][{}]ssh cmd read error[{}]", m_host, m_username, m_nbytes);
             break;
         }
         buffer[m_nbytes] = '\0'; // ssh_channel_read_timeout 不添加结束符
@@ -191,11 +191,11 @@ void SshSession::send_cmd_thread(void)
         }
         // 如果带宽占满，可能会导致ssh消息堵住，从而直接结束，但是这也算一个故障
         if (m_last_cmd && m_nbytes == 0) {
-            LOG_INFO("[{}][{}]ssh cmd nature end", m_host, m_username);
+            LOG_DEBUG("[{}][{}]ssh cmd nature end", m_host, m_username);
             break;
         }
         if (m_broken_cmd) {
-            LOG_INFO("[{}][{}]ssh cmd force end", m_host, m_username);
+            LOG_DEBUG("[{}][{}]ssh cmd force end", m_host, m_username);
             break;
         }
     }
@@ -227,7 +227,7 @@ void SshSession::only_send_cmd_thread(void)
         }
         m_mtx.unlock();
         if (m_broken_cmd) {
-            LOG_INFO("[{}][{}]ssh cmd force end", m_host, m_username);
+            LOG_DEBUG("[{}][{}]ssh cmd force end", m_host, m_username);
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

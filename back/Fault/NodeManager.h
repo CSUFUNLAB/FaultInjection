@@ -13,6 +13,9 @@ public:
         std::string ip;
         bool detected;
         struct NodeInfo* up_linked;
+        int32_t input_band;
+        int32_t output_band;
+        bool server_fault;
     };
     static std::vector<struct NodeInfo> m_node_info_list;
 

@@ -12,3 +12,7 @@ public:
 	void handlerData(http_request &message) override;
 };
 
+class GenerateRandomFlow : public FaultInterface {
+public:
+	void handlerData(http_request &message) override;
+};

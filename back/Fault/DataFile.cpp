@@ -3,12 +3,12 @@
 
 using namespace std;
 
-//string DataFile::m_file_path = "~/fault_data/";
-
 static string serialie_int_data_info(uint32_t *num)
 {
     return to_string(*num) + string(",");
 }
+
+std::string DataFile::m_file_path = "~/fault_data/node_";
 
 DataFile::DataFile(NodeManager::NodeInfo *node) : SshSession(node)
 {
@@ -51,7 +51,7 @@ string DataFile::serialie_data_info(DataInfo::IperfInfo &info)
 
 void DataFile::send_data_info(DataInfo::IperfInfo &info)
 {
-    string file_name = m_file_name + to_string(info.self_node) + string(".csv");
+    string file_name = m_file_path + to_string(info.self_node) + string(".csv");
     string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + file_name + string("\n");
     LOG_DEBUG("{} {}", file_name, cmd_info);
     only_send_cmd(cmd_info);

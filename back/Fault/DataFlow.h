@@ -17,7 +17,7 @@ public:
     struct FlowInfo {
         struct NodeManager::NodeInfo *client; // 自动结束
         struct NodeManager::NodeInfo *server; // 自动结束
-        std::string bind; // 带单位 K M G
+        std::string band; // 带单位 K M G
         uint32_t port; // port 自动选择 输入填0即可
         uint32_t time; // s
         std::string type; // tcp or udp 小写
@@ -29,7 +29,8 @@ public:
     static int32_t creat_data_flow(struct FlowInfo& info);
     static void get_all_data_flow(std::vector<struct FlowInfo> &info);
     static int32_t delete_data_flow(struct FlowInfo &info);
-    static int32_t delete_data_flow_server(struct FlowInfo &info); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
+    static int32_t delete_data_flow_server(std::string server_ip); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
+    static uint32_t band_width_str_to_num(std::string band_witdh_str);
 
 private:
     using FlowInfoPortMap = std::map<int32_t, struct FlowInfo>; // 第一个参数为port

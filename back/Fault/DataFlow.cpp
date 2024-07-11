@@ -23,9 +23,9 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     if (info->type == "udp") {
         udp_cmd = " -u";
     } else { // tcp 过低的带宽要减小缓冲区
-        if (info->bind.c_str()[info->bind.size() - 1] == 'K') {
-            uint32_t bind_val = atoi(info->bind.c_str());
-            len_cmd = string(" -l ") + to_string(bind_val * 128);
+        if (info->band.c_str()[info->band.size() - 1] == 'K') {
+            uint32_t band_val = atoi(info->band.c_str());
+            len_cmd = string(" -l ") + to_string(band_val * 128);
         }
     }
     info->client_ssh = new DataFlowSsh(info, info->client);
@@ -33,19 +33,28 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
 
     int32_t ret;
     ret = info->client_ssh->open();
-    ERR_RETURN_PRINT(ret != NORMAL_OK, ret, "open src ssh[{}]", info->client->ip);
+    ERR_RETURN_DEBUG_PRINT(ret != NORMAL_OK, ret, "open src ssh[{}]", info->client->ip);
 
     ret = info->server_ssh->open();
-    ERR_RETURN_PRINT(ret != NORMAL_OK, ret, "open dst ssh[{}]", info->server->ip);
+    ERR_RETURN_DEBUG_PRINT(ret != NORMAL_OK, ret, "open dst ssh[{}]", info->server->ip);
 
-    info->server_ssh->send_cmd("iperf -se -i 1 -p " + to_string(info->port) + udp_cmd + "\n");
-    while (info->server_ssh->m_send_cmd) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    uint32_t band_width = band_width_str_to_num(info->band);
+    info->client->output_band += band_width;
+    info->server->input_band += band_width;
+
+    if (info->server->server_fault) {
+        LOG_INFO("server[{}] has app down fault, don't create server", info->server->ip);
+        info->server_ssh->send_cmd("\n"); // 这里还是发一条消息，用于client server pair结束
+    } else {
+        info->server_ssh->send_cmd("iperf -se -i 1 -p " + to_string(info->port) + udp_cmd + "\n");
+        while (info->server_ssh->m_send_cmd) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
     }
     info->client_ssh->send_cmd("iperf -ec " + info->server->ip
         + string(" -i 1 -p ") + to_string(info->port)
         + string(" -t ") + to_string(info->time)
-        + string(" -b ") + info->bind
+        + string(" -b ") + info->band
         + len_cmd + udp_cmd + "\n");
 
     return 0;
@@ -63,7 +72,7 @@ struct DataFlow::FlowInfo *DataFlow::add_data_flow(struct FlowInfo& info)
     if (server == m_flow_info_map.end()) {
         FlowInfoPortMap port_map = {{info.port, info}};
         m_flow_info_map.insert({info.server->ip, port_map});
-        LOG_INFO("add flow {} -> {} : {}", info.client->index, info.server->index, info.port);
+        LOG_INFO("add flow {} -> {} : {} {} {}s", info.client->index, info.server->index, info.port, info.band, info.time);
         return &m_flow_info_map.find(info.server->ip)->second.find(info.port)->second;
     }
     auto client = server->second.find(info.port);
@@ -72,7 +81,7 @@ struct DataFlow::FlowInfo *DataFlow::add_data_flow(struct FlowInfo& info)
         client = server->second.find(info.port);
     }
     server->second.insert({info.port, info});
-    LOG_INFO("add flow other port {} -> {} : {}", info.client->index, info.server->index, info.port);
+    LOG_INFO("add flow {} -> {} : {} {} {}s", info.client->index, info.server->index, info.port, info.band, info.time);
     return &server->second.find(info.port)->second;
 }
 
@@ -94,29 +103,32 @@ int32_t DataFlow::delete_data_flow(struct FlowInfo &info)
         "flow {} -> {} : {} not exist", info.client->ip, info.server->ip, info.port);
 
     LOG_INFO("delete flow {} -> {} : {}", info.client->ip, info.server->ip, info.port);
-    client->second.client_ssh->broken_cmd();
-    client->second.server_ssh->broken_cmd();
+    FlowInfo& save_info = client->second;
+    uint32_t band_width = band_width_str_to_num(save_info.band);
+    save_info.client->output_band -= band_width;
+    save_info.server->input_band -= band_width;
+    save_info.client_ssh->broken_cmd();
+    save_info.server_ssh->broken_cmd();
     server->second.erase(client);
     return 0;
 }
 
 // 删除记录的信息，只结束server，因为结束client无法诊断故障，不知道是正常结束还是故障结束
-int32_t DataFlow::delete_data_flow_server(struct FlowInfo& info)
+int32_t DataFlow::delete_data_flow_server(string server_ip)
 {
-    ERR_RETURN(info.client == nullptr || info.server == nullptr, -NO_NODE, "node not exist");
-    ERR_RETURN(info.client->detected == false || info.server->detected == false, -NO_NODE,
-        "detected client[{}][{}] server[{}][{}]", info.client->ip, info.client->detected, info.server->ip, info.server->detected );
-
-    auto server = m_flow_info_map.find(info.server->ip);
+    auto server = m_flow_info_map.find(server_ip);
     ERR_RETURN(server == m_flow_info_map.end(), -NO_EXIST_FLOW,
-        "flow client[{}][{}] server[{}][{}] not exist", info.client->ip, info.client->detected, info.server->ip, info.server->detected);
+        "server[{}] not have data flow", server_ip);
+    for (auto client = server->second.begin(); client != server->second.end(); client++) {
+        FlowInfo& save_info = client->second;
+        uint32_t band_width = band_width_str_to_num(save_info.band);
+        LOG_INFO("delete flow server {} -> {} : {}", save_info.client->ip, save_info.server->ip, save_info.port);
+        save_info.client->output_band -= band_width;
+        save_info.server->input_band -= band_width;
+        save_info.server_ssh->broken_cmd();
+        server->second.erase(client);
 
-    auto client = server->second.find(info.port);
-    ERR_RETURN(client == server->second.end(), -NO_EXIST_FLOW,
-        "flow client[{}][{}] server[{}][{}] not exist", info.client->ip, info.client->detected, info.server->ip, info.server->detected);
-
-    client->second.server_ssh->broken_cmd();
-    server->second.erase(client);
+    }
     return 0;
 }
 
@@ -127,6 +139,20 @@ void DataFlow::get_all_data_flow(std::vector<struct FlowInfo>& info)
         for (auto client = server_map.begin(); client != server_map.end(); client++)
         info.push_back(client->second);
     }
+}
+
+uint32_t DataFlow::band_width_str_to_num(std::string band_witdh_str)
+{
+    uint32_t k = 1;
+    char unit = band_witdh_str.c_str()[band_witdh_str.size() - 1];
+    if (unit == 'K') {
+        k = 1;
+    } else if (unit == 'M') {
+        k = 1000;
+    } else if (unit == 'G') {
+        k = 1000000;
+    }
+    return atoi(band_witdh_str.c_str()) * k;
 }
 
 DataFlowSsh::DataFlowSsh(DataFlow::FlowInfo *info, NodeManager::NodeInfo *node) : SshSession(node)

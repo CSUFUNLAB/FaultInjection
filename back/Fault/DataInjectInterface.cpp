@@ -2,6 +2,7 @@
 #include "ClientHandler.h"
 #include "NodeManager.h"
 #include "DataFlow.h"
+#include "RandomDataFlow.h"
 
 #include "Log.h"
 
@@ -12,7 +13,7 @@ void InjectDataFlow::handlerData(http_request &message)
     json::value recvDatas = json::value::object();
     recvDatas = message.extract_json().get();
     // 获取了message的web::json::value格式
-    ucout << "recvDatas:" << recvDatas << endl; // recvDatas:
+    //ucout << "recvDatas:" << recvDatas << endl; // recvDatas:
     // 获取message的Json::Value格式
     Json::Value recvJsonDatas = HandleJsonData(recvDatas);
 
@@ -22,7 +23,7 @@ void InjectDataFlow::handlerData(http_request &message)
     string type = recvJsonDatas["type"].asString();
     int32_t send_time = recvJsonDatas["sendTime"].asInt();
 
-    LOG_INFO("data flow: {} -> {} {} {} {}s", node_src, node_dst, type, band_width, send_time);
+    LOG_DEBUG("data flow: {} -> {} {} {} {}s", node_src, node_dst, type, band_width, send_time);
     DataFlow::FlowInfo flow_info = {
         NodeManager::get_node_info(node_src),
         NodeManager::get_node_info(node_dst),
@@ -65,6 +66,13 @@ void ScanNode::handlerData(http_request &message)
     m_handler_info.code = 200;
     m_handler_info.msg = nodes.toStyledString();
     LOG_DEBUG("{}", m_handler_info.msg);
+}
+
+void GenerateRandomFlow::handlerData(http_request& message)
+{
+    RandomDataFlow::get_instance()->generate_pair_flow();
+    m_handler_info.code = 200;
+    m_handler_info.msg = "success";
 }
 
 #if 0

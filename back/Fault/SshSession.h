@@ -13,6 +13,7 @@
 class SshSession {
 public:
     SshSession(struct NodeManager::NodeInfo *node);
+    // ~SshSession(); 消息结束自动释放，如果需要手动释放，可以通过消息结束命令
 
     using CmdEnd = std::function<void(void)>;
     using CharDeal = std::function<void(char* data)>;

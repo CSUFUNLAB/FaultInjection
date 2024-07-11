@@ -3,6 +3,7 @@
 #include <comutil.h>
 
 #include "DataInjectInterface.h"
+#include "FaultInjectInterface.h"
 
 using namespace std;
 
@@ -15,6 +16,8 @@ FaultInterface* create_fault_interface(void)
 FaultInterface::InterfaceFuncMap FaultInterface::m_interface_func_map = {
 	{"/api/data_insert", create_fault_interface<InjectDataFlow>},
 	{"/api/detect_nodes", create_fault_interface<ScanNode>},
+	{"/api/random_insert", create_fault_interface<GenerateRandomFlow>},
+	{"/api/fault_data_insert", create_fault_interface<FaultInject>},
 };
 
 std::map<int, std::string> FaultInterface::m_err_code_map {
@@ -40,7 +43,7 @@ http_response FaultInterface::HandleResponse(void)
 {
 	int &code = m_handler_info.code;
     string &msg = m_handler_info.msg;
-	if (code != 200) {
+	if (code != 200 && code != 300 + DEFINE_ERR) {
         auto it = m_err_code_map.find(code);
         msg = m_err_code_map[300 + ERR_CODE_BUTT];
         if (it != m_err_code_map.end()) {

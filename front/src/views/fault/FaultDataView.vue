@@ -90,17 +90,60 @@ export default {
       dataStreamInputData: DataStreamInputData,
       dataStreamOutputData:[],
       dataStreamColumn: DataStreamColumn,
-      one: '',
-      two: '',
-      refresh: true,
+      intervalId: null,
       forceRefresh :'',
     }
   },
   mounted() {
     // 在页面加载后从本地存储中恢复数据
+    this.dataStreamRefreh();
     this.checkAndRemoveExpiredData();
+    // this.getDataStreamForServer();
+  },
+  destroyed() {
+    // 页面销毁后，清除计时器
+    this.clear();
   },
   methods: {
+    // 获取后端发送的输出表单数据
+    async getDataStreamForServer() {
+      const response = await axios.get('/front/get_data_stream');
+      const data = response.data.data;
+
+      // 获取后端发送的数据
+      const newData = data.map(item => {
+        const parts = item.split(',');
+        return {
+          nodeSrc: parseInt(parts[0]),
+          nodeDst: parseInt(parts[1]),
+          type: parts[2],
+          bandWidth: parts[3],
+          sendTime: parseInt(parts[4]),
+          laterTime:new Date(parseInt(parts[4])),
+        };
+      });
+
+      if (newData.length > 0) {
+        // 写入输出表格
+        this.dataStreamOutputData = this.dataStreamOutputData.concat(newData);
+        localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+      }
+    },
+    // 获取数据定时器
+    dataStreamRefreh() {
+      if (this.intervalId != null) {
+        return;
+      }
+      // 计时器为空，获取数据
+      this.intervalId = setInterval(() => {
+        this.getDataStreamForServer();
+      }, 1000);
+    },
+    // 停止定时器
+    clear() {
+      clearInterval(this.intervalId); // 清楚计时器
+      this.intervalId = null;
+    },
     // 计时结束
     hilarity(index) {
       this.dataStreamOutputData.splice(index, 1);
@@ -198,29 +241,29 @@ export default {
     },
     //  将注入数据发送至后端
     async sendInsertData(insertData) {
-      const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
-      insertData.laterTime = laterTime;
-      insertData.sendTime = laterTime.getTime();
-      this.dataStreamOutputData.push(insertData);
+      // const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
+      // insertData.laterTime = laterTime;
+      // insertData.sendTime = laterTime.getTime();
+      // this.dataStreamOutputData.push(insertData);
+      // console.log(this.dataStreamOutputData);
+      // localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+      const res = await axios.post("/api/data_insert", insertData, {});
+      if (res.data.code === 200) {
+        // 获取当前时间和 sendTime 秒以后的时间
+        // const currentTime = new Date();
+        const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
+        insertData.laterTime = laterTime;
+        // 注入数据成功：将注入数据写入output表单，同时开始计时
+        // 深拷贝数据并添加到 output 表单
 
-      localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
-      // const res = await axios.post("/api/data_insert", insertData, {});
-      // if (res.data.code === 200) {
-      //   // 获取当前时间和 sendTime 秒以后的时间
-      //   // const currentTime = new Date();
-      //   const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
-      //   insertData.laterTime = laterTime;
-      //   // 注入数据成功：将注入数据写入output表单，同时开始计时
-      //   // 深拷贝数据并添加到 output 表单
-      //
-      //   insertData.sendTime = laterTime.getTime();
-      //   this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
-      //   // 将当前的输出数据保存到本地存储
-      //   localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
-      // } else {
-      //   this.$notify.error("注入错误");
-      //   console.log(res.data.message);
-      // }
+        insertData.sendTime = laterTime.getTime();
+        this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
+        // 将当前的输出数据保存到本地存储
+        localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+      } else {
+        this.$notify.error("注入错误");
+        console.log(res.data.message);
+      }
     },
     // 读取文件内容
     async readFileText(file) {

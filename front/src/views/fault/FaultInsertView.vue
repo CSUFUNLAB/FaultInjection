@@ -26,7 +26,7 @@
               required: true, message: '节点不能为空', trigger: 'blur'
             }"
         >
-          <el-input v-model="node.value" style="width: 70%"></el-input><el-button style="margin-left: 10px" @click.prevent="removeNode(node)">删除</el-button>
+          <el-input v-model="node.value" type='number' style="width: 70%"></el-input><el-button style="margin-left: 10px" @click.prevent="removeNode(node)">删除</el-button>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submitForm('faultDataInsertForm')">注入</el-button>

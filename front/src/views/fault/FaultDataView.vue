@@ -45,7 +45,7 @@
               </el-table-column>
             </el-table>
           </div>
-          <div class="other-row-border">
+          <div class="other-row-border" :key="forceRefresh">
             <el-table :show-header="false"
                       :data="dataStreamOutputData"
                       style="min-height:150px"
@@ -59,8 +59,7 @@
                   style="width: 30%">
                 <template v-slot="scope" v-if="item.prop === 'sendTime'">
                   <el-statistic
-                      v-if="item.prop === 'sendTime'"
-                      @finish="hilarity(scope)"
+                      @finish="hilarity(scope.$index)"
                       format="ss秒"
                       :value="scope.row[item.prop]"
                       time-indices>
@@ -91,25 +90,23 @@ export default {
       dataStreamInputData: DataStreamInputData,
       dataStreamOutputData:[],
       dataStreamColumn: DataStreamColumn,
+      one: '',
+      two: '',
+      refresh: true,
+      forceRefresh :'',
     }
   },
   mounted() {
     // 在页面加载后从本地存储中恢复数据
-    // this.checkAndRemoveExpiredData();
+    this.checkAndRemoveExpiredData();
   },
   methods: {
     // 计时结束
-    hilarity(scope) {
-      // 计时结束，从输出框中删除数据
-      // console.log(scope);
-      const temp = JSON.parse(JSON.stringify(this.dataStreamOutputData))
-      temp.splice(scope.index, 1);
-      if (temp.length === 2) {
-        // 表单数据从3条变为2条时，倒计时值一致，解决方法：再次为倒计时赋值
-        this.dataStreamOutputData[1].sendTime = new Date(temp[0].laterTime).getTime();
-        this.dataStreamOutputData[2].sendTime = new Date(temp[1].laterTime).getTime();
-      }
-      this.dataStreamOutputData.splice(scope.index, 1);
+    hilarity(index) {
+      this.dataStreamOutputData.splice(index, 1);
+      // 强制更新组件
+      localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+      this.forceRefresh  = new Date().getTime();
     },
     // 在页面加载后从本地存储中恢复数据
     checkAndRemoveExpiredData() {
@@ -118,7 +115,6 @@ export default {
         const outputData = JSON.parse(outputDataJSON);
 
         const currentTime = new Date();
-
         outputData.forEach((data) => {
           if (currentTime > new Date(data.laterTime)) {
             const index = outputData.indexOf(data);
@@ -128,6 +124,7 @@ export default {
           }
         });
         localStorage.setItem('dataStreamOutputData', JSON.stringify(outputData));
+        this.dataStreamOutputData = outputData;
       }
     },
     // 输入约束规则
@@ -201,27 +198,29 @@ export default {
     },
     //  将注入数据发送至后端
     async sendInsertData(insertData) {
-      // const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
-      // insertData.laterTime = laterTime;
-      // insertData.sendTime = laterTime.getTime();
-      // this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
-      const res = await axios.post("/api/data_insert", insertData, {});
-      if (res.data.code === 200) {
-        // 获取当前时间和 sendTime 秒以后的时间
-        // const currentTime = new Date();
-        const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
-        insertData.laterTime = laterTime;
-        // 注入数据成功：将注入数据写入output表单，同时开始计时
-        // 深拷贝数据并添加到 output 表单
+      const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
+      insertData.laterTime = laterTime;
+      insertData.sendTime = laterTime.getTime();
+      this.dataStreamOutputData.push(insertData);
 
-        insertData.sendTime = laterTime.getTime();
-        this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
-        // 将当前的输出数据保存到本地存储
-        // localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
-      } else {
-        this.$notify.error("注入错误");
-        console.log(res.data.message);
-      }
+      localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+      // const res = await axios.post("/api/data_insert", insertData, {});
+      // if (res.data.code === 200) {
+      //   // 获取当前时间和 sendTime 秒以后的时间
+      //   // const currentTime = new Date();
+      //   const laterTime = new Date(new Date().getTime() + insertData.sendTime * 1000);
+      //   insertData.laterTime = laterTime;
+      //   // 注入数据成功：将注入数据写入output表单，同时开始计时
+      //   // 深拷贝数据并添加到 output 表单
+      //
+      //   insertData.sendTime = laterTime.getTime();
+      //   this.dataStreamOutputData.push(JSON.parse(JSON.stringify(insertData)));
+      //   // 将当前的输出数据保存到本地存储
+      //   localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+      // } else {
+      //   this.$notify.error("注入错误");
+      //   console.log(res.data.message);
+      // }
     },
     // 读取文件内容
     async readFileText(file) {

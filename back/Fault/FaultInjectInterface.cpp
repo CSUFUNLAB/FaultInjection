@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include "RandomDataFlow.h"
+
 using namespace std;
 
 void FaultInject::handlerData(http_request& message)
@@ -15,12 +17,16 @@ void FaultInject::handlerData(http_request& message)
     Json::Value recvJsonDatas = HandleJsonData(recvDatas);
     // recvDatas:{"faultParameter":"","faultType":"appdown","nodes":[{"key":"A","value":"1"}]}
     string fault_type = recvJsonDatas["faultType"].asString();
+    LOG_INFO("{}", fault_type);
     string fault_para = recvJsonDatas["faultParameter"].asString();
-    Json::Value nodeJsonDatas = recvJsonDatas["node"];
+    LOG_INFO("{}", fault_para);
+    const Json::Value &nodeJsonDatas = recvJsonDatas["nodes"];
     FaultBase* fault = nullptr;
     int32_t ret = 0;
-    for (auto &node : nodeJsonDatas) {
-        fault = FaultBase::create_fault(node["value"].asInt(), fault_type, fault_para);
+    int32_t node_num;
+    for (const auto &node : nodeJsonDatas) {
+        node_num = atoi(node["value"].asString().c_str());
+        fault = FaultBase::create_fault(node_num, fault_type, fault_para);
         ret = fault->fault_injection();
         delete fault;
         if (ret != 0) {
@@ -31,6 +37,11 @@ void FaultInject::handlerData(http_request& message)
     m_handler_info.code = ret;
 }
 
+void RandomFault::handlerData(http_request& message)
+{
+    random_fault();
+    m_handler_info.code = 200;
+}
 
 #if 0
 HandlerInfo FaultInjectInterface::handlerData(http_request message)

@@ -18,6 +18,7 @@ FaultInterface::InterfaceFuncMap FaultInterface::m_interface_func_map = {
 	{"/api/detect_nodes", create_fault_interface<ScanNode>},
 	{"/api/random_insert", create_fault_interface<GenerateRandomFlow>},
 	{"/api/fault_data_insert", create_fault_interface<FaultInject>},
+	{"/api/scan_node", create_fault_interface<RandomFault>}, // 这个名字改一下
 };
 
 std::map<int, std::string> FaultInterface::m_err_code_map {

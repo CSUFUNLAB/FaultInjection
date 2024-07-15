@@ -174,28 +174,31 @@ void SshSession::send_cmd_thread(void)
     while (1) {
         if (m_send_cmd) {
             ret = ssh_channel_write(m_channel, m_cmd.c_str(), m_cmd.size());
-            LOG_INFO("[{}][{}]send cmd[{}]: {}", m_host, m_username, ret, m_cmd);
+            LOG_DEBUG("[{}][{}]send cmd[{}]: {}", m_host, m_username, ret, m_cmd);
             m_send_cmd = false;
         }
-        m_nbytes = ssh_channel_read_timeout(m_channel, buffer, sizeof(buffer) - 1, 0, 1500);
+        m_nbytes = ssh_channel_read_timeout(m_channel, buffer, sizeof(buffer) - 1, 0, 2000);
         if (m_nbytes < 0 || m_nbytes > 1023) {
             LOG_ERR("[{}][{}]ssh cmd read error[{}]", m_host, m_username, m_nbytes);
             break;
         }
         buffer[m_nbytes] = '\0'; // ssh_channel_read_timeout 不添加结束符
         //if (m_host == "192.168.13.5") {
-            LOG_DEBUG("[{}]{}: {}", m_host, m_nbytes, buffer);
+        //LOG_INFO("[{}]{}: {}", m_host, m_nbytes, buffer);
         //}
+        if (m_cout > 0) {
+            m_cout -= 4;
+        }
         if (m_always_read || m_nbytes > 0) {
             read_echo(buffer);
         }
         // 如果带宽占满，可能会导致ssh消息堵住，从而直接结束，但是这也算一个故障
-        if (m_last_cmd && m_nbytes == 0) {
+        if (m_last_cmd && m_nbytes == 0 && m_cout <= 0) {
             LOG_DEBUG("[{}][{}]ssh cmd nature end", m_host, m_username);
             break;
         }
         if (m_broken_cmd) {
-            LOG_DEBUG("[{}][{}]ssh cmd force end", m_host, m_username);
+            LOG_INFO("[{}][{}]ssh cmd force end", m_host, m_username);
             break;
         }
     }
@@ -217,13 +220,16 @@ void SshSession::only_send_cmd(const std::string &cmd)
 void SshSession::only_send_cmd_thread(void)
 {
     ssh_begin_read();
+    string cmd;
+    //bool has_cmd = false;
 
     while (1) {
         m_mtx.lock();
         while (!m_cmd_queue.empty()) {
             LOG_DEBUG("{}", m_cmd_queue.front());
-            ssh_channel_write(m_channel, m_cmd_queue.front().c_str(), m_cmd_queue.front().size());
+            cmd = m_cmd_queue.front();
             m_cmd_queue.pop();
+            ssh_channel_write(m_channel, cmd.c_str(), cmd.size());
         }
         m_mtx.unlock();
         if (m_broken_cmd) {

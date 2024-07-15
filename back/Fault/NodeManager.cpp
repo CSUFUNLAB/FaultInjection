@@ -36,6 +36,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("66:55:44:33:22:09"),
         string("192.168.13.1"),
         true,
+        nullptr,
     },
     {
         3,
@@ -43,8 +44,8 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("f0:23:ae:09:80:bc"),
-        string("none"),
-        false,
+        string("192.168.13.5"),
+        true,
         nullptr,
     },
     {
@@ -53,8 +54,8 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("54:78:c9:07:8b:1c"),
-        string("none"),
-        false,
+        string("192.168.13.7"),
+        true,
         nullptr,
     },
     {
@@ -63,8 +64,8 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("54:78:c9:07:8a:cc"),
-        string("none"),
-        false,
+        string("192.168.13.8"),
+        true,
         nullptr,
     },
 };

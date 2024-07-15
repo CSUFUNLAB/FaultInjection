@@ -28,9 +28,10 @@ public:
 
     static int32_t creat_data_flow(struct FlowInfo& info);
     static void get_all_data_flow(std::vector<struct FlowInfo> &info);
-    static int32_t delete_data_flow(struct FlowInfo &info);
-    static int32_t delete_data_flow_server(std::string server_ip); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
+    static void close_all_data_flow(void);
+    static int32_t close_data_flow_server(std::string server_ip); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
     static uint32_t band_width_str_to_num(std::string band_witdh_str);
+    static int32_t delete_data_flow(struct FlowInfo &info); // 先结束消息才能调用这个接口
 
 private:
     using FlowInfoPortMap = std::map<int32_t, struct FlowInfo>; // 第一个参数为port

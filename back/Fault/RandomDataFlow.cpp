@@ -1,12 +1,16 @@
 #include "RandomDataFlow.h"
 #include "NodeManager.h"
 #include "DataFlow.h"
+#include "Log.h"
 
 #include <iostream>
 #include <string>
 #include <random>
 #include <thread>
 #include <chrono>
+
+#include "FaultInjection.h"
+#include "DataFile.h"
 
 using namespace std;
 
@@ -84,7 +88,7 @@ void RandomNode::get_pair_node(uint32_t& client_node, uint32_t& server_node)
     m_pair_node = -1;
 }
 
-static uint32_t up_limit_flow = 500;
+static uint32_t up_limit_flow = 900;
 static uint32_t low_limit_flow = 100;
 
 RandomDataFlow *RandomDataFlow::get_instance(void)
@@ -95,8 +99,14 @@ RandomDataFlow *RandomDataFlow::get_instance(void)
 
 void RandomDataFlow::generate_pair_flow(void)
 {
+    m_generate_random_flow = true;
     std::thread channel_chread(&RandomDataFlow::generate_pair_flow_thread, this);
     channel_chread.detach();
+}
+
+void RandomDataFlow::stop_generate_pair_flow(void)
+{
+    m_generate_random_flow = false;
 }
 
 void RandomDataFlow::generate_pair_flow_thread(void)
@@ -122,12 +132,14 @@ void RandomDataFlow::generate_pair_flow_thread(void)
         if (node_src->dev == "eth0" || node_dst->dev == "eth0") {
             continue;
         }
-        band_width = RandomNum::get_instance()->limit_random_num(low_limit_flow, up_limit_flow);
+        band_width = RandomNum::get_instance()->limit_random_num(low_limit_flow, up_limit_flow / 2);
         if (node_src->output_band + band_width > up_limit_flow || node_dst->input_band + band_width > up_limit_flow) {
+            LOG_INFO("node acc band:[{}:{}][{}:{}]", node_src_num, node_src->output_band, node_dst_num, node_dst->input_band);
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
         band_width_str = to_string(band_width) + string("K");
-        send_time = RandomNum::get_instance()->limit_random_num(10, 50);
+        send_time = RandomNum::get_instance()->limit_random_num(10, 30);
         if (RandomNum::get_bool_random() == 1) {
             type_str = "tcp";
         }
@@ -145,7 +157,41 @@ void RandomDataFlow::generate_pair_flow_thread(void)
             nullptr,
         };
         DataFlow::creat_data_flow(flow_info);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+uint32_t fault_node_array[] = {0, 2, 3, 4, 5};
+
+void random_fault(void)
+{
+    int32_t cout = 0;
+    int32_t fault_node;
+    string cout_string;
+    string file_dir;
+    AppDown app_down = AppDown(nullptr, cout_string); // 第二个参数没用到
+
+    SshSession remote_ssh(&NodeManager::m_node_info_list[0]);
+    remote_ssh.m_only_send = true;
+    remote_ssh.open();
+
+    while (cout++ < 20) {
+        LOG_INFO("test[{}] begin", cout);
+        cout_string = to_string(cout);
+        file_dir = string("~/fault_data/app_down_") + cout_string;
+        remote_ssh.only_send_cmd(string("mkdir ") + file_dir + string("\n"));
+        DataFile::m_file_path = file_dir + string("/node_");
+
+        RandomDataFlow::get_instance()->generate_pair_flow();
+        std::this_thread::sleep_for(std::chrono::seconds(60));
+        fault_node = fault_node_array[RandomNum::get_instance()->limit_random_num(0, 4)];
+        app_down.m_para = to_string(fault_node);
+        app_down.fault_injection();
+        std::this_thread::sleep_for(std::chrono::seconds(60));
+        RandomDataFlow::get_instance()->stop_generate_pair_flow();
+        DataFlow::close_all_data_flow();
+        app_down.recover_injection();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
 

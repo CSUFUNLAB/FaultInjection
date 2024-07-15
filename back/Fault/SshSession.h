@@ -29,6 +29,7 @@ public:
 
     struct NodeManager::NodeInfo* m_node_info = nullptr;
     int32_t m_nbytes; // 读取ssh返回字节数
+    int32_t m_cout = 0; // 按照-t秒数赋值，至多额外等待一半时间
     bool m_send_cmd = false; // 是否有待发送消息，发送后会置false
     bool m_last_cmd = true; // 默认只发一条消息
     bool m_ssh_end = false; // ssh是否结束

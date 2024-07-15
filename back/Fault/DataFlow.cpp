@@ -51,11 +51,16 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
-    info->client_ssh->send_cmd("iperf -ec " + info->server->ip
-        + string(" -i 1 -p ") + to_string(info->port)
-        + string(" -t ") + to_string(info->time)
-        + string(" -b ") + info->band
-        + len_cmd + udp_cmd + "\n");
+    if (info->client->server_fault) {
+        LOG_INFO("client[{}] has app down fault, don't create client", info->client->ip);
+        info->client_ssh->send_cmd("\n"); // 这里还是发一条消息，用于client server pair结束
+    } else {
+        info->client_ssh->send_cmd("iperf -ec " + info->server->ip
+            + string(" -i 1 -p ") + to_string(info->port)
+            + string(" -t ") + to_string(info->time)
+            + string(" -b ") + info->band
+            + len_cmd + udp_cmd + "\n");
+    }
 
     return 0;
 }
@@ -113,21 +118,29 @@ int32_t DataFlow::delete_data_flow(struct FlowInfo &info)
     return 0;
 }
 
+void DataFlow::close_all_data_flow(void)
+{
+    for (auto server = m_flow_info_map.begin(); server != m_flow_info_map.end(); server++) {
+        for (auto client = server->second.begin(); client != server->second.end(); client++) {
+            client->second.server_ssh->broken_cmd();
+            client->second.client_ssh->broken_cmd();
+        }
+    }
+}
+
 // 删除记录的信息，只结束server，因为结束client无法诊断故障，不知道是正常结束还是故障结束
-int32_t DataFlow::delete_data_flow_server(string server_ip)
+int32_t DataFlow::close_data_flow_server(string server_ip)
 {
     auto server = m_flow_info_map.find(server_ip);
-    ERR_RETURN(server == m_flow_info_map.end(), -NO_EXIST_FLOW,
-        "server[{}] not have data flow", server_ip);
+    if (server == m_flow_info_map.end()) {
+        LOG_INFO("server[{}] not have data flow", server_ip);
+        return 0;
+    }
     for (auto client = server->second.begin(); client != server->second.end(); client++) {
         FlowInfo& save_info = client->second;
-        uint32_t band_width = band_width_str_to_num(save_info.band);
         LOG_INFO("delete flow server {} -> {} : {}", save_info.client->ip, save_info.server->ip, save_info.port);
-        save_info.client->output_band -= band_width;
-        save_info.server->input_band -= band_width;
+        // 只需要关闭服务端，会自动删除flow
         save_info.server_ssh->broken_cmd();
-        server->second.erase(client);
-
     }
     return 0;
 }
@@ -171,6 +184,7 @@ DataFlowSsh::DataFlowSsh(DataFlow::FlowInfo *info, NodeManager::NodeInfo *node) 
         }
     }
     m_flow_info = info;
+    m_cout = info->time;
     m_data_info->m_begin_time = BeginTime::get_instance()->get_time();
 }
 

@@ -57,7 +57,7 @@ int32_t AppDown::fault_injection(void)
     ERR_RETURN(node == nullptr, -NO_NODE, "get node info failed");
     LOG_INFO("node[{}] has fault app down", node->index);
     node->server_fault = true;
-    return DataFlow::close_data_flow_server(node->ip);
+    return DataFlow::close_data_flow_server(node->index);
 }
 
 int32_t AppDown::recover_injection(void)

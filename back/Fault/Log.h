@@ -11,8 +11,8 @@ std::ofstream &logfile(void);
 
 #define LOG_DEBUG_ON 0
 
-//#define LOG_PRINT(log, ...) { logfile << std::string(fmt::format("[{}][{}]" log "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)) << std::endl; }
-#define LOG_PRINT(log, ...) { logfile() << fmt::format("[{}][{}]" log, __FUNCTION__, __LINE__, ##__VA_ARGS__) << std::endl; }
+#define LOG_PRINT(log, ...) fmt::print("[{}][{}]" log "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
+//#define LOG_PRINT(log, ...) { logfile() << fmt::format("[{}][{}]" log, __FUNCTION__, __LINE__, ##__VA_ARGS__) << std::endl; }
 #define LOG_ERR(log, ...) LOG_PRINT("[error]" log, ##__VA_ARGS__)
 #define LOG_INFO(log, ...) LOG_PRINT("[info]" log, ##__VA_ARGS__)
 
@@ -35,7 +35,7 @@ enum FAULT_INJECT_ERR_CODE {
     NORMAL_ERR, // 一般错误
     DEFINE_ERR, // 自定义错误，手动写入m_handler_info.msg
     NO_NODE, // 不存在此节点
-    NO_EXIST_FLOW, // 不存在次数据流
+    NO_EXIST_FLOW, // 不存在此数据流
     NO_OPERATE, // 不存在次操作
     SSH_ERR, // ssh错误
     ERR_CODE_BUTT, // 不存在的错误码

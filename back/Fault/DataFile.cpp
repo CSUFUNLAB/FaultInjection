@@ -8,12 +8,31 @@ static string serialie_int_data_info(uint32_t *num)
     return to_string(*num) + string(",");
 }
 
-std::string DataFile::m_file_path = "~/fault_data/node_";
+std::string DataFile::m_file_dir = "~/fault_data/";
 
 DataFile::DataFile(NodeManager::NodeInfo *node) : SshSession(node)
 {
     m_only_send = true;
     open();
+    std::thread channel_chread(&DataFile::daemon_threads, this);
+    channel_chread.detach();
+}
+
+void DataFile::cmd_end(void)
+{
+    close(); // 不detele this关了重新开
+    m_ssh_close = true;
+}
+
+void DataFile::daemon_threads(void)
+{
+    while (true) {
+        if (m_ssh_close) {
+            m_ssh_close = false;
+            open();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
 DataFile *DataFile::get_instance(void)
@@ -29,8 +48,6 @@ string DataFile::serialie_data_info(DataInfo::IperfInfo &info)
     uint32_t lost = static_cast<uint32_t>(info.lost);
     uint32_t* int_point_arry[] = {
         &info.sec,
-        &info.pair_node,
-        &info.is_client,
         &transfer,
         &band,
         &info.trans_type,
@@ -51,8 +68,13 @@ string DataFile::serialie_data_info(DataInfo::IperfInfo &info)
 
 void DataFile::send_data_info(DataInfo::IperfInfo &info)
 {
-    string file_name = m_file_path + to_string(info.self_node) + string(".csv");
-    string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + file_name + string("\n");
+    string file_name;
+    if (info.is_client == 1) {
+        file_name = string("node_") + to_string(info.self_node) + string("_") + to_string(info.pair_node) + string("_0.cvs");
+    } else {
+        file_name = string("node_") + to_string(info.pair_node) + string("_") + to_string(info.self_node) + string("_1.cvs");
+    }
+    string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + m_file_dir + file_name + string("\n");
     LOG_DEBUG("{} {}", file_name, cmd_info);
     only_send_cmd(cmd_info);
 }

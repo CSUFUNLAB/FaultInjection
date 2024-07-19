@@ -7,12 +7,14 @@
 #include <iostream>
 #include <fstream>
 
+#include "BeginTime.h"
+
 std::ofstream &logfile(void);
 
 #define LOG_DEBUG_ON 0
 
-#define LOG_PRINT(log, ...) fmt::print("[{}][{}]" log "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
-//#define LOG_PRINT(log, ...) { logfile() << fmt::format("[{}][{}]" log, __FUNCTION__, __LINE__, ##__VA_ARGS__) << std::endl; }
+//#define LOG_PRINT(log, ...) fmt::print("[{}][{}][{}s]" log "\n", __FUNCTION__, __LINE__, BeginTime::get_instance()->get_time(), ##__VA_ARGS__)
+#define LOG_PRINT(log, ...) { logfile() << fmt::format("[{}][{}][{}s]" log, __FUNCTION__, __LINE__, BeginTime::get_instance()->get_time(), ##__VA_ARGS__) << std::endl; }
 #define LOG_ERR(log, ...) LOG_PRINT("[error]" log, ##__VA_ARGS__)
 #define LOG_INFO(log, ...) LOG_PRINT("[info]" log, ##__VA_ARGS__)
 

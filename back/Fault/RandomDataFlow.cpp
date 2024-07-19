@@ -128,8 +128,16 @@ void RandomDataFlow::generate_pair_flow_thread(void)
         if (node_src == nullptr || node_dst == nullptr) {
             continue;
         }
-        // ap的eth网卡不重复作为节点
-        if (node_src->dev == "eth0" || node_dst->dev == "eth0") {
+        // 如果向ap节点发消息，必须发到对应通道的网卡上面，有线发eth0，无线发ap，否则数据会被另一个网卡截留
+        // 或许有转发办法
+        // eth和ap不能相互通讯，无论是ap到自身eth还是服务器
+        if ((node_src->type == "eth" && node_dst->type == "ap")
+            || (node_src->type == "ap" && node_dst->type == "eth")) {
+            continue;
+        }
+        // sta不能向ap的eth发消息
+        if ((node_src->type == "sta" && node_dst->dev == "eth0")
+            || (node_src->dev == "eth0" && node_dst->type == "sta")) {
             continue;
         }
         band_width = RandomNum::get_instance()->limit_random_num(low_limit_flow, up_limit_flow / 2);
@@ -161,8 +169,6 @@ void RandomDataFlow::generate_pair_flow_thread(void)
     }
 }
 
-uint32_t fault_node_array[] = {0, 2, 3, 4, 5};
-
 void random_fault(void)
 {
     int32_t cout = 0;
@@ -175,23 +181,30 @@ void random_fault(void)
     remote_ssh.m_only_send = true;
     remote_ssh.open();
 
-    while (cout++ < 20) {
+    while (cout++ < 100) {
         LOG_INFO("test[{}] begin", cout);
+        NodeManager::get_all_sta_ip();
         cout_string = to_string(cout);
         file_dir = string("~/fault_data/app_down_") + cout_string;
         remote_ssh.only_send_cmd(string("mkdir ") + file_dir + string("\n"));
-        DataFile::m_file_path = file_dir + string("/node_");
+        DataFile::m_file_dir = file_dir + string("/");
 
         RandomDataFlow::get_instance()->generate_pair_flow();
         std::this_thread::sleep_for(std::chrono::seconds(60));
-        fault_node = fault_node_array[RandomNum::get_instance()->limit_random_num(0, 4)];
+        //std::this_thread::sleep_for(std::chrono::seconds(30));
+        fault_node = RandomNum::get_instance()->limit_random_num(0, RandomNode::m_biggest_node_num);
         app_down.m_para = to_string(fault_node);
         app_down.fault_injection();
         std::this_thread::sleep_for(std::chrono::seconds(60));
+        //std::this_thread::sleep_for(std::chrono::seconds(30));
+
         RandomDataFlow::get_instance()->stop_generate_pair_flow();
+        std::this_thread::sleep_for(std::chrono::seconds(10));
         DataFlow::close_all_data_flow();
         app_down.recover_injection();
         std::this_thread::sleep_for(std::chrono::seconds(5));
+        // 不明白为什么仍然有没被删除的flow，理论上close是用broken删除的，只要结束了就一定可以删除
+        DataFlow::detect_all_data_flow();
     }
 }
 

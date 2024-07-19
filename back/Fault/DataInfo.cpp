@@ -183,11 +183,25 @@ int32_t DataInfo::get_info(int32_t index, char* token)
 
 void DataInfo::upload_info(void)
 {
-    LOG_DEBUG("[{}] {} -> {} {} time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}] lost[{}]%",
+    string arrow;
+    string tcp;
+#if 0
+    if (m_iperf_info.is_client) {
+        arrow = " -> ";
+    } else {
+        arrow = " <- ";
+    }
+    if (m_iperf_info.trans_type == 0) {
+        tcp = "tcp";
+    } else {
+        tcp = "udp";
+    }
+#endif
+    LOG_DEBUG("[{}] {}" + arrow + "{} {} time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}] lost[{}%]",
         m_node->ip,
         m_iperf_info.self_node,
         m_iperf_info.pair_node,
-        m_iperf_info.is_client,
+        tcp,
         m_iperf_info.sec,
         m_iperf_info.transfer,
         m_iperf_info.transfer_unit,
@@ -247,7 +261,7 @@ UdpClientDataInfo::UdpClientDataInfo(NodeInfo *self_node, NodeInfo *pair_node) :
 
 UdpServerDataInfo::UdpServerDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
 {
-    m_iperf_info.is_client = 1;
+    m_iperf_info.is_client = 0;
     m_iperf_info.trans_type = 1;
 
     m_transfer_str = udp_client_transfer_str;

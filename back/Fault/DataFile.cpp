@@ -24,14 +24,20 @@ void DataFile::cmd_end(void)
     m_ssh_close = true;
 }
 
+// 不知为何data file后面没有继续写入，那重新打开一下
 void DataFile::daemon_threads(void)
 {
     while (true) {
-        if (m_ssh_close) {
-            m_ssh_close = false;
-            open();
+        std::this_thread::sleep_for(std::chrono::seconds(600));
+        LOG_INFO("close data file");
+        m_broken_cmd = true;
+        while (!m_ssh_close) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        m_ssh_close = false;
+        m_broken_cmd = false;
+        LOG_INFO("open data file");
+        open();
     }
 }
 
@@ -75,7 +81,7 @@ void DataFile::send_data_info(DataInfo::IperfInfo &info)
         file_name = string("node_") + to_string(info.pair_node) + string("_") + to_string(info.self_node) + string("_1.cvs");
     }
     string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + m_file_dir + file_name + string("\n");
-    LOG_DEBUG("{} {}", file_name, cmd_info);
+    LOG_DEBUG("{}",cmd_info);
     only_send_cmd(cmd_info);
 }
 

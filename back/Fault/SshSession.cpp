@@ -78,7 +78,7 @@ int32_t SshSession::open(void)
     LOG_DEBUG("[{}][{}]ssh open", m_host, m_username);
 
     rc = ssh_channel_open_session(m_channel);
-    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}][{}]", m_host, m_username);
+    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}]", m_node_info->index);
 
     if (m_only_send) {
         std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
@@ -89,6 +89,46 @@ int32_t SshSession::open(void)
     }
 
     return 0;
+}
+
+int32_t SshSession::only_open(void)
+{
+    // 初始化SSH会话
+    m_session = ssh_new();
+
+    ERR_RETURN_DEBUG_PRINT(m_session == nullptr, -NORMAL_ERR, "create ssh session[{}][{}]", m_host, m_username);
+
+    // 设置SSH服务器连接信息
+    ssh_options_set(m_session, SSH_OPTIONS_HOST, m_host.c_str());
+    ssh_options_set(m_session, SSH_OPTIONS_USER, m_username.c_str());
+    // 连接SSH服务器
+    int32_t rc = ssh_connect(m_session);
+    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "connect ssh server[{}][{}]", m_host, m_username);
+
+    // 认证用户
+    rc = ssh_userauth_password(m_session, NULL, m_password.c_str());
+    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "authenticate ssh user[{}][{}]", m_host, m_username);
+
+    m_channel = ssh_channel_new(m_session);
+    ERR_RETURN_DEBUG_PRINT(m_channel == nullptr, -NORMAL_ERR, "create ssh channel[{}][{}]", m_host, m_username);
+
+    LOG_DEBUG("[{}][{}]ssh open", m_host, m_username);
+
+    rc = ssh_channel_open_session(m_channel);
+    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}][{}]", m_host, m_username);
+
+    return 0;
+}
+
+void SshSession::send_thread(void)
+{
+    if (m_only_send) {
+        std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
+        channel_chread.detach();
+    } else {
+        std::thread channel_chread(&SshSession::send_cmd_thread, this);
+        channel_chread.detach();
+    }
 }
 
 void SshSession::ssh_begin_read(void)
@@ -204,8 +244,6 @@ void SshSession::send_cmd_thread(void)
         }
     }
 
-    m_ssh_end = true;
-
     cmd_end();
 
     return;
@@ -226,12 +264,16 @@ void SshSession::only_send_cmd_thread(void)
     int32_t ret;
 
     while (1) {
+        if (m_broken_cmd) {
+            LOG_INFO("[{}]ssh cmd force end", m_node_info->index);
+            break;
+        }
         m_mtx.lock();
         if (!m_cmd_queue.empty()) {
             has_cmd = true;
             cmd = m_cmd_queue.front();
+            LOG_DEBUG("{}", cmd);
             m_cmd_queue.pop();
-            //LOG_DEBUG("{}", m_cmd_queue.front());
         }
         m_mtx.unlock();
         if (has_cmd) {
@@ -242,13 +284,8 @@ void SshSession::only_send_cmd_thread(void)
             }
             continue;
         }
-        if (m_broken_cmd) {
-            LOG_DEBUG("[{}]ssh cmd force end", m_node_info->index);
-            break;
-        }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    m_ssh_end = true;
     cmd_end();
 
     return;

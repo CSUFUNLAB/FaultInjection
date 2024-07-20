@@ -12,7 +12,6 @@
 
 class DataFlowSsh : public SshSession {
 public:
-
     struct FlowId {
         uint32_t client_node_num;
         uint32_t server_node_num;
@@ -42,6 +41,7 @@ public:
         DataFlowSsh* client_ssh; // 自动结束
         DataFlowSsh* server_ssh; // 自动结束
         uint32_t use_cout; // 用于结束后删除表中存储的此条信息
+        bool begin; // flow的ssh是否开始，未开始不能删除info
     };
 
     static int32_t creat_data_flow(struct FlowInfo& info);

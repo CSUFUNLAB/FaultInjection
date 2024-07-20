@@ -23,6 +23,7 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
         return -NO_NODE;
     }
     info->use_cout = 2;
+    info->begin = false;
     DataFlowSsh::FlowId flow_id = {
         info->client->index,
         info->server->index,
@@ -34,12 +35,20 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     info->server_ssh = new DataFlowSsh(flow_id, info->type, info->server);
     m_mtx.unlock();
 
-    int32_t ret;
-    ret = info->client_ssh->open();
-    ERR_RETURN_DEBUG_PRINT(ret != NORMAL_OK, ret, "open src ssh[{}][{}]", info->client->index, info->client->ip);
+    int32_t client_ret = info->client_ssh->only_open();
+    int32_t server_ret = info->server_ssh->only_open();
+    if (client_ret != NORMAL_OK || server_ret != NORMAL_OK) {
+        LOG_ERR("open src ssh[{}][{}]: {}", info->client->index, info->client->ip, client_ret);
+        LOG_ERR("open src ssh[{}][{}]: {}", info->server->index, info->server->ip, server_ret);
+        info->begin = true; // 让delete_data_flow可以删除
+        delete info->client_ssh;
+        delete info->server_ssh;
+        DataFlow::delete_data_flow(flow_id);
+        return NORMAL_ERR;
+    }
 
-    ret = info->server_ssh->open();
-    ERR_RETURN_DEBUG_PRINT(ret != NORMAL_OK, ret, "open dst ssh[{}][{}]", info->server->index, info->server->ip);
+    info->client_ssh->send_thread();
+    info->server_ssh->send_thread();
 
     std::thread channel_chread(&DataFlow::send_cmd_thread, info);
     channel_chread.detach();
@@ -68,7 +77,7 @@ void DataFlow::send_cmd_thread(FlowInfo *info)
         info->server_ssh->send_cmd("\n"); // 这里还是发一条消息，用于client server pair结束
     } else {
         info->server_ssh->send_cmd("iperf -se -i 1 -p " + to_string(info->port) + udp_cmd + "\n");
-        while (info->server_ssh->m_send_cmd) {
+        while (info->server_ssh->m_send_cmd) { // 这行报错可能不是server_ssh不存在，是info不存在了
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
@@ -82,6 +91,7 @@ void DataFlow::send_cmd_thread(FlowInfo *info)
             + string(" -b ") + info->band
             + len_cmd + udp_cmd + "\n");
     }
+    info->begin = true;
 }
 
 struct DataFlow::FlowInfo *DataFlow::add_data_flow(struct FlowInfo& info)
@@ -92,69 +102,67 @@ struct DataFlow::FlowInfo *DataFlow::add_data_flow(struct FlowInfo& info)
 
     info.port = 8081;
 
-    auto server = m_flow_info_map.find(info.server->index);
-    if (server == m_flow_info_map.end()) {
+    auto flow_by_server = m_flow_info_map.find(info.server->index);
+    if (flow_by_server == m_flow_info_map.end()) {
         FlowInfoPortMap port_map = {{info.port, info}};
         m_flow_info_map.insert({info.server->index, port_map});
         LOG_INFO("add flow {} -> {} : {} {} {} {}s", info.client->index, info.server->index, info.port, info.type, info.band, info.time);
         return &m_flow_info_map.find(info.server->index)->second.find(info.port)->second;
     }
-    auto client = server->second.find(info.port);
-    uint32_t same_dev_node_num = 0;
+    auto info_it = flow_by_server->second.find(info.port);
+    uint32_t pair_node_num = 0;
     if (info.server->index == 1) {
-        same_dev_node_num = 2;
+        pair_node_num = 2;
     } else if (info.server->index == 2) {
-        same_dev_node_num = 1;
+        pair_node_num = 1;
     }
-    if (same_dev_node_num == 0) {
-        while (client != server->second.end()) { // port自动选择的情况下，总能找到可新插入的data flow
-            info.port++;
-            client = server->second.find(info.port);
-        }
-    } else {
-        auto same_dev_node = m_flow_info_map.find(same_dev_node_num);
-        if (same_dev_node == m_flow_info_map.end()) {
-            while (client != server->second.end()) { // port自动选择的情况下，总能找到可新插入的data flow
-                info.port++;
-                client = server->second.find(info.port);
-            }
-        } else {
-            auto same_dev_node_client = same_dev_node->second.find(info.port);
-            while (client != server->second.end() || same_dev_node_client != same_dev_node->second.end()) { // port自动选择的情况下，总能找到可新插入的data flow
-                info.port++;
-                client = server->second.find(info.port);
-                same_dev_node_client = same_dev_node->second.find(info.port);
-            }
+    // ap有两个网卡eth和ap，它们端共用口
+    FlowInfoServerMap::iterator pair_node_flow;
+    FlowInfoPortMap::iterator pair_node_info_it;
+    bool consider_pair = false;
+    if (pair_node_num != 0) {
+        pair_node_flow = m_flow_info_map.find(pair_node_num);
+        if (pair_node_flow != m_flow_info_map.end()) {
+            consider_pair = true;
+            pair_node_info_it = pair_node_flow->second.find(info.port);
         }
     }
-    server->second.insert({info.port, info});
+    while (info_it != flow_by_server->second.end() ||
+            (consider_pair && pair_node_info_it != pair_node_flow->second.end())) { // port自动选择的情况下，总能找到可新插入的data flow
+        info.port++;
+        info_it = flow_by_server->second.find(info.port);
+        if (consider_pair) {
+            pair_node_info_it = pair_node_flow->second.find(info.port);
+        }
+    }
+
+    flow_by_server->second.insert({info.port, info});
     LOG_INFO("add flow {} -> {} : {} {} {} {}s", info.client->index, info.server->index, info.port, info.type, info.band, info.time);
-    return &server->second.find(info.port)->second;
+    return &flow_by_server->second.find(info.port)->second;
 }
 
 int32_t DataFlow::delete_data_flow(DataFlowSsh::FlowId &flow_id)
 {
     m_mtx.lock();
     do {
-        auto server = m_flow_info_map.find(flow_id.server_node_num);
-        if (server == m_flow_info_map.end()) {
+        auto flow_by_server = m_flow_info_map.find(flow_id.server_node_num);
+        if (flow_by_server == m_flow_info_map.end()) {
             break;
         }
-        auto client = server->second.find(flow_id.port);
-        if (client == server->second.end()) {
+        auto info_it = flow_by_server->second.find(flow_id.port);
+        if (info_it == flow_by_server->second.end()) {
             break;
         }
-        if (client->second.client->index != flow_id.client_node_num) {
+        if (info_it->second.client->index != flow_id.client_node_num) {
             break;
         }
-        LOG_INFO("delete flow {} -> {} : {} {} {}s", flow_id.client_node_num, flow_id.server_node_num, flow_id.port, client->second.type, client->second.time);
-        FlowInfo& save_info = client->second;
-        uint32_t band_width = band_width_str_to_num(save_info.band);
-        save_info.client->output_band -= band_width;
-        save_info.server->input_band -= band_width;
-        save_info.client_ssh->broken_cmd();
-        save_info.server_ssh->broken_cmd();
-        server->second.erase(client);
+        LOG_INFO("delete flow {} -> {} : {} {} {} {}s",
+            flow_id.client_node_num, flow_id.server_node_num, flow_id.port, info_it->second.type, info_it->second.band, info_it->second.time);
+        FlowInfo& info = info_it->second;
+        uint32_t band_width = band_width_str_to_num(info.band);
+        info.client->output_band -= band_width;
+        info.server->input_band -= band_width;
+        flow_by_server->second.erase(info_it);
         m_mtx.unlock();
         return 0;
 
@@ -168,10 +176,12 @@ int32_t DataFlow::delete_data_flow(DataFlowSsh::FlowId &flow_id)
 void DataFlow::close_all_data_flow(void)
 {
     LOG_INFO("close all data flow");
-    for (auto server = m_flow_info_map.begin(); server != m_flow_info_map.end(); server++) {
-        for (auto client = server->second.begin(); client != server->second.end(); client++) {
-            client->second.server_ssh->broken_cmd();
-            client->second.client_ssh->broken_cmd();
+    for (auto flow_by_server = m_flow_info_map.begin(); flow_by_server != m_flow_info_map.end(); flow_by_server++) {
+        for (auto info_it = flow_by_server->second.begin(); info_it != flow_by_server->second.end(); info_it++) {
+            FlowInfo& info = info_it->second;
+            LOG_INFO("close flow {} -> {} : {} {} {} {}s", info.client->index, info.server->index, info.port, info.type, info.band, info.time);
+            info.server_ssh->broken_cmd();
+            info.client_ssh->broken_cmd();
         }
     }
 }
@@ -182,18 +192,27 @@ bool DataFlow::detect_all_data_flow(void)
     int32_t cout = 0;
     bool ret = false;
     for (auto& node : NodeManager::m_node_info_list) {
-        while (node.input_band != 0 || node.output_band != 0) {
+        while (node.input_band > 0 || node.output_band > 0) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
             LOG_INFO("node[{}] {}:{}", node.index, node.input_band, node.output_band);
             cout++;
-            if (cout > 100) {
+            if (cout > 30) {
                 LOG_ERR("some flow still not close");
-                for (auto server = m_flow_info_map.begin(); server != m_flow_info_map.end(); server++) {
-                    for (auto client = server->second.begin(); client != server->second.end(); client++) {
-                        FlowInfo& info = client->second;
+                for (auto flow_by_server = m_flow_info_map.begin(); flow_by_server != m_flow_info_map.end(); flow_by_server++) {
+                    for (auto info_it = flow_by_server->second.begin(); info_it != flow_by_server->second.end(); info_it++) {
+                        FlowInfo& info = info_it->second;
                         LOG_INFO("exist flow {} -> {} : {} {} {} {}s", info.client->index, info.server->index, info.port, info.type, info.band, info.time);
-                        info.server_ssh->broken_cmd();
+                        // 现在仍然不知道为什么有没删掉的
+                        uint32_t band_width = band_width_str_to_num(info.band);
+                        info.client->output_band -= band_width;
+                        info.server->input_band -= band_width;
+                        // 现状是broken_cmd可能没有关掉ssh，导致没有触发后面的delete流程，可能会内存泄漏
                         info.client_ssh->broken_cmd();
+                        info.server_ssh->broken_cmd();
+                        while (!info.begin) { // 在begin之前erase client可能会导致send_cmd_thread空指针
+                            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        }
+                        flow_by_server->second.erase(info_it);
                         ret = true;
                     }
                 }
@@ -207,16 +226,17 @@ bool DataFlow::detect_all_data_flow(void)
 // 删除记录的信息，只结束server，因为结束client无法诊断故障，不知道是正常结束还是故障结束
 int32_t DataFlow::close_data_flow_server(int32_t server_node_num)
 {
-    auto server = m_flow_info_map.find(server_node_num);
-    if (server == m_flow_info_map.end()) {
+    auto flow_by_server = m_flow_info_map.find(server_node_num);
+    if (flow_by_server == m_flow_info_map.end()) {
         LOG_INFO("server[{}] not have data flow", server_node_num);
         return 0;
     }
-    for (auto client = server->second.begin(); client != server->second.end(); client++) {
-        FlowInfo& save_info = client->second;
-        LOG_INFO("delete flow only server {} -> {} : {} {} {}s", save_info.client->index, save_info.server->index, save_info.port, save_info.type, save_info.time);
+    for (auto info_it = flow_by_server->second.begin(); info_it != flow_by_server->second.end(); info_it++) {
+        FlowInfo& info = info_it->second;
+        LOG_INFO("delete flow only server {} -> {} : {} {} {} {}s",
+            info.client->index, info.server->index, info.port, info.type, info.band, info.time);
         // 只需要关闭服务端，会自动删除flow
-        save_info.server_ssh->broken_cmd();
+        info.server_ssh->broken_cmd();
     }
     return 0;
 }

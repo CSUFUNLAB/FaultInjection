@@ -167,6 +167,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
         DataFlow::creat_data_flow(flow_info);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+    LOG_INFO("end");
 }
 
 void random_fault(void)

@@ -21,6 +21,8 @@ public:
     int32_t open(void);
     void send_cmd(const std::string &cmd); // 没有回复消息，不再需要发命令，会自动结束ssh
     void only_send_cmd(const std::string &cmd); // 用于大量命令发送的场景
+    int32_t only_open(void);
+    void send_thread(void);
     void broken_cmd(void);
     void close(void); // 非阻塞read返回数据时close会崩溃
 
@@ -32,9 +34,10 @@ public:
     int32_t m_cout = 0; // 至少等待时间
     bool m_send_cmd = false; // 是否有待发送消息，发送后会置false
     bool m_last_cmd = true; // 默认只发一条消息
-    bool m_ssh_end = false; // ssh是否结束
     bool m_only_send = false; // 切换仅发送线程
     bool m_always_read = false; // 即便没有返回数据，也会调用一次read echo
+    uint32_t m_heart = 0;
+    bool m_broken_cmd = false;
 
 private:
     std::string m_host;
@@ -48,7 +51,6 @@ private:
     std::queue<std::string> m_cmd_queue;
 
     char buffer[1024];
-    bool m_broken_cmd = false;
 
     struct Credit {
         std::string username;

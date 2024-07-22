@@ -76,9 +76,9 @@ void DataFile::send_data_info(DataInfo::IperfInfo &info)
 {
     string file_name;
     if (info.is_client == 1) {
-        file_name = string("node_") + to_string(info.self_node) + string("_") + to_string(info.pair_node) + string("_0.cvs");
+        file_name = string("node_") + to_string(info.self_node) + string("_") + to_string(info.pair_node) + string("_0.csv");
     } else {
-        file_name = string("node_") + to_string(info.pair_node) + string("_") + to_string(info.self_node) + string("_1.cvs");
+        file_name = string("node_") + to_string(info.pair_node) + string("_") + to_string(info.self_node) + string("_1.csv");
     }
     string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + m_file_dir + file_name + string("\n");
     LOG_DEBUG("{}",cmd_info);

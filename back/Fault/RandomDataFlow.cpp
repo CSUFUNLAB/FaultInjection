@@ -89,7 +89,7 @@ void RandomNode::get_pair_node(uint32_t& client_node, uint32_t& server_node)
 }
 
 static uint32_t up_limit_flow = 900;
-static uint32_t low_limit_flow = 100;
+static uint32_t low_limit_flow = 50;
 
 RandomDataFlow *RandomDataFlow::get_instance(void)
 {
@@ -140,7 +140,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
             || (node_src->dev == "eth0" && node_dst->type == "sta")) {
             continue;
         }
-        band_width = RandomNum::get_instance()->limit_random_num(low_limit_flow, up_limit_flow / 2);
+        band_width = RandomNum::get_instance()->limit_random_num(low_limit_flow, up_limit_flow / 5);
         if (node_src->output_band + band_width > up_limit_flow || node_dst->input_band + band_width > up_limit_flow) {
             LOG_INFO("node acc band:[{}:{}][{}:{}]", node_src_num, node_src->output_band, node_dst_num, node_dst->input_band);
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -182,7 +182,7 @@ void random_fault(void)
     remote_ssh.m_only_send = true;
     remote_ssh.open();
 
-    while (cout++ < 100) {
+    while (cout++ < 20) {
         LOG_INFO("test[{}] begin", cout);
         NodeManager::get_all_sta_ip();
         cout_string = to_string(cout);

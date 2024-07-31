@@ -90,6 +90,9 @@
     <ClCompile Include="RandomDataFlow.cpp">
       <Filter>源文件\Data</Filter>
     </ClCompile>
+    <ClCompile Include="FaultClient.cpp">
+      <Filter>源文件\Server\interface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -142,6 +145,9 @@
     </ClInclude>
     <ClInclude Include="RandomDataFlow.h">
       <Filter>头文件\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="FaultClient.h">
+      <Filter>头文件\Server\interface</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

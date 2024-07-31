@@ -129,12 +129,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BeginTime.cpp" />
-    <ClCompile Include="ClientHandler.cpp" />
     <ClCompile Include="DataDisplayInterface.cpp" />
     <ClCompile Include="DataFile.cpp" />
     <ClCompile Include="DataFlow.cpp" />
     <ClCompile Include="DataInfo.cpp" />
     <ClCompile Include="DataInjectInterface.cpp" />
+    <ClCompile Include="FaultClient.cpp" />
     <ClCompile Include="FaultDiagnosisInterface.cpp" />
     <ClCompile Include="FaultInjectInterface.cpp" />
     <ClCompile Include="FaultInjection.cpp" />
@@ -148,12 +148,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BeginTime.h" />
-    <ClInclude Include="ClientHandler.h" />
     <ClInclude Include="DataDisplayInterface.h" />
     <ClInclude Include="DataFile.h" />
     <ClInclude Include="DataFlow.h" />
     <ClInclude Include="DataInfo.h" />
     <ClInclude Include="DataInjectInterface.h" />
+    <ClInclude Include="FaultClient.h" />
     <ClInclude Include="FaultDiagnosisInterface.h" />
     <ClInclude Include="FaultInjectInterface.h" />
     <ClInclude Include="FaultInjection.h" />

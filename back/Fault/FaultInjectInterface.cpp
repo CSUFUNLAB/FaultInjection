@@ -7,6 +7,9 @@
 #include "RandomDataFlow.h"
 
 using namespace std;
+using namespace web;
+using namespace web::json;
+using namespace web::http;
 
 void FaultInject::handlerData(http_request& message)
 {

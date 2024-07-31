@@ -2,6 +2,7 @@
 #include "Log.h"
 #include "SshSession.h"
 #include "BeginTime.h"
+#include "DataInjectInterface.h"
 
 #include <functional>
 #include <cctype>
@@ -46,6 +47,8 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
         DataFlow::delete_data_flow(flow_id);
         return NORMAL_ERR;
     }
+
+    DataFlowClient::send(*info);
 
     info->client_ssh->send_thread();
     info->server_ssh->send_thread();

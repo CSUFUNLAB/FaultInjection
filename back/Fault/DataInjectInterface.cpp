@@ -1,12 +1,16 @@
 #include "DataInjectInterface.h"
-#include "ClientHandler.h"
 #include "NodeManager.h"
 #include "DataFlow.h"
 #include "RandomDataFlow.h"
+#include "FaultClient.h"
+#include "DataFlow.h"
 
 #include "Log.h"
 
 using namespace std;
+using namespace web;
+using namespace web::json;
+using namespace web::http;
 
 void InjectDataFlow::handlerData(http_request &message)
 {
@@ -73,6 +77,19 @@ void GenerateRandomFlow::handlerData(http_request& message)
     RandomDataFlow::get_instance()->generate_pair_flow();
     m_handler_info.code = 200;
     m_handler_info.msg = "success";
+}
+
+void DataFlowClient::send(DataFlow::FlowInfo& info)
+{
+    Json::Value flow_json;
+    flow_json["nodeSrc"] = info.client->index;
+    flow_json["nodeDst"] = info.server->index;
+    flow_json["bandWidth"] = info.band;
+    flow_json["type"] = info.type;
+    flow_json["sendTime"] = info.time;
+    web::json::value webJson = web::json::value::parse(flow_json.toStyledString());
+    std::wstring path = U("/api/fault_result");
+    FaultClient::push(webJson, path);
 }
 
 #if 0

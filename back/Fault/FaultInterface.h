@@ -6,18 +6,14 @@
 #include <map>
 #include <functional>
 
-using namespace web;
-using namespace web::json;
-using namespace http;
-
 class FaultInterface {
 public:
-	http_response handle(http_request &message);
+	web::http::http_response handle(web::http::http_request &message);
 
-	virtual void handlerData(http_request &message); // 默认处理函数用于返回无操作的错误
+	virtual void handlerData(web::http::http_request &message); // 默认处理函数用于返回无操作的错误
 
 	// // web::json:value 转换为 Json:Value （有些版本的cpprest好像不需要）
-	Json::Value HandleJsonData(json::value requestJson);
+	Json::Value HandleJsonData(web::json::value requestJson);
 	static FaultInterface* fault_interface_factory(std::string &uri);
 
     struct HandlerInfo {
@@ -33,6 +29,6 @@ private:
 	static InterfaceFuncMap m_interface_func_map;
 	static std::map<int, std::string> m_err_code_map;
 
-	http_response HandleResponse(void);
+	web::http::http_response HandleResponse(void);
 };
 

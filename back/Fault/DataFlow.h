@@ -61,4 +61,8 @@ private:
     static std::mutex m_mtx;
 };
 
+class DataFlowClient {
+public:
+    static void send(DataFlow::FlowInfo& info);
+};
 

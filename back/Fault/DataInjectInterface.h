@@ -1,18 +1,20 @@
 #pragma once
-#include "FaultInterface.h"
 #include <string>
+
+#include "FaultInterface.h"
 
 class InjectDataFlow : public FaultInterface {
 public:
-	void handlerData(http_request &message) override;
+	void handlerData(web::http::http_request &message) override;
 };
 
 class ScanNode : public FaultInterface {
 public:
-	void handlerData(http_request &message) override;
+	void handlerData(web::http::http_request &message) override;
 };
 
 class GenerateRandomFlow : public FaultInterface {
 public:
-	void handlerData(http_request &message) override;
+	void handlerData(web::http::http_request &message) override;
 };
+

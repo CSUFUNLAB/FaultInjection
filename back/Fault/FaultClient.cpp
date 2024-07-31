@@ -24,8 +24,4 @@ void FaultClient::push(web::json::value &postData, const wstring &uri)
         wstring log = postResponse.extract_string().get();
         LOG_ERR("Post response content: {}", string(log.begin(), log.end()));
     }
-    else {
-        wstring log = postResponse.extract_string().get();
-        LOG_INFO("Post response content: {}", string(log.begin(), log.end()));
-    }
 }

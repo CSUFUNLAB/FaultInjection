@@ -88,7 +88,7 @@ void DataFlowClient::send(DataFlow::FlowInfo& info)
     flow_json["type"] = info.type;
     flow_json["sendTime"] = info.time;
     web::json::value webJson = web::json::value::parse(flow_json.toStyledString());
-    std::wstring path = U("/api/fault_result");
+    std::wstring path = U("/api/send_data_stream");
     FaultClient::push(webJson, path);
 }
 

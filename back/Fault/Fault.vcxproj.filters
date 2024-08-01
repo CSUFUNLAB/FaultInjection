@@ -96,7 +96,7 @@
     <ClCompile Include="FaultClient.cpp">
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\ZGY\Desktop\GPTClient.cpp">
+    <ClCompile Include="GPTClient.cpp">
       <Filter>源文件\GPT</Filter>
     </ClCompile>
   </ItemGroup>
@@ -152,7 +152,7 @@
     <ClInclude Include="FaultClient.h">
       <Filter>头文件\Server\interface</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\ZGY\Desktop\GPTClient.h">
+    <ClInclude Include="GPTClient.h">
       <Filter>头文件\GPT</Filter>
     </ClInclude>
   </ItemGroup>

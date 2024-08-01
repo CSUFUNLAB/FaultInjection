@@ -129,7 +129,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BeginTime.cpp" />
-    <ClCompile Include="C:\Users\ZGY\Desktop\GPTClient.cpp" />
     <ClCompile Include="DataDisplayInterface.cpp" />
     <ClCompile Include="DataFile.cpp" />
     <ClCompile Include="DataFlow.cpp" />
@@ -140,6 +139,7 @@
     <ClCompile Include="FaultInjectInterface.cpp" />
     <ClCompile Include="FaultInjection.cpp" />
     <ClCompile Include="FaultInterface.cpp" />
+    <ClCompile Include="GPTClient.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NodeManager.cpp" />
     <ClCompile Include="RandomDataFlow.cpp" />
@@ -149,7 +149,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BeginTime.h" />
-    <ClInclude Include="C:\Users\ZGY\Desktop\GPTClient.h" />
     <ClInclude Include="DataDisplayInterface.h" />
     <ClInclude Include="DataFile.h" />
     <ClInclude Include="DataFlow.h" />
@@ -160,6 +159,7 @@
     <ClInclude Include="FaultInjectInterface.h" />
     <ClInclude Include="FaultInjection.h" />
     <ClInclude Include="FaultInterface.h" />
+    <ClInclude Include="GPTClient.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="NodeManager.h" />
     <ClInclude Include="RandomDataFlow.h" />

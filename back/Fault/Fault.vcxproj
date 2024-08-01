@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BeginTime.cpp" />
+    <ClCompile Include="C:\Users\ZGY\Desktop\GPTClient.cpp" />
     <ClCompile Include="DataDisplayInterface.cpp" />
     <ClCompile Include="DataFile.cpp" />
     <ClCompile Include="DataFlow.cpp" />
@@ -148,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BeginTime.h" />
+    <ClInclude Include="C:\Users\ZGY\Desktop\GPTClient.h" />
     <ClInclude Include="DataDisplayInterface.h" />
     <ClInclude Include="DataFile.h" />
     <ClInclude Include="DataFlow.h" />

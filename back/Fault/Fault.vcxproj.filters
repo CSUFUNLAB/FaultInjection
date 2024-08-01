@@ -37,6 +37,12 @@
     <Filter Include="源文件\Server\interface">
       <UniqueIdentifier>{7791bd31-8b00-4e69-8216-d506f69d9c7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\GPT">
+      <UniqueIdentifier>{5ded0b14-062f-443f-a41c-d3428344b7e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GPT">
+      <UniqueIdentifier>{3890c267-5113-4abd-bc88-82edc0923196}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -62,9 +68,6 @@
     </ClCompile>
     <ClCompile Include="FaultInjection.cpp">
       <Filter>源文件\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="ClientHandler.cpp">
-      <Filter>源文件\Server</Filter>
     </ClCompile>
     <ClCompile Include="DataDisplayInterface.cpp">
       <Filter>源文件\Server\interface</Filter>
@@ -93,6 +96,9 @@
     <ClCompile Include="FaultClient.cpp">
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\ZGY\Desktop\GPTClient.cpp">
+      <Filter>源文件\GPT</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -109,9 +115,6 @@
     </ClInclude>
     <ClInclude Include="NodeManager.h">
       <Filter>头文件\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="ClientHandler.h">
-      <Filter>头文件\Server</Filter>
     </ClInclude>
     <ClInclude Include="ServerHandler.h">
       <Filter>头文件\Server</Filter>
@@ -148,6 +151,9 @@
     </ClInclude>
     <ClInclude Include="FaultClient.h">
       <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ZGY\Desktop\GPTClient.h">
+      <Filter>头文件\GPT</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

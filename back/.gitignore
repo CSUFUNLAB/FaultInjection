@@ -2,4 +2,6 @@
 x64/
 Fault/x64/
 Fault/log.txt
+Fault/config.json
 packages
+

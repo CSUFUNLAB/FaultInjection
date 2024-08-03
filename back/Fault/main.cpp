@@ -1,6 +1,7 @@
 #include "Server.h"
 #include "Log.h"
 
+
 std::ofstream logfilesave("log.txt");
 
 std::ofstream &logfile(void)

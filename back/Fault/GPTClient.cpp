@@ -98,3 +98,21 @@ utility::string_t GPTClient::send_message(std::string message) {
             }).wait();
         return result;
 }
+
+
+
+/**
+* 调用方法
+* 1. 修改config.json中proxy值为本地代理地址
+* 2. 引入头文件 GPTClient.h
+* 3. 通过Client类get_instance方法获取client实例
+* 4. 调用send_message方法与GPT交互，参数message为待发送的消息，返回值为GPT的响应结果
+*/
+
+//#include "GPTClient.h"
+//
+//int main() {
+//    GPTClient& client = GPTClient::get_instance();
+//    utility::string_t response = client.send_message("Who are you?");
+//    std::wcout << response << std::endl;
+//}

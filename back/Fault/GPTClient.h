@@ -12,14 +12,20 @@ using namespace web::http::client;
 class GPTClient {
 public:
     // 获取唯一实例的静态方法
-    static GPTClient& getInstance(const std::string& apiKey = "");
+    static GPTClient& get_instance();
+
+    // 加载配置参数
+    void load_config();
+
+    // 清空聊天记录
+    void reset_messages();
 
     // 公共方法
-    pplx::task<json::value> sendMessage(std::vector<json::value>& messages);
+    utility::string_t send_message(std::string message);
 
 private:
     // 私有构造函数
-    GPTClient(const std::string& apiKey);
+    GPTClient();
     // 私有析构函数
     ~GPTClient() = default;
     // 删除复制构造函数
@@ -27,6 +33,10 @@ private:
     // 删除赋值运算符
     GPTClient& operator=(const GPTClient&) = delete;
 
-    std::string apiKey;
+    utility::string_t prompt;
+    std::vector<json::value> messages;
+    utility::string_t model;
+    utility::string_t apiKey;
+    uri proxy;
     uri apiUrl;
 };

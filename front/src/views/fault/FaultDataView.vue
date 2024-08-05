@@ -206,8 +206,14 @@ export default {
       insertData.nodeSrc = parseInt(insertData.nodeSrc);
       insertData.nodeDst = parseInt(insertData.nodeDst);
       insertData.sendTime = parseInt(insertData.sendTime);
-      // 测试代码
-      await this.sendInsertData(insertData);
+      // 注入数据发送给后端，不直接显示注入数据
+      const res = await axios.post("/api/data_insert", insertData, {});
+      if (res.data.code === 200) {
+        this.$notify.success("注入成功");
+      } else {
+        this.$notify.error("注入错误");
+        console.log(res.data.message);
+      }
     },
     // 从csv文件中读取数据发送给后端
     insertDataFromFile() {

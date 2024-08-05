@@ -29,9 +29,11 @@
           <el-input v-model="node.value" type='number' style="width: 70%"></el-input><el-button style="margin-left: 10px" @click.prevent="removeNode(node)">删除</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="submitForm('faultDataInsertForm')">注入</el-button>
-          <el-button @click="addNode">新增节点</el-button>
-          <el-button @click="resetForm('faultDataInsertForm')">重置</el-button>
+          <el-button type="primary" plain @click="submitForm('faultDataInsertForm')">注入</el-button>
+          <el-button type="primary" plain @click="addNode">新增节点</el-button>
+          <el-button type="primary" plain @click="randomInsertFault('faultDataInsertForm')">随机注入故障</el-button>
+          <el-button type="primary" plain @click="insertFaultRecover('faultDataInsertForm')">注入故障恢复</el-button>
+          <el-button type="warning" plain @click="resetForm('faultDataInsertForm')">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -85,6 +87,42 @@ export default {
     // 获取表单数据
     getFormData() {
 
+    },
+    // 随机注入故障按钮：往后端发送faultType字段
+    randomInsertFault(formName) {
+      this.$refs[formName].validate(async (valid) => {
+        if (valid) {
+          let newFaultDataInsertForm = {
+            "faultType": this.faultDataInsertForm.faultType
+          };
+          // 调用后端接口，传输json数据
+          const res = await axios.post("/api/random_insert_fault", newFaultDataInsertForm);
+          if (res.data.code === 200) {
+            this.$notify.success("注入成功");
+          }
+        } else {
+          console.log('随机注入故障失败，请重试！');
+          return false;
+        }
+      });
+    },
+    // 注入故障恢复按钮：往后端发送faultType字段
+    insertFaultRecover(formName) {
+      this.$refs[formName].validate(async (valid) => {
+        if (valid) {
+          let newFaultDataInsertForm = {
+            "faultType": this.faultDataInsertForm.faultType
+          };
+          // 调用后端接口，传输json数据
+          const res = await axios.post("/api/insert_fault_recover", newFaultDataInsertForm);
+          if (res.data.code === 200) {
+            this.$notify.success("注入成功");
+          }
+        } else {
+          console.log('注入故障恢复失败，请重试！');
+          return false;
+        }
+      });
     },
     // 表单提交
     submitForm(formName) {

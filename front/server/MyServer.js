@@ -13,59 +13,31 @@ function handleWrite(data) {
 http.createServer(function (request, response) {
     // 根据请求路径处理不同的接口
     if (request.url === '/api/fault_result') {
-        // 获取请求体中的 JSON 数据
-        let body = [];
+        // 后端传递“故障显示界面”的数据接口，传递数据形式为String
+        // 获取请求体中的String数据
+        let body = '';
         request.on('data', chunk => {
-            body.push(chunk)
+            body += chunk.toString();
         });
         request.on('end', () => {
             try {
-                // 将 JSON 数据解析为对象
-                const data = JSON.parse(body);
+                console.log(body);
+                // 以追加的方式将数据存入文件中，文件不存在会自动创建
+                const writerStream = fs.createWriteStream('faultData.csv', { flags: 'a' });
+                // 写入数据
+                writerStream.write( body)
+                // 标记文件末尾
+                writerStream.end();
                 response.statusCode = 200;
-                console.log(data)
-
-                fs.readFile('faultData.csv', 'utf8', (err, fileContent) => {
-                    if (err) {
-                        // 文件不存在或读取错误，直接处理
-                        // 创建一个可以写入的流，追加方式写入
-                        handleWrite(data);
-                        response.end("SUCCESS");
-                    } else {
-                        const lines  = fileContent.split('\n');
-                        const secondLastLine = lines[lines.length - 2];
-                        if (secondLastLine) {
-                            const lastNumber = secondLastLine.split(',').pop();
-                            if (data.flag === 1 && lastNumber === '0') {
-                                handleWrite(data);
-                                response.end("SUCCESS");
-                                // 清空文件后写入
-                                // fs.writeFile('faultData.csv', '', (clearErr) => {
-                                //     if (clearErr) {
-                                //         console.error('清空文件出错:', clearErr);
-                                //     } else {
-                                //         handleWrite(data);
-                                //         response.end("SUCCESS");
-                                //     }
-                                // });
-                            } else {
-                                handleWrite(data);
-                                response.end("SUCCESS");
-                            }
-                        } else {
-                            handleWrite(data);
-                            response.end("SUCCESS");
-                        }
-                    }
-                });
+                response.end("SUCCESS");
             } catch (err) {
                 // 如果解析出现错误，返回错误信息
                 response.statusCode = 400;
-                response.end(err);
+                response.end(JSON.stringify(err));
             }
         });
     } else if (request.url === '/api/send_data_stream') {
-    //     接收后端发送的数据流数据
+        // 后端传递“数据流注入”界面输出表单数据接口，传输数据形式为JSON数据，
         let body = [];
         request.on('data', chunk => {
             body.push(chunk)
@@ -87,6 +59,7 @@ http.createServer(function (request, response) {
                 response.end("SUCCESS");
             } catch (err) {
                 // 如果解析出现错误，返回错误信息
+                console.log(err);
                 response.statusCode = 400;
                 response.end(JSON.stringify(err));
             }
@@ -94,6 +67,7 @@ http.createServer(function (request, response) {
     } else if (request.url === '/front/get_data_stream') {
         try {
             if (request.method === 'GET') {
+                // 前端获取“数据流注入”数据接口
                 let fileData = '';
                 const readStream = fs.createReadStream('dataStream.csv', {start: 0, encoding:'utf8'});
                 readStream.on('data', chunk => {
@@ -110,7 +84,6 @@ http.createServer(function (request, response) {
                     lines.forEach(line => {
                         if (line) {
                             const parts = line.split(',');
-                            console.log('ll:', parts.length);
                             if (parts.length === 6) {
                                 const sendTime = parseInt(parts[4]);
                                 if (sendTime >= currentTime) {
@@ -138,6 +111,7 @@ http.createServer(function (request, response) {
     } else if (request.url === '/front/get_fault_result') {
         try {
             if (request.method === 'GET') {
+                // 前端获取“故障数据”接口
                 let fileData = '';
                 const readStream = fs.createReadStream('faultData.csv', {start: 0, encoding:'utf8'});
                 readStream.on('data', chunk => {

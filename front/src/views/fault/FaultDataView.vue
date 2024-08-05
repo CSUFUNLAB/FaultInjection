@@ -91,6 +91,7 @@ export default {
       dataStreamOutputData:[],
       dataStreamColumn: DataStreamColumn,
       intervalId: null,
+      processedData: new Set(), // 用于记录已处理的数据
       forceRefresh :'',
     }
   },
@@ -124,9 +125,17 @@ export default {
       });
 
       if (newData.length > 0) {
-        // 写入输出表格
-        this.dataStreamOutputData = this.dataStreamOutputData.concat(newData);
-        localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+        // 过滤掉已经处理过的数据
+        const uniqueNewData = newData.filter(item => !this.processedData.has(item.sendTime));
+
+        if (uniqueNewData.length > 0) {
+          // 写入输出表格
+          this.dataStreamOutputData = this.dataStreamOutputData.concat(uniqueNewData);
+          localStorage.setItem('dataStreamOutputData', JSON.stringify(this.dataStreamOutputData));
+
+          // 标记为已处理
+          uniqueNewData.forEach(item => this.processedData.add(item.sendTime));
+        }
       }
     },
     // 获取数据定时器

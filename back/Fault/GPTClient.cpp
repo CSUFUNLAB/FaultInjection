@@ -46,7 +46,14 @@ void GPTClient::reset_messages() {
     }
     else {
         messages.clear();
-        messages.push_back(web::json::value::object({ { U("role"), web::json::value::string(U("system")) }, { U("content"), web::json::value::string(prompt) } }));
+        messages.push_back(Message(web::json::value::object({ { U("role"), web::json::value::string(U("system")) }, { U("content"), web::json::value::string(prompt) } })));
+    }
+}
+
+// 遍历打印messages
+void GPTClient::print_messages() const {
+    for (const auto& message : messages) {
+        std::wcout << message.role << L": " << message.content << std::endl;
     }
 }
 
@@ -54,7 +61,7 @@ utility::string_t GPTClient::send_message(std::string message) {
     utility::string_t result;
 
     //将新消息存入对话列表
-    messages.push_back(web::json::value::object({ { U("role"), web::json::value::string(U("user")) }, { U("content"),  web::json::value::string(conversions::to_string_t(message))} }));
+    messages.push_back(Message(web::json::value::object({ { U("role"), web::json::value::string(U("user")) }, { U("content"),  web::json::value::string(conversions::to_string_t(message))} })));
 
     // 创建HTTP客户端
     web::http::client::http_client_config clientConfig;
@@ -68,7 +75,9 @@ utility::string_t GPTClient::send_message(std::string message) {
     request.headers().set_content_type(U("application/json"));
     json::value payload;
     payload[U("model")] = json::value::string(model);
-    payload[U("messages")] = json::value::array(messages);
+    std::vector<json::value> jsonmessages(messages.size());
+    std::transform(messages.begin(), messages.end(), jsonmessages.begin(), [](Message x) { return x.toJson(); });
+    payload[U("messages")] = json::value::array(jsonmessages);
     request.set_body(payload);
 
     // 发起网络请求
@@ -77,7 +86,7 @@ utility::string_t GPTClient::send_message(std::string message) {
             return response.extract_json().then([this, &result](json::value jsonResponse) -> json::value {
                 //std::wcout << L"Response body: " << jsonResponse.serialize() << std::endl;
                 // 将返回的消息存入聊天记录
-                messages.push_back(web::json::value::object({ { U("role"), web::json::value::string(U("assistant")) }, { U("content"), jsonResponse[U("choices")][0][U("message")][U("content")] } }));
+                messages.push_back(Message(web::json::value::object({ { U("role"), web::json::value::string(U("assistant")) }, { U("content"), jsonResponse[U("choices")][0][U("message")][U("content")] } })));
                 result = jsonResponse[U("choices")][0][U("message")][U("content")].as_string();
                 return jsonResponse;
                 });
@@ -100,7 +109,6 @@ utility::string_t GPTClient::send_message(std::string message) {
 }
 
 
-
 /**
 * 调用方法
 * 1. 修改config.json中proxy值为本地代理地址
@@ -115,4 +123,5 @@ utility::string_t GPTClient::send_message(std::string message) {
 //    GPTClient& client = GPTClient::get_instance();
 //    utility::string_t response = client.send_message("Who are you?");
 //    std::wcout << response << std::endl;
+//    client.print_messages();
 //}

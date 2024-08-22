@@ -1,6 +1,5 @@
 #include "Server.h"
 #include "Log.h"
-#include "GPTClient.h"
 
 
 std::ofstream logfilesave("log.txt");

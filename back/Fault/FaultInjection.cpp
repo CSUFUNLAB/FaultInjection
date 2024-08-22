@@ -20,11 +20,6 @@ int32_t NodeCrash::fault_injection(void)
     return 0;
 }
 
-int32_t NodeCrash::recover_injection(void)
-{
-    return 0;
-}
-
 int32_t NetworkCongestion::fault_injection(void)
 {
     m_is_fault = true;

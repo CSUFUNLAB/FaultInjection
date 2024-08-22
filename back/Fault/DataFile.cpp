@@ -3,12 +3,12 @@
 
 using namespace std;
 
-static string serialie_int_data_info(uint32_t *num)
+std::string DataFile::m_file_dir = "~/fault_data/";
+
+string DataFile::serialie_int_data_info(uint32_t *num)
 {
     return to_string(*num) + string(",");
 }
-
-std::string DataFile::m_file_dir = "~/fault_data/";
 
 DataFile::DataFile(NodeManager::NodeInfo *node) : SshSession(node)
 {
@@ -83,5 +83,6 @@ void DataFile::send_data_info(DataInfo::IperfInfo &info)
     string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + m_file_dir + file_name + string("\n");
     LOG_DEBUG("{}",cmd_info);
     only_send_cmd(cmd_info);
+    DataFileClient::get_instance()->send(info);
 }
 

@@ -25,3 +25,18 @@ void FaultClient::push(web::json::value &postData, const wstring &uri)
         LOG_ERR("Post response content: {}", string(log.begin(), log.end()));
     }
 }
+
+FaultClient *FaultClient::create_client(void)
+{
+    return new FaultClient(U("http://127.0.0.1:8888"));
+}
+
+void FaultClient::rep_push(web::json::value& postData, const std::wstring& uri)
+{
+    auto postResponse = post(postData, uri).get();
+    if (postResponse.status_code() != 200) {
+        wstring log = postResponse.extract_string().get();
+        LOG_ERR("Post response content: {}", string(log.begin(), log.end()));
+    }
+}
+

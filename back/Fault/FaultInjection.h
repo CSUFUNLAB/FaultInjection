@@ -3,6 +3,7 @@
 #include <string>
 #include "SshSession.h"
 
+// 使用ssh注入故障，每次只能注入一个故障，不可重复使用
 class FaultBase {
 public:
     FaultBase(SshSession* ssh, std::string& para) : m_ssh(ssh), m_para(para) {};
@@ -16,13 +17,12 @@ public:
     virtual int32_t recover_injection(void) = 0;
 };
 
-// 每次只能注入一个故障，不可重复使用
 class NodeCrash : public FaultBase {
 public:
     using FaultBase::FaultBase;
 
     int32_t fault_injection(void) override;
-    int32_t recover_injection(void) override;
+    int32_t recover_injection(void) override { return 0; }; // crash故障原理是重启，无需恢复
 };
 
 class NetworkCongestionSsh : public SshSession {

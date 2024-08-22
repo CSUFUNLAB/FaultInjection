@@ -197,8 +197,7 @@ void DataInfo::upload_info(void)
         tcp = "udp";
     }
 #endif
-    LOG_DEBUG("[{}] {}" + arrow + "{} {} time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}] lost[{}%]",
-        m_node->ip,
+    LOG_DEBUG("{}" + arrow + "{} {} time[{}] transfer[{}*{}] band[{}*{}] err[{}] retry[{}] rtt[{}] lost[{}%]",
         m_iperf_info.self_node,
         m_iperf_info.pair_node,
         tcp,
@@ -216,11 +215,10 @@ void DataInfo::upload_info(void)
     DataFile::get_instance()->send_data_info(m_iperf_info);
 }
 
-DataInfo::DataInfo(NodeInfo *self_node, NodeInfo *pair_node)
+DataInfo::DataInfo(uint32_t self_node, uint32_t pair_node)
 {
-    m_node = self_node;
-    m_iperf_info.self_node = m_node->index;
-    m_iperf_info.pair_node = pair_node->index;
+    m_iperf_info.self_node = self_node;
+    m_iperf_info.pair_node = pair_node;
 
     m_info_point_arry[0] = &m_iperf_info.sec;
     m_info_point_arry[1] = &m_iperf_info.transfer;
@@ -229,10 +227,11 @@ DataInfo::DataInfo(NodeInfo *self_node, NodeInfo *pair_node)
     m_info_point_arry[4] = &m_iperf_info.band_unit;
 }
 
-TcpClientDataInfo::TcpClientDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
+TcpClientDataInfo::TcpClientDataInfo(DataInfo::FlowId &flow_id) : DataInfo(flow_id.client_node_num, flow_id.server_node_num)
 {
     m_iperf_info.is_client = 1;
     m_iperf_info.trans_type = 0;
+    m_iperf_info.port = flow_id.port;
 
     m_transfer_str = tcp_client_transfer_str;
     m_info_point_arry[5] = &m_iperf_info.err;
@@ -241,28 +240,31 @@ TcpClientDataInfo::TcpClientDataInfo(NodeInfo *self_node, NodeInfo *pair_node) :
     m_info_num = 8;
 }
 
-TcpServerDataInfo::TcpServerDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
+TcpServerDataInfo::TcpServerDataInfo(DataInfo::FlowId &flow_id) : DataInfo(flow_id.server_node_num, flow_id.client_node_num)
 {
     m_iperf_info.is_client = 0;
     m_iperf_info.trans_type = 0;
+    m_iperf_info.port = flow_id.port;
 
     m_transfer_str = tcp_server_transfer_str;
     m_info_num = 5;
 }
 
-UdpClientDataInfo::UdpClientDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
+UdpClientDataInfo::UdpClientDataInfo(DataInfo::FlowId &flow_id) : DataInfo(flow_id.client_node_num, flow_id.server_node_num)
 {
     m_iperf_info.is_client = 1;
     m_iperf_info.trans_type = 1;
+    m_iperf_info.port = flow_id.port;
 
     m_transfer_str = tcp_server_transfer_str; // ¶þÕßÒ»ÖÂ
     m_info_num = 5;
 }
 
-UdpServerDataInfo::UdpServerDataInfo(NodeInfo *self_node, NodeInfo *pair_node) : DataInfo(self_node, pair_node)
+UdpServerDataInfo::UdpServerDataInfo(DataInfo::FlowId &flow_id) : DataInfo(flow_id.server_node_num, flow_id.client_node_num)
 {
     m_iperf_info.is_client = 0;
     m_iperf_info.trans_type = 1;
+    m_iperf_info.port = flow_id.port;
 
     m_transfer_str = udp_client_transfer_str;
     m_info_point_arry[5] = &m_iperf_info.lost;
@@ -306,7 +308,7 @@ void DataInfo::deal_iperf_line_echo(char* buffer)
         return;
     }
     while (token != nullptr) {
-        LOG_DEBUG("[{}][{}][{}]", m_node->ip, cout, token);
+        //LOG_DEBUG("[{}][{}][{}]",self_node, cout, token);
         if (get_info(cout, token) == 0) {
             break;
         }
@@ -322,7 +324,7 @@ void DataInfo::deal_iperf_echo(char* buffer)
     char* token = strtok_s(buffer, "\n", &next_token);
     while (token != nullptr) {
         //if (m_ip == "192.168.13.5") {
-        //    LOG_DEBUG("[{}]{}", m_node->ip, token);
+        //    LOG_DEBUG("[{}]{}", self_node, token);
         //}
         deal_iperf_line_echo(token);
         token = strtok_s(nullptr, "\n", &next_token);

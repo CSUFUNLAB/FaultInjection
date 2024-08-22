@@ -6,7 +6,7 @@
 
 class DataInfo {
 public:
-    DataInfo(NodeManager::NodeInfo *self_node, NodeManager::NodeInfo *pair_node);
+    DataInfo(uint32_t self_node, uint32_t pair_node);
 
     virtual void upload_info(void);
     int32_t get_info(int32_t index, char* token);
@@ -15,9 +15,18 @@ public:
 
     using GetDataInfo = int32_t(*)(const char* buff, void* info);
 
+    struct FlowId {
+        uint32_t client_node_num;
+        uint32_t server_node_num;
+        uint32_t time;
+        uint32_t port;
+        uint32_t *use_cout;
+    };
+
     struct IperfInfo {
         uint32_t self_node;
         uint32_t pair_node; // if is client, it is server node, otherwise
+        uint32_t port;
         uint32_t is_client; // 1 is client, 0 is server
         uint32_t trans_type; // 0: tcp; 1: udp
         uint32_t sec;
@@ -49,21 +58,21 @@ public:
 
 class TcpClientDataInfo : public DataInfo {
 public:
-    TcpClientDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
+    TcpClientDataInfo(DataInfo::FlowId &flow_id);
 };
 
 class TcpServerDataInfo : public DataInfo {
 public:
-    TcpServerDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
+    TcpServerDataInfo(DataInfo::FlowId &flow_id);
 };
 
 class UdpClientDataInfo : public DataInfo {
 public:
-    UdpClientDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
+    UdpClientDataInfo(DataInfo::FlowId &flow_id);
 };
 
 class UdpServerDataInfo : public DataInfo {
 public:
-    UdpServerDataInfo(struct NodeManager::NodeInfo *node_cilent, struct NodeManager::NodeInfo *node_server);
+    UdpServerDataInfo(DataInfo::FlowId &flow_id);
 };
 

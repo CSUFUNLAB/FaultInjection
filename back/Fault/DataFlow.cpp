@@ -25,7 +25,7 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     }
     info->use_cout = 2;
     info->begin = false;
-    DataFlowSsh::FlowId flow_id = {
+    DataInfo::FlowId flow_id = {
         info->client->index,
         info->server->index,
         info->time,
@@ -144,7 +144,7 @@ struct DataFlow::FlowInfo *DataFlow::add_data_flow(struct FlowInfo& info)
     return &flow_by_server->second.find(info.port)->second;
 }
 
-int32_t DataFlow::delete_data_flow(DataFlowSsh::FlowId &flow_id)
+int32_t DataFlow::delete_data_flow(DataInfo::FlowId &flow_id)
 {
     m_mtx.lock();
     do {
@@ -267,21 +267,21 @@ uint32_t DataFlow::band_width_str_to_num(std::string band_witdh_str)
     return atoi(band_witdh_str.c_str()) * k;
 }
 
-DataFlowSsh::DataFlowSsh(FlowId &flow_id, string &type, NodeManager::NodeInfo *node) : m_flow_id(flow_id), SshSession(node)
+DataFlowSsh::DataFlowSsh(DataInfo::FlowId &flow_id, string &type, NodeManager::NodeInfo *node) : m_flow_id(flow_id), SshSession(node)
 {
     NodeManager::NodeInfo* client_node = NodeManager::get_node_info(flow_id.client_node_num);
     NodeManager::NodeInfo* server_node = NodeManager::get_node_info(flow_id.server_node_num);
     if (flow_id.client_node_num == node->index) {
         if (type == "tcp") {
-            m_data_info = new TcpClientDataInfo(client_node, server_node);
+            m_data_info = new TcpClientDataInfo(flow_id);
         } else {
-            m_data_info = new UdpClientDataInfo(client_node, server_node);
+            m_data_info = new UdpClientDataInfo(flow_id);
         }
     } else {
         if (type == "tcp") {
-            m_data_info = new TcpServerDataInfo(server_node, client_node);
+            m_data_info = new TcpServerDataInfo(flow_id);
         } else {
-            m_data_info = new UdpServerDataInfo(server_node, client_node);
+            m_data_info = new UdpServerDataInfo(flow_id);
         }
     }
     m_cout = flow_id.time;

@@ -14,6 +14,9 @@ public:
 
 	static void push(web::json::value &postData, const std::wstring &uri);
 
+	static FaultClient *create_client(void);
+	void rep_push(web::json::value &postData, const std::wstring &uri); // 频繁发送的时候，使用此函数
+
 private:
 	http_client myClient;
 };

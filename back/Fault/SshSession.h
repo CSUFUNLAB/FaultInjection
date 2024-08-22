@@ -59,12 +59,13 @@ private:
 
     using CreditMap = std::map<const std::string, SshSession::Credit>;
 
-    static CreditMap credit_map;
+    CreditMap credit_map;
     static struct Credit error_credit;
     struct Credit &find_credit(const std::string &node_describe);
 
     void ssh_begin_read(void); // 读取ssh建立时一大段文字
     void send_cmd_thread(void);
     void only_send_cmd_thread(void);
+    void initialize_credit_map();
 };
 

@@ -4,32 +4,11 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <cpprest/filestream.h>
+#include <cpprest/json.h>
 
 using namespace std;
 
-SshSession::CreditMap SshSession::credit_map = {
-    {
-        "linux server",
-        {
-            "remote", // username
-            "MeanZhao%10", // password
-        },
-    },
-    {
-        "antsdr",
-        {
-            "root", // username
-            "openwifi", // password
-        },
-    },
-    {
-        "orangepi",
-        {
-            "orangepi", // username
-            "orangepi", // password
-        },
-    },
-};
 
 struct SshSession::Credit SshSession::error_credit = {
     "none", // username
@@ -38,6 +17,7 @@ struct SshSession::Credit SshSession::error_credit = {
 
 SshSession::SshSession(struct NodeManager::NodeInfo *node)
 {
+    initialize_credit_map();
     m_node_info = node;
     m_host = node->ip;
     Credit& credit = find_credit(node->describe);
@@ -291,3 +271,31 @@ void SshSession::only_send_cmd_thread(void)
     return;
 }
 
+// 初始化credit_map
+void SshSession::initialize_credit_map() {
+    // 打开配置文件
+    std::ifstream file("./config.json");
+    if (!file.is_open()) {
+        throw std::runtime_error("File Not Found: config.json not found.");
+    }
+
+    // 读取文件到字符串流中
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    file.close();
+
+    // 解析JSON数据
+    auto jsonValue = web::json::value::parse(buffer.str());
+    auto servers = jsonValue.at(U("servers")).as_array();
+
+    // 填充credit_map
+    for (const auto& server : servers) {
+        std::string servername = utility::conversions::to_utf8string(server.at(U("servername")).as_string());
+        std::string username = utility::conversions::to_utf8string(server.at(U("username")).as_string());
+        std::string password = utility::conversions::to_utf8string(server.at(U("password")).as_string());
+        Credit temp_credit;
+        temp_credit.username = username;
+        temp_credit.password = password;
+        credit_map[servername] = temp_credit;
+    }
+}

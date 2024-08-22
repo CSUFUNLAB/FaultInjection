@@ -16,6 +16,7 @@ struct SshSession::Credit SshSession::error_credit = {
 };
 SshSession::SshSession(struct NodeManager::NodeInfo *node)
 {
+    //³õÊ¼»¯credit_map
     initialize_credit_map();
     m_node_info = node;
     m_host = node->ip;

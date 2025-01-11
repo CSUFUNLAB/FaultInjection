@@ -8,7 +8,7 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
 ### Back 后端
 使用visual studio打开项目**back/Fault.sln**，运行代码，无报错，出现cmd窗口即成功。
 
-* visual studio  
+* visual studio 2022
     从官网下载安装，需要组件
     ![vs](image/vs.png)
 

@@ -6,9 +6,10 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
 ## 安装环境
 
 ### Back 后端
-使用visual studio打开项目**back/Fault.sln**，运行代码，无报错，出现cmd窗口即成功。
+使用visual studio打开项目**back/Fault.sln**，运行代码，无报错，出现cmd如下窗口即成功。
+![success](image/success.png)
 
-* visual studio 2022
+* visual studio 2022  
     从官网下载安装，需要组件
     ![vs](image/vs.png)
 
@@ -24,7 +25,7 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
     * 添加vcpkg目录至环境变量
     * 安装，vcpkg目录下
         ```
-        ./bootstrap-vcpkg.bat
+        .\bootstrap-vcpkg.bat
         ```
     * 整合至vs
         ```
@@ -37,9 +38,13 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
         * libssh 
         * cpprestsdk 
         * jsoncpp
+        * boost-filesystem
         * fmt  
             fmt存在兼容性问题，当报错时注释掉红框内模版
             ![fmt](image/fmt.png)
+    * utf-8兼容性  
+        不一定会出现，如果出现了注释掉红框模板
+        ![utf8](image/utf8.png)
 
 ### Front 前端
 安装npm软件，npm可以直接在cmd中运行验证安装成功。

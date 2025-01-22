@@ -83,6 +83,6 @@ void DataFile::send_data_info(DataInfo::IperfInfo &info)
     string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + m_file_dir + file_name + string("\n");
     LOG_DEBUG("{}",cmd_info);
     only_send_cmd(cmd_info);
-    DataFileClient::get_instance()->send(info);
+    // DataFileClient::get_instance()->send(info);
 }
 

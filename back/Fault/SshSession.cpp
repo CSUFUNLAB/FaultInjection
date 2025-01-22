@@ -14,6 +14,7 @@ struct SshSession::Credit SshSession::error_credit = {
     "none", // username
     "none", // password
 };
+
 SshSession::SshSession(struct NodeManager::NodeInfo *node)
 {
     //≥ı ºªØcredit_map

@@ -41,10 +41,10 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
     {
         3,
         string("orangepi"),
-        string("sta"),
+        string("adhoc"),
         string("wlan0"),
         string("f0:23:ae:09:80:bc"),
-        string("192.168.13.5"),
+        string("192.168.13.1"),
         true,
         nullptr,
     },
@@ -64,7 +64,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("54:78:c9:07:8a:cc"),
-        string("192.168.13.8"),
+        string("192.168.13.3"),
         true,
         nullptr,
     },
@@ -141,11 +141,13 @@ public:
     void cmd_end(void) override;
 
     void get_sta_ip(char* buff);
+    void get_adhoc_ip(char* buff);
     int32_t get_sta_ip_read_echo(int32_t cout, char *buff);
     int32_t sta_mac_to_ip(int32_t cout, char *buff);
     int32_t ap_dump_sta_mac(int32_t cout, char *buff);
-    static atomic<int> m_count;
-
+    int32_t arp_get_ip(int32_t cout, char* buff);
+    static atomic<int> m_count; // 等待ssh命令结束
+    bool m_is_ap; // true ap-sta, false adhoc
 
 private:
     int32_t m_cmd_index = 0;
@@ -174,8 +176,29 @@ int32_t NodeManagerSsh::sta_mac_to_ip(int32_t cout, char* buff)
                     node.ip = m_station_ip;
                     node.up_linked = m_node_info;
                     node.detected = true;
-                    LOG_INFO("node[{}] is sta of [{}]", m_station_ip, m_node_info->ip);
+                    LOG_INFO("node[{}] is sta of [{}]", m_station_ip);
                 }
+            }
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int32_t NodeManagerSsh::arp_get_ip(int32_t cout, char* buff)
+{
+    if (cout == 0 && isdigit(buff[0]) == 0) { // 只看ip地址开始的行
+        return 1;
+    }
+    if (cout == 0) {
+        m_station_ip = buff;
+    } else if (cout == 2) {
+        string get_mac = buff;
+        for (auto& node : NodeManager::m_node_info_list) {
+            if (node.mac == get_mac) {
+                node.ip = m_station_ip;
+                node.detected = true;
+                LOG_INFO("node[{}] is adhoc node", m_station_ip, m_node_info->ip);
             }
         }
         return 0;
@@ -243,9 +266,40 @@ void NodeManagerSsh::get_sta_ip(char *buff)
     }
 }
 
+void NodeManagerSsh::get_adhoc_ip(char* buff)
+{
+    char* space_token = nullptr;
+    char* next_space_token = nullptr;
+    char* next_line_token = nullptr;
+    char* line_token = strtok_s(buff, "\n", &next_line_token);
+    int32_t ret = -1;
+    int32_t cout; // of space token
+    while (line_token != nullptr) {
+        LOG_DEBUG("line {}", line_token);
+        space_token = strtok_s(line_token, " ", &next_space_token);
+        LOG_DEBUG("space {}", space_token);
+        cout = 0;
+        while (space_token != nullptr) {
+            ret = arp_get_ip(cout, space_token);
+            // > 0 表示跳过这一行，但是未找到结果
+            // = 0 表示这一行已经看完了，看下一行
+            if (ret >= 0) {
+                break;
+            }
+            cout++;
+            space_token = strtok_s(nullptr, " ", &next_space_token);
+        }
+        line_token = strtok_s(nullptr, "\n", &next_line_token);
+    }
+}
+
 void NodeManagerSsh::read_echo(char* data)
 {
-    get_sta_ip(data);
+    if (m_is_ap) {
+        get_sta_ip(data);
+    } else {
+        get_adhoc_ip(data);
+    }
 }
 
 void NodeManagerSsh::cmd_end(void)
@@ -259,21 +313,35 @@ int32_t NodeManager::get_sta_ip(NodeInfo &info)
 {
     NodeManagerSsh *ssh = new NodeManagerSsh(&info);
     ssh->m_always_read = true;
+    ssh->m_is_ap = true;
 
     int32_t ret = ssh->open();
     ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);
 
     ssh->m_last_cmd = false;
-
     ssh->m_count.fetch_add(1);
-
     ssh->send_cmd(string("iw dev sdr0 station dump | grep Station") + "\n");
 
     return 0;
 }
 
+int32_t NodeManager::get_adhoc_ip(NodeInfo& info)
+{
+    NodeManagerSsh *ssh = new NodeManagerSsh(&info);
+    ssh->m_always_read = true;
+    ssh->m_is_ap = false;
+
+    int32_t ret = ssh->open();
+    ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);
+
+    ssh->m_count.fetch_add(1);
+    ssh->send_cmd(string("arp -n") + "\n");
+    return 0;
+}
+
 void NodeManager::get_all_sta_ip(void)
 {
+    int32_t ret;
     m_node_info_list[0].up_linked = &m_node_info_list[0];
     m_node_info_list[1].up_linked = &m_node_info_list[0];
     m_node_info_list[2].up_linked = &m_node_info_list[1];
@@ -282,17 +350,25 @@ void NodeManager::get_all_sta_ip(void)
         node.detected = false;
     }
     // TODO: 使用ping来检测ap
+    m_node_info_list[3].detected = true;
+    for (auto& node : NodeManager::m_node_info_list) {
+        if (node.type == "adhoc") {
+            ret = get_adhoc_ip(node);
+            break;
+        }
+    }
+    /*
     m_node_info_list[0].detected = true;
     m_node_info_list[1].detected = true;
     m_node_info_list[2].detected = true;
 
-    int32_t ret;
     for (auto& node : NodeManager::m_node_info_list) {
         if (node.type == "ap") {
             ret = get_sta_ip(node);
             LOG_INFO("scan node[{}]", node.index);
         }
     }
+    */
     while (NodeManagerSsh::m_count != 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

@@ -29,7 +29,7 @@ public:
     virtual void cmd_end(void); // 覆写使用
     virtual void read_echo(char *data); // 覆写使用
 
-    struct NodeManager::NodeInfo* m_node_info = nullptr;
+    struct NodeManager::NodeInfo* m_node_info = nullptr; // ssh目标节点信息
     int32_t m_nbytes; // 读取ssh返回字节数
     int32_t m_cout = 0; // 至少等待时间
     bool m_send_cmd = false; // 是否有待发送消息，发送后会置false

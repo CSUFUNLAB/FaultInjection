@@ -31,5 +31,6 @@ public:
 private:
     static std::string m_error_return;
     static int32_t get_sta_ip(NodeInfo& info);
+    static int32_t get_adhoc_ip(NodeInfo& info);
 };
 

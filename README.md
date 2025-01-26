@@ -81,3 +81,14 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
 ![back_debug](image/back_debug.png)
 运行代码，无报错，出现cmd如下窗口即成功。
 ![success](image/success.png)
+
+## 启动脚本
+一些systemd开机启动脚本用于初始化环境
+### 设置方法
+在`/etc/systemd/system`中创建service后缀文件，其中包含需要开机运行sh脚本路径，开机脚本需要`chmod 777`修改权限  
+使用`systemctl start service_name`，检查脚本是否可以运行，一般是脚本权限问题，service是service文件去掉后缀的名字
+使用`systemctl enable server_name`，设置服务为开机启动
+
+### 已有脚本
+* openwifi 启动自动初始化wifi模块
+* orangepi adhoc启动自动ping其他机器

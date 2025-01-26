@@ -52,3 +52,32 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
 ### 终端工具
 控制板子需要终端工具，推荐**MobaXterm**，控制orangepi的板子需要一个额外的usb转串口硬件CH340，串口属性:
 ![fmt](image/serial.jpg)
+
+## 执行
+
+### 前端
+
+* 在front文件夹中打开命令行 
+* 编译命令，只需执行一次
+    ```
+    npm install
+    ```
+* 运行命令，编译后可仅执行此命令
+    ```
+    npm run serve
+    ```
+    cmd中会生成一个网站，打开即为前端
+    ![front_web](image/front_web.png)
+* 前端服务端  
+    打开前端网站后会报错
+    ![front_error](image/front_error.png)
+    需要额外打开前端的服务端，在front/server文件夹中打开命令行，并且执行
+    ```
+    node.exe .\MyServer.js
+    ```
+    然后关掉网页报错
+### 后端
+使用vs生成并运行解决方案
+![back_debug](image/back_debug.png)
+运行代码，无报错，出现cmd如下窗口即成功。
+![success](image/success.png)

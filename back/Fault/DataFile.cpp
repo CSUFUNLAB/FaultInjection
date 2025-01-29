@@ -20,16 +20,18 @@ DataFile::DataFile(NodeManager::NodeInfo *node) : SshSession(node)
 
 void DataFile::cmd_end(void)
 {
-    close(); // 不detele this关了重新开
+    close(); // 不detele this，关了可以重新开
     m_ssh_close = true;
 }
 
-// 不知为何data file后面没有继续写入，那重新打开一下
+// 不知为何data file一段时间后无法写入，定时重新开关ssh
 void DataFile::daemon_threads(void)
 {
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(600));
         LOG_INFO("close data file");
+        // 置位flag，等待ssh消息发送完毕并且自动close后，回位flag并重新打开ssh
+        // 未打开ssh前flag是无效的，并不存在时序问题
         m_broken_cmd = true;
         while (!m_ssh_close) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -43,7 +45,7 @@ void DataFile::daemon_threads(void)
 
 DataFile *DataFile::get_instance(void)
 {
-    static DataFile* data_file = new DataFile(&NodeManager::m_node_info_list[0]);
+    static DataFile* data_file = new DataFile(&NodeManager::m_node_info_list[6]);
     return data_file;
 }
 

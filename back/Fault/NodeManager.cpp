@@ -15,7 +15,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("enp0s31f6"),
         string("18:c0:4d:0d:f5:e2"),
         string("192.168.3.82"),
-        true,
+        false,
         nullptr,
     },
     {
@@ -25,7 +25,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("eth0"),
         string("00:0a:35:00:01:22"),
         string("192.168.3.10"),
-        true,
+        false,
         nullptr,
     },
     {
@@ -35,17 +35,17 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sdr0"),
         string("66:55:44:33:22:09"),
         string("192.168.13.1"),
-        true,
+        false,
         nullptr,
     },
     {
         3,
         string("orangepi"),
-        string("adhoc"),
+        string("sta"),
         string("wlan0"),
         string("f0:23:ae:09:80:bc"),
         string("192.168.13.1"),
-        true,
+        false,
         nullptr,
     },
     {
@@ -55,7 +55,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("54:78:c9:07:8b:1c"),
         string("192.168.13.7"),
-        true,
+        false,
         nullptr,
     },
     {
@@ -65,7 +65,47 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("54:78:c9:07:8a:cc"),
         string("192.168.13.3"),
+        false,
+        nullptr,
+    },
+    {
+        6,
+        string("orangepi"),
+        string("adhoc_master"), // ap本身没有master的属性，这个ap表示是连接服务器的ap
+        string("wlan0"),
+        string("9c:b8:b4:5d:e8:54"),
+        string("192.168.13.1"),
         true,
+        nullptr,
+    },
+    {
+        7,
+        string("orangepi"),
+        string("adhoc"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:f6:9a"),
+        string("192.168.13.2"),
+        false,
+        nullptr,
+    },
+    {
+        8,
+        string("orangepi"),
+        string("adhoc"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:f7:98"),
+        string("192.168.13.3"),
+        false,
+        nullptr,
+    },
+    {
+        9,
+        string("orangepi"),
+        string("adhoc"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:f7:58"),
+        string("192.168.13.3"),
+        false,
         nullptr,
     },
 };
@@ -275,9 +315,9 @@ void NodeManagerSsh::get_adhoc_ip(char* buff)
     int32_t ret = -1;
     int32_t cout; // of space token
     while (line_token != nullptr) {
-        LOG_DEBUG("line {}", line_token);
+        // LOG_DEBUG("line {}", line_token);
         space_token = strtok_s(line_token, " ", &next_space_token);
-        LOG_DEBUG("space {}", space_token);
+        // LOG_DEBUG("space {}", space_token);
         cout = 0;
         while (space_token != nullptr) {
             ret = arp_get_ip(cout, space_token);
@@ -291,6 +331,7 @@ void NodeManagerSsh::get_adhoc_ip(char* buff)
         }
         line_token = strtok_s(nullptr, "\n", &next_line_token);
     }
+    LOG_DEBUG("get adhoc ip end");
 }
 
 void NodeManagerSsh::read_echo(char* data)
@@ -346,13 +387,10 @@ void NodeManager::get_all_sta_ip(void)
     m_node_info_list[1].up_linked = &m_node_info_list[0];
     m_node_info_list[2].up_linked = &m_node_info_list[1];
 
-    for (auto& node : NodeManager::m_node_info_list) {
-        node.detected = false;
-    }
     // TODO: 使用ping来检测ap
-    m_node_info_list[3].detected = true;
+    m_node_info_list[6].detected = true;
     for (auto& node : NodeManager::m_node_info_list) {
-        if (node.type == "adhoc") {
+        if (node.type == "adhoc_master") {
             ret = get_adhoc_ip(node);
             break;
         }

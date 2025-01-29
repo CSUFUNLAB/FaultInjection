@@ -1,0 +1,12 @@
+[Unit]
+Description=ping othres boards
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/home/orangepi/ping_others.sh
+User=root
+
+[Install]
+WantedBy=multi-user.target
+

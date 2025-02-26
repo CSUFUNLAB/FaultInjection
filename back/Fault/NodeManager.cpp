@@ -31,7 +31,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
     {
         2,
         string("antsdr"),
-        string("ap"),
+        string("abandon"),
         string("sdr0"),
         string("66:55:44:33:22:09"),
         string("192.168.13.1"),
@@ -41,10 +41,10 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
     {
         3,
         string("orangepi"),
-        string("sta"),
-        string("wlan0"),
+        string("ap"),
+        string("ap0"),
         string("f0:23:ae:09:80:bc"),
-        string("192.168.13.1"),
+        string("192.168.12.1"),
         false,
         nullptr,
     },
@@ -54,7 +54,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("54:78:c9:07:8b:1c"),
-        string("192.168.13.7"),
+        string("0.0.0.0"),
         false,
         nullptr,
     },
@@ -64,7 +64,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sta"),
         string("wlan0"),
         string("54:78:c9:07:8a:cc"),
-        string("192.168.13.3"),
+        string("0.0.0.0"),
         false,
         nullptr,
     },
@@ -75,7 +75,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:e8:54"),
         string("192.168.13.1"),
-        true,
+        false,
         nullptr,
     },
     {
@@ -84,7 +84,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("adhoc"),
         string("wlan0"),
         string("9c:b8:b4:5d:f6:9a"),
-        string("192.168.13.2"),
+        string("0.0.0.0"),
         false,
         nullptr,
     },
@@ -94,7 +94,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("adhoc"),
         string("wlan0"),
         string("9c:b8:b4:5d:f7:98"),
-        string("192.168.13.3"),
+        string("0.0.0.0"),
         false,
         nullptr,
     },
@@ -104,7 +104,57 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("adhoc"),
         string("wlan0"),
         string("9c:b8:b4:5d:f7:58"),
-        string("192.168.13.3"),
+        string("0.0.0.0"),
+        false,
+        nullptr,
+    },
+    {
+        10,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:f7:6c"),
+        string("0.0.0.0"),
+        false,
+        nullptr,
+    },
+    {
+        11,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:f7:6e"),
+        string("0.0.0.0"),
+        false,
+        nullptr,
+    },
+    {
+        12,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:f6:7c"),
+        string("0.0.0.0"),
+        false,
+        nullptr,
+    },
+    {
+        13,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:e6:fa"),
+        string("0.0.0.0"),
+        false,
+        nullptr,
+    },
+    {
+        14,
+        string("orangepi"),
+        string("sta"),
+        string("wlan0"),
+        string("9c:b8:b4:5d:e8:44"),
+        string("0.0.0.0"),
         false,
         nullptr,
     },
@@ -200,6 +250,9 @@ atomic<int> NodeManagerSsh::m_count = 0;
 
 int32_t NodeManagerSsh::sta_mac_to_ip(int32_t cout, char* buff)
 {
+    if (buff == nullptr) {
+        return 1;
+    }
     if (cout == 0 && isdigit(buff[0]) == 0) { // 只看ip地址开始的行
         return 1;
     }
@@ -216,7 +269,7 @@ int32_t NodeManagerSsh::sta_mac_to_ip(int32_t cout, char* buff)
                     node.ip = m_station_ip;
                     node.up_linked = m_node_info;
                     node.detected = true;
-                    LOG_INFO("node[{}] is sta of [{}]", m_station_ip);
+                    LOG_INFO("node[{}] is sta of [{}]", m_station_ip, node.ip);
                 }
             }
         }
@@ -248,15 +301,27 @@ int32_t NodeManagerSsh::arp_get_ip(int32_t cout, char* buff)
 
 int32_t NodeManagerSsh::ap_dump_sta_mac(int32_t cout, char* buff)
 {
-    if (cout == 0 && buff[0] != 'S') { // 只看Station开始的行
-        return 1;
+    // 不知道为什么，buff直接打印是Station，但是buff[i]一个个打印却包含异常字符
+    bool is_Station = false;
+    for (int i = 0; i < strlen(buff); i++) {
+        if (buff[i] == 'S') {
+            if (buff[i + 1] == 't') {
+                is_Station = true;
+                break;
+            }
+        }
+    }
+    if (cout == 0 && is_Station) { // 只看Station开始的行
+        LOG_DEBUG("read next space");
+        return -1;
     }
     if (cout == 1) {
         LOG_DEBUG("ap[{}] sta mac[{}]", m_node_info->ip, buff);
         m_station_mac.push_back(buff);
         return 0;
     }
-    return -1;
+    LOG_DEBUG("not Station begin line");
+    return 1;
 }
 
 int32_t NodeManagerSsh::get_sta_ip_read_echo(int32_t cout, char* buff)
@@ -286,7 +351,9 @@ void NodeManagerSsh::get_sta_ip(char *buff)
             ret = get_sta_ip_read_echo(cout, space_token);
             // > 0 表示跳过这一行，但是未找到结果
             // = 0 表示这一行已经看完了，看下一行
+            LOG_DEBUG("next space");
             if (ret >= 0) {
+                LOG_DEBUG("next line");
                 break;
             }
             cout++;
@@ -337,9 +404,9 @@ void NodeManagerSsh::get_adhoc_ip(char* buff)
 void NodeManagerSsh::read_echo(char* data)
 {
     if (m_is_ap) {
-        get_sta_ip(data);
+       get_sta_ip(data);
     } else {
-        get_adhoc_ip(data);
+       get_adhoc_ip(data);
     }
 }
 
@@ -361,7 +428,8 @@ int32_t NodeManager::get_sta_ip(NodeInfo &info)
 
     ssh->m_last_cmd = false;
     ssh->m_count.fetch_add(1);
-    ssh->send_cmd(string("iw dev sdr0 station dump | grep Station") + "\n");
+    string cmd_line = "iw dev " + info.dev + " station dump | grep Station";
+    ssh->send_cmd(cmd_line + "\n");
 
     return 0;
 }
@@ -387,7 +455,8 @@ void NodeManager::get_all_sta_ip(void)
     m_node_info_list[1].up_linked = &m_node_info_list[0];
     m_node_info_list[2].up_linked = &m_node_info_list[1];
 
-    // TODO: 使用ping来检测ap
+#if 0
+    // adhoc检测
     m_node_info_list[6].detected = true;
     for (auto& node : NodeManager::m_node_info_list) {
         if (node.type == "adhoc_master") {
@@ -395,18 +464,17 @@ void NodeManager::get_all_sta_ip(void)
             break;
         }
     }
-    /*
-    m_node_info_list[0].detected = true;
-    m_node_info_list[1].detected = true;
-    m_node_info_list[2].detected = true;
-
+#endif
+#if 1
+    // sta检测
+    m_node_info_list[3].detected = true;
     for (auto& node : NodeManager::m_node_info_list) {
         if (node.type == "ap") {
             ret = get_sta_ip(node);
             LOG_INFO("scan node[{}]", node.index);
         }
     }
-    */
+#endif
     while (NodeManagerSsh::m_count != 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

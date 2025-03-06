@@ -179,7 +179,7 @@ void random_fault(void)
     AppDown app_down = AppDown(nullptr, cout_string); // 第二个参数没用到
 
     SshSession remote_ssh(&NodeManager::m_node_info_list[0]);
-    remote_ssh.m_only_send = true;
+    remote_ssh.m_send_type = SshSession::QUEUE_CMD;
     remote_ssh.open();
 
     while (cout++ < 20) {

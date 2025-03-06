@@ -61,13 +61,7 @@ int32_t SshSession::open(void)
     rc = ssh_channel_open_session(m_channel);
     ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}]", m_node_info->index);
 
-    if (m_only_send) {
-        std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
-        channel_chread.detach();
-    } else {
-        std::thread channel_chread(&SshSession::send_cmd_thread, this);
-        channel_chread.detach();
-    }
+    send_thread();
 
     return 0;
 }
@@ -103,11 +97,14 @@ int32_t SshSession::only_open(void)
 
 void SshSession::send_thread(void)
 {
-    if (m_only_send) {
+    if (m_send_type == QUEUE_CMD) {
         std::thread channel_chread(&SshSession::only_send_cmd_thread, this);
         channel_chread.detach();
-    } else {
+    } else if (m_send_type == SHELL_SSH) {
         std::thread channel_chread(&SshSession::send_cmd_thread, this);
+        channel_chread.detach();
+    } else if (m_send_type == EXEC_CMD) {
+        std::thread channel_chread(&SshSession::exec_cmd_thread, this);
         channel_chread.detach();
     }
 }
@@ -208,14 +205,14 @@ void SshSession::send_cmd_thread(void)
         }
         buffer[m_nbytes] = '\0'; // ssh_channel_read_timeout 不添加结束符
         LOG_DEBUG("[{}]{}: {}", m_node_info->index, m_nbytes, buffer);
-        if (m_cout > 0) {
-            m_cout -= 1;
+        if (m_wait > 0) {
+            m_wait -= 1;
         }
         if (m_always_read || m_nbytes > 0) {
             read_echo(buffer);
         }
         // 如果带宽占满，可能会导致ssh消息堵住，从而直接结束，但是这也算一个故障
-        if (m_last_cmd && m_nbytes == 0 && m_cout <= 0) {
+        if (m_last_cmd && m_nbytes == 0 && m_wait <= 0) {
             LOG_INFO("[{}]ssh cmd nature end", m_node_info->index);
             break;
         }
@@ -237,6 +234,7 @@ void SshSession::only_send_cmd(const std::string &cmd)
     m_mtx.unlock();
 }
 
+// 用于纯发送，例如数据>>文件
 void SshSession::only_send_cmd_thread(void)
 {
     ssh_begin_read();
@@ -266,6 +264,19 @@ void SshSession::only_send_cmd_thread(void)
             continue;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    cmd_end();
+
+    return;
+}
+
+void SshSession::exec_cmd_thread(void)
+{
+    int32_t ret;
+
+    ret = ssh_channel_request_exec(m_channel, m_cmd.c_str());
+    if (ret != 0) {
+        LOG_ERR("[{}]send cmd[{}]: {}", m_node_info->index, ret, m_cmd);
     }
     cmd_end();
 

@@ -12,7 +12,7 @@ string DataFile::serialie_int_data_info(uint32_t *num)
 
 DataFile::DataFile(NodeManager::NodeInfo *node) : SshSession(node)
 {
-    m_only_send = true;
+    m_send_type = QUEUE_CMD;
     open();
     std::thread channel_chread(&DataFile::daemon_threads, this);
     channel_chread.detach();

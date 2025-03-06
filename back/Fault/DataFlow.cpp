@@ -284,13 +284,14 @@ DataFlowSsh::DataFlowSsh(DataInfo::FlowId &flow_id, string &type, NodeManager::N
             m_data_info = new UdpServerDataInfo(flow_id);
         }
     }
-    m_cout = flow_id.time;
+    m_wait = flow_id.time;
     m_data_info->m_begin_time = BeginTime::get_instance()->get_time();
 }
 
 void DataFlowSsh::read_echo(char* data)
 {
-    m_data_info->deal_iperf_echo(data);
+    // 
+    // m_data_info->deal_iperf_echo(data);
 }
 
 void DataFlowSsh::cmd_end(void)

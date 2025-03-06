@@ -130,9 +130,9 @@ net.ipv4.conf.all.accept_redirects = 0
 * 在3上添加路由，往1发的消息往2发送
 * 2上打开ip转发。
 
-四块板子设置路由如下，1号到4号板ip为192.168.13.1-4，192.168.3.0为服务器有线网段
+四块板子设置路由如下，1号到4号板ip为192.168.13.1-4，192.168.3.0为电脑有线网段
 ```
-# 服务器
+# windows电脑
 # 192.168.3.24是1号板有线网卡eth0的ip
 route ADD 192.168.13.0 MASK 255.255.255.0 192.168.3.24
 
@@ -153,3 +153,47 @@ route add -net 192.168.3.0 netmask 255.255.255.0 gw 192.168.13.3
 ip route add 192.168.13.1/32 via 192.168.13.3
 ip route add 192.168.13.2/32 via 192.168.13.3
 ```
+
+### 创建ap
+orangepi自带脚本，创建ap并且共享eth0的网络，创建出来的网卡为ap0
+```
+sudo create_ap -m nat wlan0 eth0 orangepi orangepi
+```
+
+### 一个桌面板linux作为外网中转
+网络拓扑如下
+CSU-WIFI --- 桌面板linux --网线-- 服务器板linux --- 自组网wifi
+#### dhcp服务器
+```
+# 安装
+apt install isc-dhcp-server -y
+
+# 编辑 /etc/default/isc-dhcp-server
+INTERFACESv4="eth0"
+
+# 编辑/etc/dhcp/dhcpd.conf
+# 允许 DHCP 服务分配 IP 地址（取消注释）
+authoritative;
+# 定义子网（添加）
+subnet 192.168.4.0 netmask 255.255.255.0 {
+  range 192.168.4.2 192.168.4.254;
+  option routers 192.168.4.1;
+  option broadcast-address 192.168.4.255;
+}
+# 关闭dhcpd.conf文件
+
+# 设置eth0 ip
+nmcli con mod "Wired connection 1" ipv4.method manual ipv4.addresses 192.168.4.1/24
+# 启动服务器
+sudo systemctl restart isc-dhcp-server
+```
+
+#### 外网
+板子可以连接csu-wifi来连接外网
+* 板子通过网线连接电脑，电脑共享wifi网络给有线
+* wlan0的metric改为50，比eth0的小即可
+    sudo nmcli connection modify CSU-WIFI ipv4.route-metric 50
+* 板子上运行chromium-browser，可以通过ssh打开chrome浏览器
+* 板子上打开的浏览器中，打开认证网页，断开认证
+* 断开电脑wifi
+* 板子上打开的浏览器中，重新认证

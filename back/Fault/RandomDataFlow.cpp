@@ -180,14 +180,14 @@ void random_fault(void)
 
     SshSession remote_ssh(&NodeManager::m_node_info_list[0]);
     remote_ssh.m_send_type = SshSession::QUEUE_CMD;
-    remote_ssh.open();
+    remote_ssh.open_and_send();
 
     while (cout++ < 20) {
         LOG_INFO("test[{}] begin", cout);
         NodeManager::get_all_sta_ip();
         cout_string = to_string(cout);
         file_dir = string("~/fault_data/app_down_") + cout_string;
-        remote_ssh.only_send_cmd(string("mkdir ") + file_dir + string("\n"));
+        remote_ssh.queue_send_cmd(string("mkdir ") + file_dir + string("\n"));
         DataFile::m_file_dir = file_dir + string("/");
 
         RandomDataFlow::get_instance()->generate_pair_flow();

@@ -14,7 +14,7 @@ FaultBase::~FaultBase()
 
 int32_t NodeCrash::fault_injection(void)
 {
-    int32_t ret = m_ssh->open();
+    int32_t ret = m_ssh->open_and_send();
     ERR_RETURN(ret != 0, -1, "open ssh failed");
     m_ssh->send_cmd("reboot\n");
     return 0;
@@ -24,7 +24,7 @@ int32_t NetworkCongestion::fault_injection(void)
 {
     m_is_fault = true;
     m_ssh->m_last_cmd = false;
-    int32_t ret = m_ssh->open();
+    int32_t ret = m_ssh->open_and_send();
     ERR_RETURN(ret != 0, -1, "open ssh failed");
     m_ssh->send_cmd("modprobe iptable_mangle\n");
     return 0;
@@ -40,7 +40,7 @@ void NetworkCongestionSsh::read_echo(char* data)
 int32_t NetworkCongestion::recover_injection(void)
 {
     m_is_fault = false;
-    int32_t ret = m_ssh->open();
+    int32_t ret = m_ssh->open_and_send();
     ERR_RETURN(ret != 0, -1, "open ssh failed");
     m_ssh->send_cmd(string("tc qdisc del dev ") + m_ssh->m_node_info->dev + string(" root\n"));
     return 0;

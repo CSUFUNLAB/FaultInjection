@@ -35,7 +35,7 @@ struct SshSession::Credit& SshSession::find_credit(const string &node_describe)
     return it->second;
 }
 
-int32_t SshSession::open(void)
+int32_t SshSession::open_and_send(void)
 {
     // 初始化SSH会话
     m_session = ssh_new();
@@ -227,7 +227,7 @@ void SshSession::send_cmd_thread(void)
     return;
 }
 
-void SshSession::only_send_cmd(const std::string &cmd)
+void SshSession::queue_send_cmd(const std::string &cmd)
 {
     m_mtx.lock();
     m_cmd_queue.push(cmd);

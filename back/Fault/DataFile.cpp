@@ -13,7 +13,7 @@ string DataFile::serialie_int_data_info(uint32_t *num)
 DataFile::DataFile(NodeManager::NodeInfo *node) : SshSession(node)
 {
     m_send_type = QUEUE_CMD;
-    open();
+    open_and_send();
     std::thread channel_chread(&DataFile::daemon_threads, this);
     channel_chread.detach();
 }
@@ -39,7 +39,7 @@ void DataFile::daemon_threads(void)
         m_ssh_close = false;
         m_broken_cmd = false;
         LOG_INFO("open data file");
-        open();
+        open_and_send();
     }
 }
 
@@ -84,7 +84,7 @@ void DataFile::send_data_info(DataInfo::IperfInfo &info)
     }
     string cmd_info = string("echo ") + serialie_data_info(info) + string(" >> ") + m_file_dir + file_name + string("\n");
     LOG_DEBUG("{}",cmd_info);
-    only_send_cmd(cmd_info);
+    queue_send_cmd(cmd_info);
     // DataFileClient::get_instance()->send(info);
 }
 

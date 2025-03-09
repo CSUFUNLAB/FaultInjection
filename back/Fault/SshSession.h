@@ -18,10 +18,10 @@ public:
     using CmdEnd = std::function<void(void)>;
     using CharDeal = std::function<void(char* data)>;
 
-    int32_t open(void);
+    int32_t open_and_send(void); // open 会同时创建send_thread
+    int32_t only_open(void); // only open 不会创建send_thread
     void send_cmd(const std::string &cmd); // 没有回复消息，不再需要发命令，会自动结束ssh
-    void only_send_cmd(const std::string &cmd); // 用于大量命令发送的场景
-    int32_t only_open(void);
+    void queue_send_cmd(const std::string &cmd); // 用于大量命令发送的场景
     void send_thread(void);
     void broken_cmd(void);
     void close(void); // 非阻塞read返回数据时close会崩溃

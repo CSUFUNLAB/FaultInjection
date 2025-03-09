@@ -424,7 +424,7 @@ int32_t NodeManager::get_sta_ip(NodeInfo &info)
     ssh->m_always_read = true;
     ssh->m_is_ap = true;
 
-    int32_t ret = ssh->open();
+    int32_t ret = ssh->open_and_send();
     ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);
 
     ssh->m_last_cmd = false;
@@ -441,7 +441,7 @@ int32_t NodeManager::get_adhoc_ip(NodeInfo& info)
     ssh->m_always_read = true;
     ssh->m_is_ap = false;
 
-    int32_t ret = ssh->open();
+    int32_t ret = ssh->open_and_send();
     ERR_RETURN_PRINT(ret != NORMAL_OK, -NORMAL_ERR, "open src ssh[{}]", info.ip);
 
     ssh->m_count.fetch_add(1);

@@ -9,9 +9,11 @@
 
 using namespace std;
 
-DataFlow::FlowInfoServerMap DataFlow::m_flow_info_map;
-
-mutex DataFlow::m_mtx;
+DataFlow* DataFlow::get_instance(void)
+{
+    static DataFlow* p = new DataFlow();
+    return p;
+}
 
 int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
 {
@@ -53,7 +55,7 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     info->client_ssh->send_thread();
     info->server_ssh->send_thread();
 
-    std::thread channel_chread(&DataFlow::send_cmd_thread, info);
+    std::thread channel_chread(&DataFlow::send_cmd_thread, DataFlow::get_instance(), info);
     channel_chread.detach();
 
     return 0;
@@ -308,7 +310,7 @@ void DataFlowSsh::cmd_end(void)
     }
     mtx.unlock();
     if (need_detele_flow) {
-        DataFlow::delete_data_flow(m_flow_id);
+        DataFlow::get_instance()->delete_data_flow(m_flow_id);
     }
     delete this;
 }

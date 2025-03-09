@@ -38,7 +38,7 @@ void InjectDataFlow::handlerData(http_request &message)
         nullptr,
         nullptr,
     };
-    int32_t ret = DataFlow::creat_data_flow(flow_info);
+    int32_t ret = DataFlow::get_instance()->creat_data_flow(flow_info);
     ret = ret == 0 ? 200 : 300 - ret;
     m_handler_info.code = ret;
     //m_handler_info.msg = "success";

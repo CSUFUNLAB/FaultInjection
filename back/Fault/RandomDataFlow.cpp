@@ -164,7 +164,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
             nullptr,
             nullptr,
         };
-        DataFlow::creat_data_flow(flow_info);
+        DataFlow::get_instance()->creat_data_flow(flow_info);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     LOG_INFO("end");
@@ -201,11 +201,11 @@ void random_fault(void)
 
         RandomDataFlow::get_instance()->stop_generate_pair_flow();
         std::this_thread::sleep_for(std::chrono::seconds(10));
-        DataFlow::close_all_data_flow();
+        DataFlow::get_instance()->close_all_data_flow();
         app_down.recover_injection();
         std::this_thread::sleep_for(std::chrono::seconds(5));
         // 不明白为什么仍然有没被删除的flow，理论上close是用broken删除的，只要结束了就一定可以删除
-        DataFlow::detect_all_data_flow();
+        DataFlow::get_instance()->detect_all_data_flow();
     }
 }
 

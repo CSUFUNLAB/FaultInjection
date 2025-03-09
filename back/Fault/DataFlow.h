@@ -37,21 +37,28 @@ public:
         bool begin; // flow的ssh是否开始，未开始不能删除info
     };
 
-    static int32_t creat_data_flow(struct FlowInfo& info);
-    static void get_all_data_flow(std::vector<struct FlowInfo> &info);
-    static void close_all_data_flow(void);
-    static int32_t close_data_flow_server(int32_t server_node_num); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
-    static int32_t delete_data_flow(DataInfo::FlowId &flow_id); // 先结束消息才能调用这个接口
-    static uint32_t band_width_str_to_num(std::string band_witdh_str);
-    static bool detect_all_data_flow(void);
+    typedef enum IperfType {
+        SAVE_FILE,
+        ONLINE_PARSING,
+    };
+
+    static DataFlow* get_instance(void);
+
+    int32_t creat_data_flow(struct FlowInfo& info);
+    void get_all_data_flow(std::vector<struct FlowInfo> &info);
+    void close_all_data_flow(void);
+    int32_t close_data_flow_server(int32_t server_node_num); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
+    int32_t delete_data_flow(DataInfo::FlowId &flow_id); // 先结束消息才能调用这个接口
+    uint32_t band_width_str_to_num(std::string band_witdh_str);
+    bool detect_all_data_flow(void);
 
 private:
     using FlowInfoPortMap = std::map<int32_t, struct FlowInfo>; // 第一个参数为port
     using FlowInfoServerMap = std::map<int32_t, FlowInfoPortMap>; // 第一个参数为server node num
-    static FlowInfoServerMap m_flow_info_map;
-    static struct FlowInfo *add_data_flow(struct FlowInfo &info);
-    static void send_cmd_thread(FlowInfo* info);
-    static std::mutex m_mtx;
+    FlowInfoServerMap m_flow_info_map;
+    struct FlowInfo *add_data_flow(struct FlowInfo &info);
+    void send_cmd_thread(FlowInfo* info);
+    std::mutex m_mtx;
 };
 
 class DataFlowClient {

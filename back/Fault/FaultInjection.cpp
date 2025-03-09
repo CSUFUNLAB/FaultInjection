@@ -46,13 +46,15 @@ int32_t NetworkCongestion::recover_injection(void)
     return 0;
 }
 
+//  app down 的错误注入方式改为建立连接的客户端和服务端时间不对称
 int32_t AppDown::fault_injection(void)
 {
     NodeManager::NodeInfo *node = NodeManager::get_node_info(atoi(m_para.c_str()));
     ERR_RETURN(node == nullptr, -NO_NODE, "get node info failed");
     LOG_INFO("node[{}] has fault app down", node->index);
     node->server_fault = true;
-    return DataFlow::close_data_flow_server(node->index);
+    return DataFlow::get_instance()->close_data_flow_server(node->index);
+
 }
 
 int32_t AppDown::recover_injection(void)

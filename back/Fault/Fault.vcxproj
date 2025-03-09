@@ -145,6 +145,7 @@
     <ClCompile Include="RandomDataFlow.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerHandler.cpp" />
+    <ClCompile Include="ShellScript.cpp" />
     <ClCompile Include="SshSession.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +166,7 @@
     <ClInclude Include="RandomDataFlow.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="ServerHandler.h" />
+    <ClInclude Include="ShellScript.h" />
     <ClInclude Include="SshSession.h" />
   </ItemGroup>
   <ItemGroup>

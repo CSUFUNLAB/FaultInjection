@@ -278,6 +278,9 @@ void SshSession::exec_cmd_thread(void)
     if (ret != 0) {
         LOG_ERR("[{}]send cmd[{}]: {}", m_node_info->index, ret, m_cmd);
     }
+    if (m_wait > 0) {
+        std::this_thread::sleep_for(std::chrono::seconds(m_wait));
+    }
     cmd_end();
 
     return;

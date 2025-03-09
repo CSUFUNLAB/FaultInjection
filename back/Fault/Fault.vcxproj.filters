@@ -99,6 +99,9 @@
     <ClCompile Include="GPTClient.cpp">
       <Filter>源文件\GPT</Filter>
     </ClCompile>
+    <ClCompile Include="ShellScript.cpp">
+      <Filter>源文件\Network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -154,6 +157,9 @@
     </ClInclude>
     <ClInclude Include="GPTClient.h">
       <Filter>头文件\GPT</Filter>
+    </ClInclude>
+    <ClInclude Include="ShellScript.h">
+      <Filter>头文件\Network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

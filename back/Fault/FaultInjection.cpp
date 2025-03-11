@@ -46,7 +46,9 @@ int32_t NetworkCongestion::recover_injection(void)
     return 0;
 }
 
-//  app down 的错误注入方式改为建立连接的客户端和服务端时间不对称
+// 这里面app down的原理是让某一个节点的app全部无法执行，这是不合理的
+// 应该是app执行到一半，某一个app失效
+//  app down 的错误注入方式应该改为建立连接的客户端和服务端时间不对称
 int32_t AppDown::fault_injection(void)
 {
     NodeManager::NodeInfo *node = NodeManager::get_node_info(atoi(m_para.c_str()));

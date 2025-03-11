@@ -13,6 +13,7 @@ std::ofstream &logfile(void)
 
 int main(int argc, char* argv[]) {
 	
+	/*
 	SshSession* ssh = new SshSession(&NodeManager::m_node_info_list[10]);
 	ssh->m_send_type = SshSession::EXEC_CMD;
 	ssh->only_open();
@@ -27,6 +28,7 @@ int main(int argc, char* argv[]) {
 
 	ssh->send_cmd("nohup iperf3 -c 192.168.12.1 -i 1 -t 4 > data.txt &");
 	ssh->send_thread();
+    */
 
 	// nohup sh -c "date +%s && iperf3 -c 192.168.4.2 -i 1 -t 4" > data.txt 
 	// nohup timeout 10 iperf3 -s -i 1 > data.txt &

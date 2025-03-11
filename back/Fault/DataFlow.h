@@ -39,8 +39,10 @@ public:
 
     typedef enum IperfType {
         SAVE_FILE,
-        ONLINE_PARSING,
+        ONLINE_PARSING, // 为了SAVE_FILE，此选项目前不保证可用
     };
+
+    IperfType m_iperf_type = SAVE_FILE;
 
     static DataFlow* get_instance(void);
 
@@ -58,6 +60,8 @@ private:
     FlowInfoServerMap m_flow_info_map;
     struct FlowInfo *add_data_flow(struct FlowInfo &info);
     void send_cmd_thread(FlowInfo* info);
+    void save_file_cmd(FlowInfo* info);
+    void online_parsing_cmd(FlowInfo* info);
     std::mutex m_mtx;
 };
 

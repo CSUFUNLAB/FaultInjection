@@ -37,32 +37,8 @@ struct SshSession::Credit& SshSession::find_credit(const string &node_describe)
 
 int32_t SshSession::open_and_send(void)
 {
-    // 初始化SSH会话
-    m_session = ssh_new();
-
-    ERR_RETURN_DEBUG_PRINT(m_session == nullptr, -NORMAL_ERR, "create ssh session[{}][{}]", m_host, m_username);
-
-    // 设置SSH服务器连接信息
-    ssh_options_set(m_session, SSH_OPTIONS_HOST, m_host.c_str());
-    ssh_options_set(m_session, SSH_OPTIONS_USER, m_username.c_str());
-    // 连接SSH服务器
-    int32_t rc = ssh_connect(m_session);
-    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "connect ssh server[{}][{}]", m_host, m_username);
-
-    // 认证用户
-    rc = ssh_userauth_password(m_session, NULL, m_password.c_str());
-    ERR_RETURN_DEBUG_PRINT(rc != SSH_OK, -NORMAL_ERR, "authenticate ssh user[{}][{}]", m_host, m_username);
-
-    m_channel = ssh_channel_new(m_session);
-    ERR_RETURN_DEBUG_PRINT(m_channel == nullptr, -NORMAL_ERR, "create ssh channel[{}][{}]", m_host, m_username);
-
-    LOG_DEBUG("[{}][{}]ssh open", m_host, m_username);
-
-    rc = ssh_channel_open_session(m_channel);
-    ERR_RETURN_PRINT(rc != SSH_OK, -NORMAL_ERR, "open ssh channel[{}]", m_node_info->index);
-
+    only_open();
     send_thread();
-
     return 0;
 }
 
@@ -274,7 +250,12 @@ void SshSession::exec_cmd_thread(void)
 {
     int32_t ret;
 
+    while (!m_send_cmd) { // 必须等待一条消息
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
     ret = ssh_channel_request_exec(m_channel, m_cmd.c_str());
+    m_send_cmd = false;
     if (ret != 0) {
         LOG_ERR("[{}]send cmd[{}]: {}", m_node_info->index, ret, m_cmd);
     }

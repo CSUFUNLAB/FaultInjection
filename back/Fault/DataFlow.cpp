@@ -61,7 +61,64 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     return 0;
 }
 
-void DataFlow::send_cmd_thread(FlowInfo *info)
+void DataFlow::send_cmd_thread(FlowInfo* info)
+{
+    if (m_iperf_type == SAVE_FILE) {
+        save_file_cmd(info);
+    } else if (m_iperf_type == ONLINE_PARSING) {
+        online_parsing_cmd(info);
+    } else {
+        LOG_ERR("err iperf type[{}]", (int)(m_iperf_type));
+    }
+}
+
+void DataFlow::save_file_cmd(FlowInfo* info)
+{
+    info->client_ssh->m_send_type = SshSession::EXEC_CMD;
+    info->server_ssh->m_send_type = SshSession::EXEC_CMD;
+    // app down故障在此处理
+    // wait在ssh里面只是关闭ssh的时间，用于delet flow空闲port，实际命令是nohup执行的，并不需要保持连接
+    info->client_ssh->m_wait = info->time + 2; // 多2s防止误差
+    info->server_ssh->m_wait = info->time + 3; // server先建立，多执行1s
+
+    string udp_cmd = "";
+    string len_cmd = "";
+    // clientnodeindex_servernode_index_isserver
+    string base_file_name = to_string(info->client->index) + string("_") + to_string(info->server->index);
+    string client_file_name = base_file_name + string("_0.csv");
+    string server_file_name = base_file_name + string("_1.csv");
+    if (info->type == "udp") {
+        udp_cmd = " -u";
+    } else { // tcp 过低的带宽要减小缓冲区
+        if (info->band.c_str()[info->band.size() - 1] == 'K') {
+            uint32_t band_val = atoi(info->band.c_str());
+            len_cmd = string(" -l ") + to_string(band_val * 128);
+        }
+    }
+    info->server_ssh->send_cmd(
+        string("nohup timeout ") + to_string(info->server_ssh->m_wait) +
+        string(" iperf -s -i 1 -p ") + to_string(info->port) +
+        string(" -J --logfile ") + server_file_name +
+        "\n");
+
+    while (info->server_ssh->m_send_cmd) { // 这行报错可能不是server_ssh不存在，是info不存在了
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    info->client_ssh->send_cmd(
+        string("iperf -c ") + info->server->ip +
+        string(" -i 1 -p ") + to_string(info->port) +
+        string(" -t ") + to_string(info->time) +
+        string(" -b ") + info->band +
+        len_cmd +
+        udp_cmd +
+        string(" -J --logfile ") + client_file_name +
+        "\n");
+
+    info->begin = true;
+}
+
+void DataFlow::online_parsing_cmd(FlowInfo *info)
 {
     string udp_cmd = "";
     string len_cmd = "";
@@ -77,6 +134,7 @@ void DataFlow::send_cmd_thread(FlowInfo *info)
     info->client->output_band += band_width;
     info->server->input_band += band_width;
 
+    // 这个故障属于节点所有app崩溃，是不太合理的
     if (info->server->server_fault) {
         LOG_INFO("server[{}] has app down fault, don't create server", info->server->index);
         info->server_ssh->send_cmd("\n"); // 这里还是发一条消息，用于client server pair结束

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 监控cpu mem 流量
+# 监控cpu mem net traffic
 # 作者 彭富
 
 # 未完成，需要在一个脚本内实现这些功能

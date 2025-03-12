@@ -4,6 +4,7 @@
       <el-card>
         <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">节点信息</p>
         <el-button type="primary" @click="detectNodes()" class="button_class">检测节点</el-button>
+        <el-button type="success" @click="functionalTest()" class="button_class" style="margin-right: 10px">功能测试</el-button>
         <el-table :data="nodeInfoData" max-height="250" border stripe highlight-current-row>
           <el-table-column
               v-for="(item, index) in nodeInfoColumn"
@@ -106,6 +107,10 @@ export default {
     this.clear();
   },
   methods: {
+    // 功能测试按钮触发函数
+    functionalTest() {
+
+    },
     // 获取后端发送的输出表单数据
     async getDataStreamForServer() {
       const response = await axios.get('/front/get_data_stream');

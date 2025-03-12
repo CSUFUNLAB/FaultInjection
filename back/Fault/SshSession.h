@@ -38,13 +38,19 @@ public:
     uint32_t m_heart = 0;
     bool m_broken_cmd = false;
 
-    enum SshSendType {
+    typedef enum {
         SHELL_SSH, // 打开shell，有交互
         QUEUE_CMD, // 将需要发送的命令放入m_cmd_queue逐个发送，无回显
         EXEC_CMD, // 只发送一个命令，一般用于脚本，无回显
-    };
+    } SshSendType ;
 
     SshSendType m_send_type = SHELL_SSH;
+
+    // python ssh 是用python脚本打开cmd然后使用windows的openssh
+    // 不需要再次调用open send等函数
+    // 不支持QUEUE_CMD，SHELL_SSH仅读取一条命令的回复
+    // 尽量不在代码中写过于复杂的命令行逻辑，同时windows的cmd脚本太难写了，用python脚本
+    void python_ssh(std::string cmd);
 
 private:
     std::string m_host;
@@ -73,6 +79,7 @@ private:
     void ssh_begin_read(void); // 读取ssh建立时一大段文字
     void send_cmd_thread(void);
     void only_send_cmd_thread(void);
+    void python_ssh_thread(void);
     void exec_cmd_thread(void);
     void initialize_credit_map();
 };

@@ -123,8 +123,8 @@ void RandomDataFlow::generate_pair_flow_thread(void)
 
     while (m_generate_random_flow) {
         random_node.get_pair_node(node_src_num, node_dst_num);
-        node_src = NodeManager::get_node_info(node_src_num);
-        node_dst = NodeManager::get_node_info(node_dst_num);
+        node_src = NodeManager::get_instance()->get_node_info(node_src_num);
+        node_dst = NodeManager::get_instance()->get_node_info(node_dst_num);
         if (node_src == nullptr || node_dst == nullptr) {
             continue;
         }
@@ -184,7 +184,7 @@ void random_fault(void)
 
     while (cout++ < 20) {
         LOG_INFO("test[{}] begin", cout);
-        NodeManager::get_all_sta_ip();
+        NodeManager::get_instance()->get_all_sta_ip();
         cout_string = to_string(cout);
         file_dir = string("~/fault_data/app_down_") + cout_string;
         remote_ssh.queue_send_cmd(string("mkdir ") + file_dir + string("\n"));

@@ -37,11 +37,11 @@
     <Filter Include="源文件\Server\interface">
       <UniqueIdentifier>{7791bd31-8b00-4e69-8216-d506f69d9c7f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\GPT">
-      <UniqueIdentifier>{5ded0b14-062f-443f-a41c-d3428344b7e5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\GPT">
+    <Filter Include="头文件\Tools">
       <UniqueIdentifier>{3890c267-5113-4abd-bc88-82edc0923196}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Tools">
+      <UniqueIdentifier>{5ded0b14-062f-443f-a41c-d3428344b7e5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -97,7 +97,7 @@
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
     <ClCompile Include="GPTClient.cpp">
-      <Filter>源文件\GPT</Filter>
+      <Filter>源文件\Tools</Filter>
     </ClCompile>
     <ClCompile Include="ShellScript.cpp">
       <Filter>源文件\Network</Filter>
@@ -156,7 +156,7 @@
       <Filter>头文件\Server\interface</Filter>
     </ClInclude>
     <ClInclude Include="GPTClient.h">
-      <Filter>头文件\GPT</Filter>
+      <Filter>头文件\Tools</Filter>
     </ClInclude>
     <ClInclude Include="ShellScript.h">
       <Filter>头文件\Network</Filter>

@@ -34,10 +34,11 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
         info->port,
         &(info->use_cout),
     };
-    info->client_ssh = new DataFlowSsh(flow_id, info->type,info->client);
-    info->server_ssh = new DataFlowSsh(flow_id, info->type, info->server);
+    info->client_ssh = new DataFlowSsh(flow_id, info->client);
+    info->server_ssh = new DataFlowSsh(flow_id, info->server);
     m_mtx.unlock();
 
+    #if 0
     int32_t client_ret = info->client_ssh->only_open();
     int32_t server_ret = info->server_ssh->only_open();
     if (client_ret != NORMAL_OK || server_ret != NORMAL_OK) {
@@ -57,6 +58,9 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
 
     std::thread channel_chread(&DataFlow::send_cmd_thread, DataFlow::get_instance(), info);
     channel_chread.detach();
+    #endif
+
+    save_file_cmd(info);
 
     return 0;
 }
@@ -74,19 +78,17 @@ void DataFlow::send_cmd_thread(FlowInfo* info)
 
 void DataFlow::save_file_cmd(FlowInfo* info)
 {
-    info->client_ssh->m_send_type = SshSession::EXEC_CMD;
-    info->server_ssh->m_send_type = SshSession::EXEC_CMD;
     // app down故障在此处理
-    // wait在ssh里面只是关闭ssh的时间，用于delet flow空闲port，实际命令是nohup执行的，并不需要保持连接
+    // m_wait用于nohup结束时间，也是ssh结束时间
     info->client_ssh->m_wait = info->time + 2; // 多2s防止误差
-    info->server_ssh->m_wait = info->time + 3; // server先建立，多执行1s
+    info->server_ssh->m_wait = info->time + 2 + 7; // server先建立，从经验看需要额外7s
 
     string udp_cmd = "";
     string len_cmd = "";
     // clientnodeindex_servernode_index_isserver
     string base_file_name = to_string(info->client->index) + string("_") + to_string(info->server->index);
-    string client_file_name = base_file_name + string("_0.csv");
-    string server_file_name = base_file_name + string("_1.csv");
+    string client_file_name = base_file_name + string("_0.json");
+    string server_file_name = base_file_name + string("_1.json");
     if (info->type == "udp") {
         udp_cmd = " -u";
     } else { // tcp 过低的带宽要减小缓冲区
@@ -95,25 +97,26 @@ void DataFlow::save_file_cmd(FlowInfo* info)
             len_cmd = string(" -l ") + to_string(band_val * 128);
         }
     }
-    info->server_ssh->send_cmd(
-        string("nohup timeout ") + to_string(info->server_ssh->m_wait) +
-        string(" iperf -s -i 1 -p ") + to_string(info->port) +
+    info->server_ssh->python_ssh(
+        string("nohup timeout ") + to_string(info->server_ssh->m_wait) + string(" \\\"") +
+        string(" iperf3 -s -i 1 -p ") + to_string(info->port) +
         string(" -J --logfile ") + server_file_name +
-        "\n");
+        string("\\\""));
 
     while (info->server_ssh->m_send_cmd) { // 这行报错可能不是server_ssh不存在，是info不存在了
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    info->client_ssh->send_cmd(
-        string("iperf -c ") + info->server->ip +
+    info->client_ssh->python_ssh(
+        string("nohup timeout ") + to_string(info->client_ssh->m_wait) + string(" \\\"") +
+        string("iperf3 -c ") + info->server->ip +
         string(" -i 1 -p ") + to_string(info->port) +
         string(" -t ") + to_string(info->time) +
         string(" -b ") + info->band +
         len_cmd +
         udp_cmd +
         string(" -J --logfile ") + client_file_name +
-        "\n");
+        string("\\\""));
 
     info->begin = true;
 }
@@ -327,36 +330,8 @@ uint32_t DataFlow::band_width_str_to_num(std::string band_witdh_str)
     return atoi(band_witdh_str.c_str()) * k;
 }
 
-DataFlowSsh::DataFlowSsh(DataInfo::FlowId &flow_id, string &type, NodeManager::NodeInfo *node) : m_flow_id(flow_id), SshSession(node)
-{
-    NodeManager::NodeInfo* client_node = NodeManager::get_node_info(flow_id.client_node_num);
-    NodeManager::NodeInfo* server_node = NodeManager::get_node_info(flow_id.server_node_num);
-    if (flow_id.client_node_num == node->index) {
-        if (type == "tcp") {
-            m_data_info = new TcpClientDataInfo(flow_id);
-        } else {
-            m_data_info = new UdpClientDataInfo(flow_id);
-        }
-    } else {
-        if (type == "tcp") {
-            m_data_info = new TcpServerDataInfo(flow_id);
-        } else {
-            m_data_info = new UdpServerDataInfo(flow_id);
-        }
-    }
-    m_wait = flow_id.time;
-    m_data_info->m_begin_time = BeginTime::get_instance()->get_time();
-}
-
-void DataFlowSsh::read_echo(char* data)
-{
-    // 
-    // m_data_info->deal_iperf_echo(data);
-}
-
 void DataFlowSsh::cmd_end(void)
 {
-    delete m_data_info;
     DataFlowSsh::close();
     bool need_detele_flow = false;
     static mutex mtx;

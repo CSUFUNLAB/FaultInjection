@@ -29,8 +29,8 @@ void InjectDataFlow::handlerData(http_request &message)
 
     LOG_DEBUG("data flow: {} -> {} {} {} {}s", node_src, node_dst, type, band_width, send_time);
     DataFlow::FlowInfo flow_info = {
-        NodeManager::get_node_info(node_src),
-        NodeManager::get_node_info(node_dst),
+        NodeManager::get_instance()->get_node_info(node_src),
+        NodeManager::get_instance()->get_node_info(node_dst),
         band_width,
         0,
         send_time,
@@ -46,11 +46,11 @@ void InjectDataFlow::handlerData(http_request &message)
 
 void ScanNode::handlerData(http_request &message)
 {
-    NodeManager::get_all_sta_ip();
+    NodeManager::get_instance()->get_all_sta_ip();
     Json::Value nodes(Json::arrayValue);
     for (auto &node : NodeManager::m_node_info_list) {
         if (!node.detected) {
-            LOG_INFO("node[{}] not detected", node.index);
+            LOG_DEBUG("node[{}] not detected", node.index);
             continue;
         }
         Json::Value node_json;

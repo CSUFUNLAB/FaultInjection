@@ -12,12 +12,10 @@
 
 class DataFlowSsh : public SshSession {
 public:
-    DataFlowSsh(DataInfo::FlowId &flow_id, std::string &type, NodeManager::NodeInfo *node);
 
-    DataInfo* m_data_info = nullptr;
+    DataFlowSsh(DataInfo::FlowId& flow_id, NodeManager::NodeInfo* node) : m_flow_id(flow_id), SshSession(node) {};
     struct DataInfo::FlowId m_flow_id;
     void cmd_end(void) override;
-    void read_echo(char* data)  override;
 };
 
 // 每个dateflow配两个datainfo和两个sshsession
@@ -37,10 +35,10 @@ public:
         bool begin; // flow的ssh是否开始，未开始不能删除info
     };
 
-    typedef enum IperfType {
+    typedef enum {
         SAVE_FILE,
         ONLINE_PARSING, // 为了SAVE_FILE，此选项目前不保证可用
-    };
+    } IperfType;
 
     IperfType m_iperf_type = SAVE_FILE;
 

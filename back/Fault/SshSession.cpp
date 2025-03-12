@@ -295,3 +295,52 @@ void SshSession::initialize_credit_map() {
         credit_map[servername] = temp_credit;
     }
 }
+
+void SshSession::python_ssh(std::string cmd)
+{
+    string target = m_username + string(" ") + m_host + string(" ") + m_password + string(" ");
+    m_cmd = string("python ../../script/ssh_connect.py ") + target + string("\"") + cmd + string("\"");
+
+    m_send_cmd = true;
+    std::thread channel_chread(&SshSession::python_ssh_thread, this);
+    channel_chread.detach();
+}
+
+
+void SshSession::python_ssh_thread(void)
+{
+    LOG_INFO("[{}][{}] cmd {}", m_node_info->index, m_node_info->ip, m_cmd.c_str());
+
+    // 执行命令并打开管道
+    LOG_DEBUG("[{}][{}] begin send", m_node_info->index, m_node_info->ip);
+
+    FILE* pipe = _popen(m_cmd.c_str(), "r");
+    if (!pipe) {
+        LOG_ERR("[{}][{}] Failed to execute Python script!", m_node_info->index, m_node_info->ip);
+        return;
+    }
+
+    // popen应该是在后台执行，所以这个地方没有时间节点
+
+    // 无论如何把pipe中的缓冲读出来，否则直接关闭会报错
+    // 如果不需要读取，不覆写read_echo即可
+    char buffer[128];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        LOG_DEBUG("[Python Output] {}", buffer);
+        read_echo(buffer);
+    }
+
+    m_send_cmd = false;
+
+    // 关闭管道并检查返回值
+    int exit_code = _pclose(pipe);
+    if (exit_code != 0) {
+        LOG_ERR("[{}][{}] Python script failed with exit code: {}", m_node_info->index, m_node_info->ip, exit_code);
+    }
+    if (m_wait > 0) {
+        LOG_DEBUG("[{}][{}] wait {}", m_node_info->index, m_node_info->ip, m_wait);
+        std::this_thread::sleep_for(std::chrono::seconds(m_wait));
+    }
+    LOG_DEBUG("[{}][{}] cmd end", m_node_info->index, m_node_info->ip);
+    cmd_end();
+}

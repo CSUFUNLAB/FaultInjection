@@ -51,7 +51,7 @@ int32_t NetworkCongestion::recover_injection(void)
 //  app down 的错误注入方式应该改为建立连接的客户端和服务端时间不对称
 int32_t AppDown::fault_injection(void)
 {
-    NodeManager::NodeInfo *node = NodeManager::get_node_info(atoi(m_para.c_str()));
+    NodeManager::NodeInfo *node = NodeManager::get_instance()->get_node_info(atoi(m_para.c_str()));
     ERR_RETURN(node == nullptr, -NO_NODE, "get node info failed");
     LOG_INFO("node[{}] has fault app down", node->index);
     node->server_fault = true;
@@ -61,7 +61,7 @@ int32_t AppDown::fault_injection(void)
 
 int32_t AppDown::recover_injection(void)
 {
-    NodeManager::NodeInfo *node = NodeManager::get_node_info(atoi(m_para.c_str()));
+    NodeManager::NodeInfo *node = NodeManager::get_instance()->get_node_info(atoi(m_para.c_str()));
     ERR_RETURN(node == nullptr, -NO_NODE, "get node info failed");
     node->server_fault = false;
     return 0;
@@ -69,7 +69,7 @@ int32_t AppDown::recover_injection(void)
 
 FaultBase* FaultBase::create_fault(int32_t node_num, std::string &type, std::string &para)
 {
-    NodeManager::NodeInfo *node = NodeManager::get_node_info(node_num);
+    NodeManager::NodeInfo *node = NodeManager::get_instance()->get_node_info(node_num);
     ERR_RETURN(node == nullptr, nullptr, "get node info failed");
     SshSession* ssh = nullptr;
     LOG_INFO("create fault [{}] {} {}", node_num, type, para);

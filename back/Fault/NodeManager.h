@@ -18,19 +18,20 @@ public:
         bool server_fault;
     };
     static std::vector<struct NodeInfo> m_node_info_list;
+    static NodeManager* get_instance(void);
 
-    static bool node_num_exist(int32_t node_num);
-    static bool node_ip_exist(std::string& ip);
-    static bool node_mac_exist(std::string& mac);
-    static struct NodeInfo* get_node_info(int32_t node_num); // 内部会判断node是否被检测到
+    bool node_num_exist(int32_t node_num);
+    bool node_ip_exist(std::string& ip);
+    bool node_mac_exist(std::string& mac);
+    struct NodeInfo* get_node_info(int32_t node_num); // 内部会判断node是否被检测到
 
-    static std::string& node_num_to_ip(int32_t node_num);
-    static int32_t node_mac_to_num(std::string mac);
-    static void get_all_sta_ip(void);
+    std::string& node_num_to_ip(int32_t node_num);
+    int32_t node_mac_to_num(std::string mac);
+    void get_all_sta_ip(void);
 
 private:
     static std::string m_error_return;
-    static int32_t get_sta_ip(NodeInfo& info);
-    static int32_t get_adhoc_ip(NodeInfo& info);
+    void get_sta_ip(NodeInfo& info);
+    void get_adhoc_ip(NodeInfo& info);
 };
 

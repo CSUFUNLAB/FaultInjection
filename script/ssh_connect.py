@@ -14,7 +14,8 @@ password = sys.argv[3]
 cmd = sys.argv[4]
 is_ap = False
 
-# ap这个放了ssh公钥不输入密码，如果等待会导致时间浪费
+# ap这个放了ssh公钥不需要输入密码，如果等待会导致时间浪费
+# 后面要将输入密码做成n次循环，一共需要输入n次密码
 if host == "192.168.12.1":
     is_ap = True
 
@@ -28,7 +29,7 @@ print("connect ssh！")
 
 
 if is_ap:
-    print(child.read())
+    print("is ap")
 else:
     try:
         child.expect('password', timeout=10)
@@ -41,6 +42,9 @@ else:
     except wexpect.TIMEOUT:
         print("wait timeout")
 
+# sendline在后台执行，如果此时close会导致ssh命令不一定执行
+# cmd_has_exec表明检测到后命令已经被执行了
+# 如果命令马上就可以执行完，会检测不到echo cmd_has_exec，但也不需要检测了
 try:
     child.expect('cmd_has_exec')
 except wexpect.EOF:

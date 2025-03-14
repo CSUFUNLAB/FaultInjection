@@ -100,7 +100,7 @@
       <Filter>源文件\Tools</Filter>
     </ClCompile>
     <ClCompile Include="ShellScript.cpp">
-      <Filter>源文件\Network</Filter>
+      <Filter>源文件\Tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +160,9 @@
     </ClInclude>
     <ClInclude Include="ShellScript.h">
       <Filter>头文件\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ShellScript.h">
+      <Filter>头文件\Tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

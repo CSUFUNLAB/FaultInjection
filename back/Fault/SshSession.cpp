@@ -118,6 +118,7 @@ void SshSession::ssh_begin_read(void)
     LOG_DEBUG("[{}][{}]ssh ready", m_host, m_username);
 }
 
+// 在python通道下没有作用
 void SshSession::close(void)
 {
     LOG_DEBUG("close ssh[{}]", m_host);
@@ -298,14 +299,27 @@ void SshSession::initialize_credit_map() {
 
 void SshSession::python_ssh(std::string cmd)
 {
-    string target = m_username + string(" ") + m_host + string(" ") + m_password + string(" ");
+    string target = (m_is_root? string("root") : m_username)
+        + string(" ") + m_host + string(" ") + m_password + string(" ");
     m_cmd = string("python ../../script/ssh_connect.py ") + target + string("\"") + cmd + string("\"");
+    LOG_INFO("{}", m_cmd);
 
     m_send_cmd = true;
     std::thread channel_chread(&SshSession::python_ssh_thread, this);
     channel_chread.detach();
 }
 
+
+void SshSession::python_scp(string& remote_path, string& local_path)
+{
+    string target = (m_is_root? string("root") : m_username)
+        + string(" ") + m_host + string(" ") + m_password + string(" ");
+    m_cmd = string("python ../../script/scp_data.py ") + target + remote_path + string(" ") + local_path;
+
+    m_send_cmd = true;
+    std::thread channel_chread(&SshSession::python_ssh_thread, this);
+    channel_chread.detach();
+}
 
 void SshSession::python_ssh_thread(void)
 {
@@ -326,7 +340,7 @@ void SshSession::python_ssh_thread(void)
     // 如果不需要读取，不覆写read_echo即可
     char buffer[128];
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        LOG_DEBUG("[Python Output] {}", buffer);
+        LOG_INFO("[Python Output] {}", buffer);
         read_echo(buffer);
     }
 

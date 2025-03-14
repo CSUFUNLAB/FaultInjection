@@ -3,6 +3,7 @@
 
 #include "SshSession.h"
 #include "NodeManager.h"
+#include "ShellScript.h"
 
 
 std::ofstream logfilesave("log.txt");
@@ -44,13 +45,18 @@ int main(int argc, char* argv[]) {
 	std::string cmd_all_client = std::string("orangepi 192.168.12.169 orangepi \"") + cmd_client + string("\"");
 	SshSession::python_ssh(cmd_all_server);
 	SshSession::python_ssh(cmd_all_client);
-
 	NodeManager::m_node_info_list[11].ip = string("192.168.12.169");
 	NodeManager::m_node_info_list[11].detected= true;
 	SshSession* ssh = new SshSession(&NodeManager::m_node_info_list[11]);
-	ssh->m_send_type = SshSession::EXEC_CMD;
-	string cmd = "nohup timeout 20 \\\" iperf3 -s -i 1 -p 8081 -J --logfile 10_11_1.csv\\\"";
+	// ssh->m_send_type = SshSession::EXEC_CMD;
+	// string cmd = "nohup timeout 20 \\\" iperf3 -s -i 1 -p 8081 -J --logfile 10_11_1.csv\\\"";
+	string cmd = "sudo mkdir root_test";
 	ssh->python_ssh(cmd);
+
+	NodeManager::m_node_info_list[13].ip = string("192.168.12.186");
+	NodeManager::m_node_info_list[13].detected= true;
+	ShellScript* ssh = new ShellScript(&NodeManager::m_node_info_list[13]);
+	ssh->collect_data();
 */
 
 	Server* mServer = new Server;

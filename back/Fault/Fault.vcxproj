@@ -143,9 +143,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NodeManager.cpp" />
     <ClCompile Include="RandomDataFlow.cpp" />
+    <ClCompile Include="ShellScript.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerHandler.cpp" />
-    <ClCompile Include="ShellScript.cpp" />
     <ClCompile Include="SshSession.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +164,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="NodeManager.h" />
     <ClInclude Include="RandomDataFlow.h" />
+    <ClInclude Include="ShellScript.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="ServerHandler.h" />
     <ClInclude Include="ShellScript.h" />

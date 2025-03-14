@@ -51,6 +51,8 @@ public:
     // 不支持QUEUE_CMD，SHELL_SSH仅读取一条命令的回复
     // 尽量不在代码中写过于复杂的命令行逻辑，同时windows的cmd脚本太难写了，用python脚本
     void python_ssh(std::string cmd);
+    void python_scp(std::string &remote_path, std::string &local_path);
+    bool m_is_root = false; // 对于添加了sudo命令的，需要root权限登录
 
 private:
     std::string m_host;

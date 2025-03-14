@@ -86,7 +86,7 @@ void DataFlow::save_file_cmd(FlowInfo* info)
     string udp_cmd = "";
     string len_cmd = "";
     // clientnodeindex_servernode_index_isserver
-    string base_file_name = to_string(info->client->index) + string("_") + to_string(info->server->index);
+    string base_file_name = string("data/") + to_string(info->client->index) + string("_") + to_string(info->server->index);
     string client_file_name = base_file_name + string("_0.json");
     string server_file_name = base_file_name + string("_1.json");
     if (info->type == "udp") {

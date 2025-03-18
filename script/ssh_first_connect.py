@@ -8,43 +8,41 @@ import sys
 pkill -f "name" 是杀死所有带name名字的进程
 '''
 
-need_read = sys.argv[1]
-need_read_int = int(need_read)
-need_password = sys.argv[2]
+need_password = sys.argv[1]
 need_password_int = int(need_password)
-cmd = sys.argv[3]
+username = sys.argv[2]
+host = sys.argv[3]
+password = sys.argv[4]
 
-# 启动 SSH 命令（假设已配置 OpenSSH 客户端）
-# 加一条echo打印，表明命令已经开始执行了
-# child = wexpect.spawn(f'ssh {username}@{host} "echo cmd_has_exec; {cmd}"')
-child = wexpect.spawn(f'{cmd}')
+child = wexpect.spawn(f'ssh {username}@{host} "echo cmd_has_exec")
 
 print("connect ssh！")
 
 for i in range(need_password_num):
     try:
-        child.expect('password', timeout=10)        
+        # 第一次连接需要同意一次本地连接
+        print('expect continue connecting')
+        child.expect('continue connecting', timeout=5)
+        child.sendline('yes')
+        print("send yes")    
+    except wexpect.EOF:
+        print("ssh end")
+    except wexpect.TIMEOUT:
+        print("wait timeout")
+        
+    try:
+        print('expect password')
+        child.expect('password', timeout=5)
         child.sendline(password)
         print("sended password")        
     except wexpect.EOF:
         print("ssh end")
     except wexpect.TIMEOUT:
-        print("password wait timeout")
+        print("wait timeout")
 
 # sendline在后台执行，如果此时close会导致ssh命令不一定执行
 # cmd_has_exec表明检测到后命令已经被执行了
 # 如果命令马上就可以执行完，会检测不到echo cmd_has_exec，但也不需要检测了
 
-if need_read_num == 1:
-    print(child.read())
-else:
-    try:
-        child.expect('cmd_has_exec')
-    except wexpect.EOF:
-        print("ssh end")
-    except wexpect.TIMEOUT:
-        print("cmd end wait timeout")
- 
-print("cmd has exec！")
-
+print(child.read())
 child.close()

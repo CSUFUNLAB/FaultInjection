@@ -85,6 +85,8 @@ private:
     void send_cmd_thread(void);
     void only_send_cmd_thread(void);
     void python_ssh_thread(void);
+    void concatenate_ssh_cmd(void);
+    void concatenate_scp_cmd(void);
     void exec_cmd_thread(void);
     void initialize_credit_map();
 };

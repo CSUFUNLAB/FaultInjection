@@ -69,19 +69,13 @@
     <ClCompile Include="FaultInjection.cpp">
       <Filter>源文件\Network</Filter>
     </ClCompile>
-    <ClCompile Include="DataDisplayInterface.cpp">
-      <Filter>源文件\Server\interface</Filter>
-    </ClCompile>
     <ClCompile Include="DataInjectInterface.cpp">
-      <Filter>源文件\Server\interface</Filter>
-    </ClCompile>
-    <ClCompile Include="FaultDiagnosisInterface.cpp">
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
     <ClCompile Include="FaultInjectInterface.cpp">
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
-    <ClCompile Include="FaultInterface.cpp">
+    <ClCompile Include="FrontInterface.cpp">
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
     <ClCompile Include="DataFile.cpp">
@@ -101,6 +95,12 @@
     </ClCompile>
     <ClCompile Include="ShellScript.cpp">
       <Filter>源文件\Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="TestFunction.cpp">
+      <Filter>源文件\Server\interface</Filter>
+    </ClCompile>
+    <ClCompile Include="DataCollect.cpp">
+      <Filter>源文件\Server\interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -122,13 +122,7 @@
     <ClInclude Include="ServerHandler.h">
       <Filter>头文件\Server</Filter>
     </ClInclude>
-    <ClInclude Include="DataDisplayInterface.h">
-      <Filter>头文件\Server\interface</Filter>
-    </ClInclude>
     <ClInclude Include="DataInjectInterface.h">
-      <Filter>头文件\Server\interface</Filter>
-    </ClInclude>
-    <ClInclude Include="FaultDiagnosisInterface.h">
       <Filter>头文件\Server\interface</Filter>
     </ClInclude>
     <ClInclude Include="FaultInjectInterface.h">
@@ -140,7 +134,7 @@
     <ClInclude Include="DataInfo.h">
       <Filter>头文件\Data</Filter>
     </ClInclude>
-    <ClInclude Include="FaultInterface.h">
+    <ClInclude Include="FrontInterface.h">
       <Filter>头文件\Server\interface</Filter>
     </ClInclude>
     <ClInclude Include="DataFile.h">
@@ -160,6 +154,18 @@
     </ClInclude>
     <ClInclude Include="ShellScript.h">
       <Filter>头文件\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ShellScript.h">
+      <Filter>头文件\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="ShellScript.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TestFunction.h">
+      <Filter>头文件\Server\interface</Filter>
+    </ClInclude>
+    <ClInclude Include="DataCollect.h">
+      <Filter>头文件\Server\interface</Filter>
     </ClInclude>
     <ClInclude Include="ShellScript.h">
       <Filter>头文件\Tools</Filter>

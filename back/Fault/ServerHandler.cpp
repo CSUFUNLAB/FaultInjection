@@ -32,7 +32,7 @@ void CommandHandle::HandlePost(http_request message)
 	ucout << "URI:" << http::uri::decode(message.relative_uri().path()) << endl;
 	LOG_INFO("conversion URI: {}", uri);
 
-	FaultInterface *fault_interface = FaultInterface::fault_interface_factory(uri);
+	FrontInterface *fault_interface = FrontInterface::fault_interface_factory(uri);
 	if (fault_interface == nullptr) {
 		LOG_INFO("this should not happend, check fault_interface_factory code");
 		return;

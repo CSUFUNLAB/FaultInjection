@@ -6,7 +6,7 @@
 #include <map>
 #include <functional>
 
-class FaultInterface {
+class FrontInterface {
 public:
 	web::http::http_response handle(web::http::http_request &message);
 
@@ -14,7 +14,7 @@ public:
 
 	// // web::json:value 转换为 Json:Value （有些版本的cpprest好像不需要）
 	Json::Value HandleJsonData(web::json::value requestJson);
-	static FaultInterface* fault_interface_factory(std::string &uri);
+	static FrontInterface* fault_interface_factory(std::string &uri);
 
     struct HandlerInfo {
         int code;
@@ -24,7 +24,7 @@ public:
 
 
 private:
-	using InterfaceFunc = std::function<FaultInterface *(void)>;
+	using InterfaceFunc = std::function<FrontInterface *(void)>;
 	using InterfaceFuncMap = std::map<std::string, InterfaceFunc>;
 	static InterfaceFuncMap m_interface_func_map;
 	static std::map<int, std::string> m_err_code_map;

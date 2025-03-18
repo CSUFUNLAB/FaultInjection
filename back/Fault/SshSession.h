@@ -10,6 +10,8 @@
 
 #include "NodeManager.h"
 
+// 弃用libssh，改用python的ssh，后续删除libssh部分
+
 class SshSession {
 public:
     SshSession(struct NodeManager::NodeInfo *node);
@@ -39,12 +41,13 @@ public:
     bool m_broken_cmd = false;
 
     typedef enum {
-        SHELL_SSH, // 打开shell，有交互
+        SHELL_CMD, // 打开shell，有交互
+        // 目前python不支持QUEUE_CMD
         QUEUE_CMD, // 将需要发送的命令放入m_cmd_queue逐个发送，无回显
         EXEC_CMD, // 只发送一个命令，一般用于脚本，无回显
     } SshSendType ;
 
-    SshSendType m_send_type = SHELL_SSH;
+    SshSendType m_send_type = EXEC_CMD; // 默认改为EXEC_CMD将会导致原有libssh Session不再适用
 
     // python ssh 是用python脚本打开cmd然后使用windows的openssh
     // 不需要再次调用open send等函数

@@ -1,20 +1,18 @@
 #pragma once
-#include <string>
 
 #include "FrontInterface.h"
 
-class InjectDataFlow : public FrontInterface {
+class DataCollectCopy : public FrontInterface {
 public:
 	void handlerData(web::http::http_request &message) override;
 };
 
-class ScanNode : public FrontInterface {
+class DataCollectBegin : public FrontInterface {
 public:
 	void handlerData(web::http::http_request &message) override;
 };
 
-class GenerateRandomFlow : public FrontInterface {
+class DataCollectEnd : public FrontInterface {
 public:
 	void handlerData(web::http::http_request &message) override;
 };
-

@@ -1,4 +1,5 @@
 #include "ShellScript.h"
+#include "Log.h"
 #include <string>
 
 using namespace std;
@@ -19,6 +20,8 @@ void ShellScript::kill_monitor(void)
 
 void ShellScript::collect_data(void)
 {
+    // cmdµÝ¹éÉ¾³ýÎÄ¼þ¼ÐÌ«¸´ÔÓÁË£¬»¹ÊÇÊÖ¶¯É¾³ý°É
+
     string remote_path = string("/home/orangepi/data");
     string local_path = string("../../data/node_") + to_string(m_node_info->index);
     python_scp(remote_path, local_path);

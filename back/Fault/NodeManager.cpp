@@ -15,6 +15,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("enp0s31f6"),
         string("18:c0:4d:0d:f5:e2"),
         string("192.168.3.82"),
+        1,
         false,
         nullptr,
     },
@@ -25,6 +26,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("eth0"),
         string("00:0a:35:00:01:22"),
         string("192.168.3.10"),
+        1,
         false,
         nullptr,
     },
@@ -35,6 +37,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("sdr0"),
         string("66:55:44:33:22:09"),
         string("192.168.13.1"),
+        1,
         false,
         nullptr,
     },
@@ -45,6 +48,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("ap0"),
         string("f0:23:ae:09:80:bc"),
         string("192.168.12.1"),
+        0,
         false,
         nullptr,
     },
@@ -55,6 +59,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("54:78:c9:07:8b:1c"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -65,6 +70,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("54:78:c9:07:8a:cc"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -75,6 +81,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:e8:54"),
         string("192.168.13.1"),
+        1,
         false,
         nullptr,
     },
@@ -85,6 +92,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:f6:9a"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -95,6 +103,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:f7:98"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -105,6 +114,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:f7:58"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -115,7 +125,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:f7:6c"),
         string("192.168.12.167"),
-        // string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -126,6 +136,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:f7:6e"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -136,6 +147,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:f6:7c"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -146,6 +158,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:e6:fa"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -156,6 +169,7 @@ vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
         string("wlan0"),
         string("9c:b8:b4:5d:e8:44"),
         string("0.0.0.0"),
+        1,
         false,
         nullptr,
     },
@@ -227,6 +241,23 @@ struct NodeManager::NodeInfo* NodeManager::get_node_info(int32_t node_num)
         return nullptr;
     }
     return &m_node_info_list[node_num];
+}
+
+uint32_t NodeManager::get_password_loop(struct NodeInfo* node)
+{
+    if (node == nullptr) {
+        return 0;
+    }
+    return node->need_password + get_password_loop(node->up_linked);
+}
+
+void NodeManager::get_detected_node(node_deal_func func)
+{
+    for (auto& node : NodeManager::m_node_info_list) {
+        if (node.detected) {
+            func(&node);
+        }
+    }
 }
 
 class NodeManagerSsh : public SshSession {
@@ -336,12 +367,14 @@ void NodeManager::get_sta_ip(NodeInfo &info)
     NodeManagerStaDumpSsh *sta_ssh = new NodeManagerStaDumpSsh(&info);
 
     string cmd_line = "iw dev " + info.dev + " station dump | grep Station";
+    sta_ssh->m_send_type = SshSession::SHELL_CMD;
     sta_ssh->python_ssh(cmd_line);
     while (sta_ssh->m_send_cmd) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     NodeManagerArpSsh *arp_ssh = new NodeManagerArpSsh(&info);
+    arp_ssh->m_send_type = SshSession::SHELL_CMD;
     arp_ssh->python_ssh("arp -n");
     while (arp_ssh->m_send_cmd) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -372,6 +405,7 @@ void NodeManager::get_sta_ip(NodeInfo &info)
 void NodeManager::get_adhoc_ip(NodeInfo& info)
 {
     NodeManagerArpSsh *arp_ssh = new NodeManagerArpSsh(&info);
+    arp_ssh->m_send_type = SshSession::SHELL_CMD;
     arp_ssh->python_ssh("arp -n");
     while (arp_ssh->m_send_cmd) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

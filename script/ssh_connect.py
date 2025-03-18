@@ -8,22 +8,14 @@ import sys
 pkill -f "name" 是杀死所有带name名字的进程
 '''
 
-username = sys.argv[1]
-host = sys.argv[2]
-password = sys.argv[3]
-cmd = sys.argv[4]
-is_ap = False
-
-# ap这个放了ssh公钥不需要输入密码，如果等待会导致时间浪费
-# 后面要将输入密码做成n次循环，一共需要输入n次密码
-if host == "192.168.12.1":
-    is_ap = True
-
-# 用root权限执行必须要输入密码
-if username == 'root':
-    is_ap = False
-
-# print(f'ssh {username}@{host} "{cmd}"')
+need_read = sys.argv[1]
+need_read_num = int(need_read)
+need_password = sys.argv[2]
+need_password_num = int(need_password)
+username = sys.argv[3]
+host = sys.argv[4]
+password = sys.argv[5]
+cmd = sys.argv[6]
 
 # 启动 SSH 命令（假设已配置 OpenSSH 客户端）
 # 加一条echo打印，表明命令已经开始执行了
@@ -31,10 +23,7 @@ child = wexpect.spawn(f'ssh {username}@{host} "echo cmd_has_exec; {cmd}"')
 
 print("connect ssh！")
 
-
-if is_ap:
-    print("is ap")
-else:
+for i in range(need_password_num):
     try:
         child.expect('password', timeout=10)
         print("requir password")
@@ -56,7 +45,8 @@ except wexpect.EOF:
 except wexpect.TIMEOUT:
     print("wait timeout")
 
-#print(child.read())
+if need_read_num == 1:
+    print(child.read())
  
 print("cmd has exec！")
 

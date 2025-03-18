@@ -1,12 +1,12 @@
 #pragma once
-#include "FaultInterface.h"
+#include "FrontInterface.h"
 
-class FaultInject : public FaultInterface {
+class FaultInject : public FrontInterface {
 public:
 	void handlerData(web::http::http_request &message) override;
 };
 
-class RandomFault : public FaultInterface {
+class RandomFault : public FrontInterface {
 public:
 	void handlerData(web::http::http_request &message) override;
 };

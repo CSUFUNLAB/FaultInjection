@@ -129,16 +129,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BeginTime.cpp" />
-    <ClCompile Include="DataDisplayInterface.cpp" />
+    <ClCompile Include="DataCollect.cpp" />
     <ClCompile Include="DataFile.cpp" />
     <ClCompile Include="DataFlow.cpp" />
     <ClCompile Include="DataInfo.cpp" />
     <ClCompile Include="DataInjectInterface.cpp" />
     <ClCompile Include="FaultClient.cpp" />
-    <ClCompile Include="FaultDiagnosisInterface.cpp" />
     <ClCompile Include="FaultInjectInterface.cpp" />
     <ClCompile Include="FaultInjection.cpp" />
-    <ClCompile Include="FaultInterface.cpp" />
+    <ClCompile Include="FrontInterface.cpp" />
     <ClCompile Include="GPTClient.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NodeManager.cpp" />
@@ -147,19 +146,19 @@
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerHandler.cpp" />
     <ClCompile Include="SshSession.cpp" />
+    <ClCompile Include="TestFunction.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BeginTime.h" />
-    <ClInclude Include="DataDisplayInterface.h" />
+    <ClInclude Include="DataCollect.h" />
     <ClInclude Include="DataFile.h" />
     <ClInclude Include="DataFlow.h" />
     <ClInclude Include="DataInfo.h" />
     <ClInclude Include="DataInjectInterface.h" />
     <ClInclude Include="FaultClient.h" />
-    <ClInclude Include="FaultDiagnosisInterface.h" />
     <ClInclude Include="FaultInjectInterface.h" />
     <ClInclude Include="FaultInjection.h" />
-    <ClInclude Include="FaultInterface.h" />
+    <ClInclude Include="FrontInterface.h" />
     <ClInclude Include="GPTClient.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="NodeManager.h" />
@@ -169,6 +168,7 @@
     <ClInclude Include="ServerHandler.h" />
     <ClInclude Include="ShellScript.h" />
     <ClInclude Include="SshSession.h" />
+    <ClInclude Include="TestFunction.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json" />

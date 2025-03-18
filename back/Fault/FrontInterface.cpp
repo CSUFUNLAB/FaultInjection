@@ -1,9 +1,12 @@
-#include "FaultInterface.h"
+#include "FrontInterface.h"
 #include "Log.h"
 #include <comutil.h>
 
 #include "DataInjectInterface.h"
 #include "FaultInjectInterface.h"
+
+#include "TestFunction.h"
+#include "DataCollect.h"
 
 using namespace std;
 using namespace web;
@@ -12,20 +15,24 @@ using namespace web::http;
 
 
 template<typename T>
-FaultInterface* create_fault_interface(void)
+FrontInterface* create_fault_interface(void)
 {
     return new T();
 }
 
-FaultInterface::InterfaceFuncMap FaultInterface::m_interface_func_map = {
+FrontInterface::InterfaceFuncMap FrontInterface::m_interface_func_map = {
     {"/api/data_insert", create_fault_interface<InjectDataFlow>},
     {"/api/detect_nodes", create_fault_interface<ScanNode>},
     {"/api/random_insert", create_fault_interface<GenerateRandomFlow>},
     {"/api/fault_data_insert", create_fault_interface<FaultInject>},
     {"/api/scan_node", create_fault_interface<RandomFault>}, // 这个名字改一下
+    {"/api/functional_test", create_fault_interface<TestFunction>},
+    {"/api/start_collect", create_fault_interface<DataCollectBegin>},
+    {"/api/end_collect", create_fault_interface<DataCollectEnd>},
+    {"/api/load_collect", create_fault_interface<DataCollectCopy>},
 };
 
-std::map<int, std::string> FaultInterface::m_err_code_map {
+std::map<int, std::string> FrontInterface::m_err_code_map {
     {300 + NORMAL_ERR, "error, please check log"},
     {300 + NO_NODE, "operate node not exist"},
     {300 + NO_EXIST_FLOW, "operate data flow not exist"},
@@ -34,17 +41,17 @@ std::map<int, std::string> FaultInterface::m_err_code_map {
     {300 + ERR_CODE_BUTT, "not exist error code, please check code"},
 };
 
-FaultInterface* FaultInterface::fault_interface_factory(std::string& uri)
+FrontInterface* FrontInterface::fault_interface_factory(std::string& uri)
 {
     auto it = m_interface_func_map.find(uri);
     if (it == m_interface_func_map.end()) {
-        LOG_INFO("no this operate");
-        return new FaultInterface();
+        LOG_INFO("no this operate {}", uri);
+        return new FrontInterface();
     }
     return (it->second)();
 }
 
-http_response FaultInterface::HandleResponse(void)
+http_response FrontInterface::HandleResponse(void)
 {
     int &code = m_handler_info.code;
     string &msg = m_handler_info.msg;
@@ -74,7 +81,7 @@ http_response FaultInterface::HandleResponse(void)
     return custom_response;
 }
 
-Json::Value FaultInterface::HandleJsonData(json::value requestJson)
+Json::Value FrontInterface::HandleJsonData(json::value requestJson)
 {
     // web::json:value 转换为 Json:Value
     Json::Value changeJson;
@@ -94,12 +101,12 @@ Json::Value FaultInterface::HandleJsonData(json::value requestJson)
     return changeJson;
 }
 
-void FaultInterface::handlerData(http_request& message)
+void FrontInterface::handlerData(http_request& message)
 {
     m_handler_info.code = 300 + NO_OPERATE;
 }
 
-http_response FaultInterface::handle(http_request &message)
+http_response FrontInterface::handle(http_request &message)
 {
     handlerData(message);
     return HandleResponse();

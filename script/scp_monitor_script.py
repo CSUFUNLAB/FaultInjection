@@ -18,8 +18,7 @@ local_file_path = sys.argv[6]
 
 print(f'scp -r {username}@{host}:{remote_file_path} {local_file_path}')
 
-child = wexpect.spawn(f'scp -r {username}@{host}:{remote_file_path} {local_file_path}')
-# child = wexpect.spawn('scp -r orangepi@192.168.12.186:/home/orangepi/data data')
+child = wexpect.spawn(f'scp ../../monitor.tar.gz {username}@{host}:/home/orangepi/')
 
 '''
 如果命令马上就退出了，可以用这个看退出前的打印
@@ -29,7 +28,7 @@ print(child.before)
   
 print("connect ssh！")
 
-if host != "192.168.12.1":
+for i in range(need_password_num):
     try:
         child.expect('password', timeout=10)
         print("requir password")

@@ -3,7 +3,10 @@
     <el-card>
       <p style="text-align: center; color: black;margin-top: 0px; font-weight: bold; font-size: 20px">故障数据显示界面</p>
       <div style="float: right; ">
-        <span>数据类型：</span>
+        <el-button type="primary" plain @click="startCollectData">开始收集</el-button>
+        <el-button type="warning" plain @click="endCollectData">结束收集</el-button>
+        <el-button type="success" plain @click="loadCollectData">下载数据</el-button>
+        <span style="margin-left: 10px">数据类型：</span>
         <el-select v-model="optionsValue" placeholder="请选择" @change="changeDataType">
           <el-option
               v-for="item in options"
@@ -56,6 +59,18 @@ export default {
     this.clear();
   },
   methods: {
+    // 开始收集 按钮触发函数
+    startCollectData() {
+
+    },
+    // 结束收集 按钮触发函数
+    endCollectData() {
+
+    },
+    // 下载数据 按钮触发函数
+    loadCollectData() {
+
+    },
     // 获取数据定时器
     faultDataRefreh() {
       if (this.intervalId != null) {

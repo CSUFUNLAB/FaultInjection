@@ -1,0 +1,152 @@
+[
+  {
+    "index": 0,
+    "describe": "linux server",
+    "type": "eth",
+    "dev": "enp0s31f6",
+    "mac": "18:c0:4d:0d:f5:e2",
+    "ip": "192.168.3.82",
+    "need_password": 0,
+    "detected": false
+  },
+  {
+    "index": 1,
+    "describe": "antsdr",
+    "type": "eth",
+    "dev": "eth0",
+    "mac": "00:0a:35:00:01:22",
+    "ip": "192.168.3.10",
+    "need_password": 0,
+    "detected": false
+  },
+  {
+    "index": 2,
+    "describe": "antsdr",
+    "type": "abandon",
+    "dev": "sdr0",
+    "mac": "66:55:44:33:22:09",
+    "ip": "192.168.13.1",
+    "need_password": 0,
+    "detected": false
+  },
+  {
+    "index": 3,
+    "describe": "orangepi",
+    "type": "ap",
+    "dev": "ap0",
+    "mac": "f0:23:ae:09:80:bc",
+    "ip": "192.168.12.1",
+    "need_password": 0,
+    "detected": false
+  },
+  {
+    "index": 4,
+    "describe": "orangepi",
+    "type": "sta",
+    "dev": "wlan0",
+    "mac": "54:78:c9:07:8b:1c",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 5,
+    "describe": "orangepi",
+    "type": "sta",
+    "dev": "wlan0",
+    "mac": "54:78:c9:07:8a:cc",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 6,
+    "describe": "orangepi",
+    "type": "adhoc_master",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:e8:54",
+    "ip": "192.168.13.1",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 7,
+    "describe": "orangepi",
+    "type": "adhoc",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:f6:9a",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 8,
+    "describe": "orangepi",
+    "type": "adhoc",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:f7:98",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 9,
+    "describe": "orangepi",
+    "type": "adhoc",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:f7:58",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 10,
+    "describe": "orangepi",
+    "type": "sta",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:f7:6c",
+    "ip": "192.168.12.167",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 11,
+    "describe": "orangepi",
+    "type": "sta",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:f7:6e",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 12,
+    "describe": "orangepi",
+    "type": "sta",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:f6:7c",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 13,
+    "describe": "orangepi",
+    "type": "sta",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:e6:fa",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  },
+  {
+    "index": 14,
+    "describe": "orangepi",
+    "type": "sta",
+    "dev": "wlan0",
+    "mac": "9c:b8:b4:5d:e8:44",
+    "ip": "0.0.0.0",
+    "need_password": 1,
+    "detected": false
+  }
+]

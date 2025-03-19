@@ -4,176 +4,13 @@
 
 #include <atomic>
 #include <functional>
+#include <nlohmann/json.hpp>
+// vcpkg install nlohmann-json
 
 using namespace std;
+using json = nlohmann::json;
 
-vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list = {
-    {
-        0,
-        string("linux server"),
-        string("eth"),
-        string("enp0s31f6"),
-        string("18:c0:4d:0d:f5:e2"),
-        string("192.168.3.82"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        1,
-        string("antsdr"),
-        string("eth"),
-        string("eth0"),
-        string("00:0a:35:00:01:22"),
-        string("192.168.3.10"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        2,
-        string("antsdr"),
-        string("abandon"),
-        string("sdr0"),
-        string("66:55:44:33:22:09"),
-        string("192.168.13.1"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        3,
-        string("orangepi"),
-        string("ap"),
-        string("ap0"),
-        string("f0:23:ae:09:80:bc"),
-        string("192.168.12.1"),
-        0,
-        false,
-        nullptr,
-    },
-    {
-        4,
-        string("orangepi"),
-        string("sta"),
-        string("wlan0"),
-        string("54:78:c9:07:8b:1c"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        5,
-        string("orangepi"),
-        string("sta"),
-        string("wlan0"),
-        string("54:78:c9:07:8a:cc"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        6,
-        string("orangepi"),
-        string("adhoc_master"), // ap本身没有master的属性，这个ap表示是连接服务器的ap
-        string("wlan0"),
-        string("9c:b8:b4:5d:e8:54"),
-        string("192.168.13.1"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        7,
-        string("orangepi"),
-        string("adhoc"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:f6:9a"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        8,
-        string("orangepi"),
-        string("adhoc"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:f7:98"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        9,
-        string("orangepi"),
-        string("adhoc"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:f7:58"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        10,
-        string("orangepi"),
-        string("sta"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:f7:6c"),
-        string("192.168.12.167"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        11,
-        string("orangepi"),
-        string("sta"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:f7:6e"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        12,
-        string("orangepi"),
-        string("sta"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:f6:7c"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        13,
-        string("orangepi"),
-        string("sta"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:e6:fa"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-    {
-        14,
-        string("orangepi"),
-        string("sta"),
-        string("wlan0"),
-        string("9c:b8:b4:5d:e8:44"),
-        string("0.0.0.0"),
-        1,
-        false,
-        nullptr,
-    },
-};
+vector<struct NodeManager::NodeInfo> NodeManager::m_node_info_list;
 
 string NodeManager::m_error_return = "none";
 
@@ -181,6 +18,55 @@ NodeManager* NodeManager::get_instance(void)
 {
     static NodeManager* p = new NodeManager();
     return p;
+}
+
+void NodeManager::init_m_node_info_list(void)
+{
+    std::ifstream file("NodeInfo.json");
+    if (!file.is_open()) {
+        std::cerr << "Failed to open JSON file!" << std::endl;
+        return;
+    }
+
+    // 将文件内容读取到一个字符串中
+    std::string file_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+
+    // 解析JSON数据
+    try {
+        json j = json::parse(file_content);
+
+        // 清空现有的节点信息列表
+        NodeManager::m_node_info_list.clear();
+
+        // 遍历数组中的每个对象
+        for (const auto& obj : j) {
+            NodeManager::NodeInfo node_info{
+               obj["index"].get<int32_t>(),
+               obj["describe"].get<std::string>(),
+               obj["type"].get<std::string>(),
+               obj["dev"].get<std::string>(),
+               obj["mac"].get<std::string>(),
+               obj["ip"].get<std::string>(),
+               obj["need_password"].get<int32_t>(),
+               obj["detected"].get<bool>(),
+               nullptr
+            };
+            NodeManager::m_node_info_list.push_back(node_info);
+        }
+    }
+    catch (json::parse_error& e) {
+        std::cerr << "JSON parse error: " << e.what() << std::endl;
+        return;
+    }
+    catch (json::type_error& e) {
+        std::cerr << "JSON type error: " << e.what() << std::endl;
+        return;
+    }
+    catch (std::exception& e) {
+        std::cerr << "General error: " << e.what() << std::endl;
+        return;
+    }
 }
 
 bool NodeManager::node_num_exist(int32_t node_num)

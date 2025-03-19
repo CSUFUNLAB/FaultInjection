@@ -39,6 +39,7 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
         * cpprestsdk 
         * jsoncpp
         * boost-filesystem
+        * nlohmann-json
         * fmt  
             fmt存在兼容性问题，当报错时注释掉红框内模版
             ![fmt](image/fmt.png)

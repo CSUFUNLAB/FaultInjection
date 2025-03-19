@@ -366,7 +366,7 @@ void NodeManager::get_sta_ip(NodeInfo &info)
 {
     NodeManagerStaDumpSsh *sta_ssh = new NodeManagerStaDumpSsh(&info);
 
-    string cmd_line = "iw dev " + info.dev + " station dump | grep Station";
+    string cmd_line = "iw dev " + info.dev + " station dump ^| grep Station"; // windows×ªÒå×Ö·û^
     sta_ssh->m_send_type = SshSession::SHELL_CMD;
     sta_ssh->python_ssh(cmd_line);
     while (sta_ssh->m_send_cmd) {

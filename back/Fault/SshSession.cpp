@@ -299,39 +299,52 @@ void SshSession::initialize_credit_map() {
 
 void SshSession::python_ssh(std::string cmd)
 {
-    string target = (m_is_root? string("root") : m_username)
-        + string(" ") + m_host + string(" ") + m_password + string(" ");
-    string need_read = "0";
+    string username = m_is_root ? string("root") : m_username;
+    string need_read = "0 ";
+    string echo_exe = string("echo cmd_has_exec;"); // 脚本里面会expect cmd_has_exec
     if (m_send_type == SHELL_CMD) {
-        need_read = "1";
+        need_read = "1 ";
+        echo_exe = ""; // read会自动等待命令执行完毕，不需要echo等待了
+    } else if (m_send_type == FIRST_CMD) {
+        need_read = "3 ";
     }
     int32_t password_loop = NodeManager::get_instance()->get_password_loop(m_node_info);
-    if (m_is_root) {
-        password_loop += 1;
+    if (m_is_root && password_loop == 0) {
+        password_loop = 1;
     }
+    string ssh_cmd = string("ssh ") + username + string("@") + m_host
+        + string(" \\\"") + echo_exe + cmd + string("\\\"");
     m_cmd = string("python ../../script/ssh_connect.py ")
-        + need_read + string(" ")
+        + need_read
         + to_string(password_loop) + string(" ")
-        + target + string("\"") + cmd + string("\"");
-
-    LOG_INFO("{}", m_cmd);
+        + m_password
+        + string(" \"") + ssh_cmd + string("\"");
 
     m_send_cmd = true;
     std::thread channel_chread(&SshSession::python_ssh_thread, this);
     channel_chread.detach();
 }
 
-void SshSession::python_scp(string& remote_path, string& local_path)
+void SshSession::python_scp(string& remote_path, string& local_path, int dir)
 {
-    string target = (m_is_root? string("root") : m_username)
-        + string(" ") + m_host + string(" ") + m_password + string(" ");
+    string username = m_is_root ? string("root") : m_username;
     int32_t password_loop = NodeManager::get_instance()->get_password_loop(m_node_info);
     if (m_is_root) {
         password_loop += 1;
     }
-    m_cmd = string("python ../../script/scp_data.py ")
+    string scp_cmd;
+    if (dir == 0) {
+        scp_cmd = string("scp -r ") + username + string("@") + m_host + string(":") + remote_path
+            + string(" ") + local_path;
+    } else {
+        scp_cmd = string("scp -r ") + local_path + string(" ")
+            + username + string("@") + m_host + string(":") + remote_path;
+    }
+    m_cmd = string("python ../../script/ssh_connect.py ")
+        + string("1 ") // scp一定到read等待命令执行完毕
         + to_string(password_loop) + string(" ")
-        + target + remote_path + string(" ") + local_path;
+        + m_password
+        + string(" \"") + scp_cmd + string("\"");
 
     m_send_cmd = true;
     std::thread channel_chread(&SshSession::python_ssh_thread, this);
@@ -340,7 +353,7 @@ void SshSession::python_scp(string& remote_path, string& local_path)
 
 void SshSession::python_ssh_thread(void)
 {
-    LOG_INFO("[{}][{}] cmd {}", m_node_info->index, m_node_info->ip, m_cmd.c_str());
+    LOG_INFO("[{}][{}] popen cmd: {}", m_node_info->index, m_node_info->ip, m_cmd.c_str());
 
     // 执行命令并打开管道
     LOG_DEBUG("[{}][{}] begin send", m_node_info->index, m_node_info->ip);
@@ -357,7 +370,7 @@ void SshSession::python_ssh_thread(void)
     // 如果不需要读取，不覆写read_echo即可
     char buffer[128];
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        LOG_INFO("[{}][{}] {}", m_node_info->index, m_node_info->ip, buffer);
+        LOG_INFO("[{}][{}]fgets: {}", m_node_info->index, m_node_info->ip, buffer);
         read_echo(buffer);
     }
 

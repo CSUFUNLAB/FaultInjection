@@ -45,6 +45,7 @@ public:
         // 目前python不支持QUEUE_CMD
         QUEUE_CMD, // 将需要发送的命令放入m_cmd_queue逐个发送，无回显
         EXEC_CMD, // 只发送一个命令，一般用于脚本，无回显
+        FIRST_CMD, // 第一次连接，输入一个yes
     } SshSendType ;
 
     SshSendType m_send_type = EXEC_CMD; // 默认改为EXEC_CMD将会导致原有libssh Session不再适用
@@ -54,7 +55,7 @@ public:
     // 不支持QUEUE_CMD，SHELL_SSH仅读取一条命令的回复
     // 尽量不在代码中写过于复杂的命令行逻辑，同时windows的cmd脚本太难写了，用python脚本
     void python_ssh(std::string cmd);
-    void python_scp(std::string &remote_path, std::string &local_path);
+    void python_scp(std::string& remote_path, std::string& local_path, int dir); // dir 0: remote->local; 1: local->remote
     bool m_is_root = false; // 对于添加了sudo命令的，需要root权限登录
 
 private:

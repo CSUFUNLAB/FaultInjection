@@ -170,6 +170,9 @@
     <ClInclude Include="ShellScript.h">
       <Filter>头文件\Tools</Filter>
     </ClInclude>
+    <ClInclude Include="ShellScript.h">
+      <Filter>头文件\Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json">

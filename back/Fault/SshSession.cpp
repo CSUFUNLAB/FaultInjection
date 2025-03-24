@@ -368,7 +368,7 @@ void SshSession::python_ssh_thread(void)
 
     // 无论如何把pipe中的缓冲读出来，否则直接关闭会报错
     // 如果不需要读取，不覆写read_echo即可
-    char buffer[128];
+    char buffer[256];
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
         LOG_INFO("[{}][{}]fgets: {}", m_node_info->index, m_node_info->ip, buffer);
         read_echo(buffer);

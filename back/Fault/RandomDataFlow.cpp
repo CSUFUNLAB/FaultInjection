@@ -14,21 +14,11 @@
 
 using namespace std;
 
-class RandomNum {
-public:
-    static RandomNum *get_instance(void);
-    static uint32_t get_bool_random(void);
-    virtual bool limit_condition(uint32_t num); // 返回true才表示满足limit条件
-    uint32_t limit_random_num(uint32_t lowlimit, uint32_t uplimit);
-    uint32_t random_num(uint32_t lowlimit, uint32_t uplimit);
-};
-
-uint32_t RandomNum::random_num(uint32_t lowlimit, uint32_t uplimit)
+uint32_t RandomNum::range_random_num(uint32_t low, uint32_t high)
 {
-
     random_device rd;  // 用于生成种子
     mt19937 gen(rd()); // 使用Mersenne Twister引擎
-    uniform_int_distribution<> dist(lowlimit, uplimit); // 生成1到100之间的整数
+    uniform_int_distribution<> dist(low, high); // 生成[low, high]之间的整数
 
     return dist(gen);
 }
@@ -38,11 +28,11 @@ bool RandomNum::limit_condition(uint32_t num)
     return true;
 }
 
-uint32_t RandomNum::limit_random_num(uint32_t lowlimit, uint32_t uplimit)
+uint32_t RandomNum::limit_random_num(uint32_t lowlimit, uint32_t highlimit)
 {
-    uint32_t num = random_num(lowlimit, uplimit);
+    uint32_t num = range_random_num(lowlimit, highlimit);
     while (!limit_condition(num)) {
-        num = random_num(lowlimit, uplimit);
+        num = range_random_num(lowlimit, highlimit);
     }
     return num;
 }
@@ -53,23 +43,46 @@ RandomNum *RandomNum::get_instance(void)
     return p;
 }
 
-uint32_t RandomNum::get_bool_random(void)
+bool RandomNum::get_bool_random(void)
 {
-    return RandomNum::get_instance()->limit_random_num(0, 1);
+    return (bool)RandomNum::get_instance()->limit_random_num(0, 1);
+}
+
+RandomNode* RandomNode::get_instance(void)
+{
+    static RandomNode* p = new RandomNode();
+    return p;
+}
+
+uint32_t RandomNode::get_random_node(void)
+{
+    uint32_t num = range_random_num(0, m_node_index.size() - 1);
+    if (num >= m_node_index.size()) { // 这个不应该发生
+        LOG_ERR("err random num");
+        return 0;
+    }
+    return m_node_index[num];
+}
+
+void RandomNode::get_detect_node(void)
+{
+    for (const auto& node : NodeManager::m_node_info_list) {
+        if (node.detected) {
+            m_node_index.push_back(node.index);
+        }
+    }
 }
 
 // 生成两个不一样的node节点
-class RandomNode : public RandomNum {
+class RandomPairNode : public RandomNode {
 public:
     uint32_t m_pair_node = -1;
-    static uint32_t m_biggest_node_num;
     bool limit_condition(uint32_t num) override;
     void get_pair_node(uint32_t& client_node, uint32_t& server_node);
 };
 
-uint32_t RandomNode::m_biggest_node_num = NodeManager::m_node_info_list.size() - 1;
 
-bool RandomNode::limit_condition(uint32_t num)
+bool RandomPairNode::limit_condition(uint32_t num)
 {
     if (m_pair_node < 0) {
         return true;
@@ -80,16 +93,13 @@ bool RandomNode::limit_condition(uint32_t num)
     return true;
 }
 
-void RandomNode::get_pair_node(uint32_t& client_node, uint32_t& server_node)
+void RandomPairNode::get_pair_node(uint32_t& client_node, uint32_t& server_node)
 {
-    m_pair_node = limit_random_num(0, m_biggest_node_num);
+    m_pair_node = RandomNode::get_instance()->get_random_node();
     client_node = m_pair_node;
-    server_node = limit_random_num(0, m_biggest_node_num);
+    server_node = RandomNode::get_instance()->get_random_node();
     m_pair_node = -1;
 }
-
-static uint32_t up_limit_flow = 900;
-static uint32_t low_limit_flow = 50;
 
 RandomDataFlow *RandomDataFlow::get_instance(void)
 {
@@ -106,6 +116,7 @@ void RandomDataFlow::generate_pair_flow(void)
 
 void RandomDataFlow::stop_generate_pair_flow(void)
 {
+    LOG_INFO("stop");
     m_generate_random_flow = false;
 }
 
@@ -115,7 +126,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
     NodeManager::NodeInfo* node_dst;
     uint32_t node_src_num;
     uint32_t node_dst_num;
-    RandomNode random_node = RandomNode();
+    RandomPairNode random_node = RandomPairNode();
     uint32_t send_time;
     uint32_t band_width;
     string type_str;
@@ -128,20 +139,8 @@ void RandomDataFlow::generate_pair_flow_thread(void)
         if (node_src == nullptr || node_dst == nullptr) {
             continue;
         }
-        // 如果向ap节点发消息，必须发到对应通道的网卡上面，有线发eth0，无线发ap，否则数据会被另一个网卡截留
-        // 或许有转发办法
-        // eth和ap不能相互通讯，无论是ap到自身eth还是服务器
-        if ((node_src->type == "eth" && node_dst->type == "ap")
-            || (node_src->type == "ap" && node_dst->type == "eth")) {
-            continue;
-        }
-        // sta不能向ap的eth发消息
-        if ((node_src->type == "sta" && node_dst->dev == "eth0")
-            || (node_src->dev == "eth0" && node_dst->type == "sta")) {
-            continue;
-        }
-        band_width = RandomNum::get_instance()->limit_random_num(low_limit_flow, up_limit_flow / 5);
-        if (node_src->output_band + band_width > up_limit_flow || node_dst->input_band + band_width > up_limit_flow) {
+        band_width = RandomNum::get_instance()->limit_random_num(low_band, high_band);
+        if (node_src->output_band + band_width > max_band || node_dst->input_band + band_width > max_band) {
             LOG_INFO("node acc band:[{}:{}][{}:{}]", node_src_num, node_src->output_band, node_dst_num, node_dst->input_band);
             std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
@@ -170,6 +169,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
     LOG_INFO("end");
 }
 
+/*
 void random_fault(void)
 {
     int32_t cout = 0;
@@ -205,8 +205,17 @@ void random_fault(void)
         app_down.recover_injection();
         std::this_thread::sleep_for(std::chrono::seconds(5));
         // 不明白为什么仍然有没被删除的flow，理论上close是用broken删除的，只要结束了就一定可以删除
-        DataFlow::get_instance()->detect_all_data_flow();
+        DataFlow::get_instance()->delete_all_data_flow();
     }
 }
+*/
+
+void random_flow(void)
+{
+    RandomDataFlow::get_instance()->generate_pair_flow();
+    std::this_thread::sleep_for(std::chrono::seconds(60));
+    RandomDataFlow::get_instance()->stop_generate_pair_flow();
+}
+
 
 

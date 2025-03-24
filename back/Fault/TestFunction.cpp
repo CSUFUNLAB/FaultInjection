@@ -2,6 +2,7 @@
 #include "SshSession.h"
 #include "ShellScript.h"
 #include "Log.h"
+#include "RandomDataFlow.h"
 
 using namespace std;
 using namespace web;
@@ -53,7 +54,7 @@ void test_func_1(void)
 
 void TestFunction::handlerData(http_request& message)
 {
-    int32_t swich_cmd = 1;
+    int32_t swich_cmd = 4;
     switch (swich_cmd) {
         case 0: // 第一次连接
             NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
@@ -67,9 +68,8 @@ void TestFunction::handlerData(http_request& message)
                 ShellScript* ssh = new ShellScript(node);
                 ssh->python_ssh("rm -rf /home/orangepi/monitor_script");
             });break;
-        case 3:
-            test_func_1(); break;
-        default:
-            test_func();
+        case 3: test_func_1(); break;
+        case 4: random_flow(); break;
+        default: test_func();
     }
 }

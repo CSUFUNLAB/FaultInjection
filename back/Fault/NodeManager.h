@@ -19,7 +19,8 @@ public:
         bool server_fault;
     };
     static std::vector<struct NodeInfo> m_node_info_list;
-    void init_m_node_info_list(void); // 这个要在使用m_node_info_list之前执行
+    // 这个要在使用m_node_info_list之前执行，不放在构造函数里面的原因是，m_node_info_list可以在这之前被调用
+    void init_m_node_info_list(void);
     static NodeManager* get_instance(void);
 
     bool node_num_exist(int32_t node_num);

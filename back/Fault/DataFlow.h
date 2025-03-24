@@ -50,7 +50,7 @@ public:
     int32_t close_data_flow_server(int32_t server_node_num); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
     int32_t delete_data_flow(DataInfo::FlowId &flow_id); // 先结束消息才能调用这个接口
     uint32_t band_width_str_to_num(std::string band_witdh_str);
-    bool detect_all_data_flow(void);
+    bool delete_all_data_flow(void);
 
 private:
     using FlowInfoPortMap = std::map<int32_t, struct FlowInfo>; // 第一个参数为port

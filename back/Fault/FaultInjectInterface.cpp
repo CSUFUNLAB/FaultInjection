@@ -42,7 +42,7 @@ void FaultInject::handlerData(http_request& message)
 
 void RandomFault::handlerData(http_request& message)
 {
-    random_fault();
+    // random_fault();
     m_handler_info.code = 200;
 }
 

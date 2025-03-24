@@ -2,6 +2,8 @@
 #include "Log.h"
 #include "SshSession.h"
 
+#include "RandomDataFlow.h"
+
 #include <atomic>
 #include <functional>
 #include <nlohmann/json.hpp>
@@ -338,5 +340,6 @@ void NodeManager::get_all_sta_ip(void)
         }
     }
 #endif
+    RandomNode::get_instance()->get_detect_node();
 }
 

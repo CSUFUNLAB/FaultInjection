@@ -254,7 +254,7 @@ void DataFlow::close_all_data_flow(void)
 }
 
 // 测试函数，目前存在删不干净band的情况
-bool DataFlow::detect_all_data_flow(void)
+bool DataFlow::delete_all_data_flow(void)
 {
     int32_t cout = 0;
     bool ret = false;

@@ -147,7 +147,7 @@
     <ClCompile Include="ServerHandler.cpp" />
     <ClCompile Include="SshSession.cpp" />
     <ClCompile Include="TestFunction.cpp" />
-    <ClCompile Include="​StringEscaping.cpp" />
+    <ClCompile Include="StringEscaping.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BeginTime.h" />
@@ -169,7 +169,7 @@
     <ClInclude Include="ServerHandler.h" />
     <ClInclude Include="SshSession.h" />
     <ClInclude Include="TestFunction.h" />
-    <ClInclude Include="​StringEscaping.h" />
+    <ClInclude Include="StringEscaping.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json" />

@@ -102,6 +102,9 @@
     <ClCompile Include="DataCollect.cpp">
       <Filter>源文件\Server\interface</Filter>
     </ClCompile>
+    <ClCompile Include="​StringEscaping.cpp">
+      <Filter>源文件\Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -153,13 +156,7 @@
       <Filter>头文件\Tools</Filter>
     </ClInclude>
     <ClInclude Include="ShellScript.h">
-      <Filter>头文件\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="ShellScript.h">
       <Filter>头文件\Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="ShellScript.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TestFunction.h">
       <Filter>头文件\Server\interface</Filter>
@@ -167,10 +164,7 @@
     <ClInclude Include="DataCollect.h">
       <Filter>头文件\Server\interface</Filter>
     </ClInclude>
-    <ClInclude Include="ShellScript.h">
-      <Filter>头文件\Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="ShellScript.h">
+    <ClInclude Include="​StringEscaping.h">
       <Filter>头文件\Tools</Filter>
     </ClInclude>
   </ItemGroup>

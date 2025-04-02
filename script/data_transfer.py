@@ -42,6 +42,16 @@ def determine_file_type(start_info):
         return "client"
     return "error"
 
+def determine_file_type_by_name(json_filepath):
+    point_pos = json_filepath.rfind('.')
+    type_str = json_filepath[point_pos - 1]
+    if type_str == '0':
+        return "client"
+    elif type_str == '1':
+        return "server"
+    else:
+        return "error"
+
 def process_json_file(json_filepath):
     """
     处理单个 JSON 文件，提取所有数据流的信息，并返回数据列表。
@@ -51,6 +61,7 @@ def process_json_file(json_filepath):
 
     json_objs = parse_multiple_json(content)
     rows = []
+    file_type = determine_file_type_by_name(json_filepath)
 
     for obj in json_objs:
         if not isinstance(obj, dict):
@@ -59,15 +70,21 @@ def process_json_file(json_filepath):
 
         try:
             start_info = obj.get("start", {})
-            file_type = determine_file_type(start_info)
-            
+            #file_type = determine_file_type(start_info)
+                        
             timestamp = start_info.get("timestamp", {})
-            timesecs = timestamp.get("timesecs", 0)
+            timesecs = timestamp.get("timesecs", 0)            
             test_start = start_info.get("test_start", {})
             protocol = test_start.get("protocol", "")
             blksize = test_start.get("blksize", 0)
-
+            
             intervals = obj.get("intervals", [])
+            if timestamp and not intervals:
+                row = {
+                    "file_type": file_type,
+                    "timesecs": timesecs,
+                }
+                rows.append(row)
             for interval in intervals:
                 streams = interval.get("streams", [])
                 for stream in streams:

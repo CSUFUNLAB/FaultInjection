@@ -2,6 +2,7 @@
 #include "Log.h"
 #include "SshSession.h"
 #include "BeginTime.h"
+#include "StringEscaping.h"
 #include "DataInjectInterface.h"
 
 #include <functional>
@@ -37,6 +38,8 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     info->client_ssh = new DataFlowSsh(flow_id, info->client);
     info->server_ssh = new DataFlowSsh(flow_id, info->server);
     m_mtx.unlock();
+    save_flow_info(info, info->client, "_0.json;");
+    save_flow_info(info, info->server, "_1.json;");
 
     #if 0
     int32_t client_ret = info->client_ssh->only_open();
@@ -65,6 +68,20 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     return 0;
 }
 
+void DataFlow::save_flow_info(FlowInfo* info, NodeManager::NodeInfo *node, string suffix)
+{
+    string file_name = string("data/") + to_string(info->client->index) + string("_") + to_string(info->server->index) + suffix;
+    string cmd_1_0 = "{\"start\":{\"timestamp\":{\"timesecs\":";
+    string cmd_1_1;
+    StringEscaping::get_instance().string_escaping(cmd_1_0, cmd_1_1);
+    string cmd_1 = "echo -ne '" + cmd_1_1 + "' ^>^> " + file_name;
+    string cmd_2 = "echo -ne \\\"$(date +%s)\\\" ^>^> " + file_name;
+    string cmd_3 = "echo \\\"}}}\\\" ^>^> " + file_name;
+    string cmd = cmd_1 + cmd_2 + cmd_3;
+    SshSession* ssh = new SshSession(node);
+    ssh->python_ssh(cmd);
+}
+
 void DataFlow::send_cmd_thread(FlowInfo* info)
 {
     if (m_iperf_type == SAVE_FILE) {
@@ -81,7 +98,7 @@ void DataFlow::save_file_cmd(FlowInfo* info)
     // app down故障在此处理
     // m_wait用于nohup结束时间，也是ssh结束时间
     info->client_ssh->m_wait = info->time + 2; // 多2s防止误差
-    info->server_ssh->m_wait = info->time + 2 + 7; // server先建立，从经验看需要额外7s
+    info->server_ssh->m_wait = info->time + 2 + 8; // server先建立，从经验看需要额外8s
 
     string udp_cmd = "";
     string len_cmd = "";
@@ -134,9 +151,6 @@ void DataFlow::online_parsing_cmd(FlowInfo *info)
             len_cmd = string(" -l ") + to_string(band_val * 128);
         }
     }
-    uint32_t band_width = band_width_str_to_num(info->band);
-    info->client->output_band += band_width;
-    info->server->input_band += band_width;
 
     // 这个故障属于节点所有app崩溃，是不太合理的
     if (info->server->server_fault) {
@@ -163,12 +177,14 @@ void DataFlow::online_parsing_cmd(FlowInfo *info)
 
 struct DataFlow::FlowInfo *DataFlow::add_data_flow(struct FlowInfo& info)
 {
+    // m_mtx.lock在外面
     ERR_RETURN(info.client == nullptr || info.server == nullptr, nullptr, "node not exist");
     ERR_RETURN(info.client->detected == false || info.server->detected == false, nullptr,
         "client[{}][{}] or server[{}][{}] not detected", info.client->index, info.client->detected, info.server->index, info.server->detected );
 
     info.port = 8081;
 
+    // 找info map中server节点的flow map，如果这个server节点没有flow，则直接添加
     auto flow_by_server = m_flow_info_map.find(info.server->index);
     if (flow_by_server == m_flow_info_map.end()) {
         FlowInfoPortMap port_map = {{info.port, info}};
@@ -176,31 +192,12 @@ struct DataFlow::FlowInfo *DataFlow::add_data_flow(struct FlowInfo& info)
         LOG_INFO("add flow {} -> {} : {} {} {} {}s", info.client->index, info.server->index, info.port, info.type, info.band, info.time);
         return &m_flow_info_map.find(info.server->index)->second.find(info.port)->second;
     }
+    // 根据port找server节点的flow map节点的flow
+    // 之前写的代码解决ap两张网卡算两个节点的port共享问题，同步这两个节点的port map，但导致代码很复杂，删除
     auto info_it = flow_by_server->second.find(info.port);
-    uint32_t pair_node_num = 0;
-    if (info.server->index == 1) {
-        pair_node_num = 2;
-    } else if (info.server->index == 2) {
-        pair_node_num = 1;
-    }
-    // ap有两个网卡eth和ap，它们端共用口
-    FlowInfoServerMap::iterator pair_node_flow;
-    FlowInfoPortMap::iterator pair_node_info_it;
-    bool consider_pair = false;
-    if (pair_node_num != 0) {
-        pair_node_flow = m_flow_info_map.find(pair_node_num);
-        if (pair_node_flow != m_flow_info_map.end()) {
-            consider_pair = true;
-            pair_node_info_it = pair_node_flow->second.find(info.port);
-        }
-    }
-    while (info_it != flow_by_server->second.end() ||
-            (consider_pair && pair_node_info_it != pair_node_flow->second.end())) { // port自动选择的情况下，总能找到可新插入的data flow
+    while (info_it != flow_by_server->second.end()) { // port自动选择的情况下，总能找到可新插入的data flow
         info.port++;
         info_it = flow_by_server->second.find(info.port);
-        if (consider_pair) {
-            pair_node_info_it = pair_node_flow->second.find(info.port);
-        }
     }
 
     flow_by_server->second.insert({info.port, info});
@@ -227,8 +224,6 @@ int32_t DataFlow::delete_data_flow(DataInfo::FlowId &flow_id)
             flow_id.client_node_num, flow_id.server_node_num, flow_id.port, info_it->second.type, info_it->second.band, info_it->second.time);
         FlowInfo& info = info_it->second;
         uint32_t band_width = band_width_str_to_num(info.band);
-        info.client->output_band -= band_width;
-        info.server->input_band -= band_width;
         flow_by_server->second.erase(info_it);
         m_mtx.unlock();
         return 0;
@@ -238,6 +233,55 @@ int32_t DataFlow::delete_data_flow(DataInfo::FlowId &flow_id)
     m_mtx.unlock();
     LOG_ERR("flow {} -> {} : {} not exist", flow_id.client_node_num, flow_id.server_node_num, flow_id.port);
     return -NO_EXIST_FLOW;
+}
+
+uint32_t DataFlow::get_input_bandwith(uint32_t node)
+{
+    m_mtx.lock();
+    uint32_t bandwith = 0;
+    auto flow_by_server = m_flow_info_map.find(node);
+    if (flow_by_server == m_flow_info_map.end()) {
+        m_mtx.unlock();
+        return bandwith;
+    }
+    for (const auto& flow : flow_by_server->second) {
+        bandwith += band_width_str_to_num(flow.second.band);
+    }
+    m_mtx.unlock();
+    return bandwith;
+}
+
+uint32_t DataFlow::get_output_bandwith(uint32_t node)
+{
+    m_mtx.lock();
+    uint32_t bandwith = 0;
+    for (const auto& flow_by_server : m_flow_info_map) {
+        for (const auto& flow : flow_by_server.second) {
+            if (flow.second.client->index == node) {
+                bandwith += band_width_str_to_num(flow.second.band);
+            }
+        }
+    }
+    m_mtx.unlock();
+    return bandwith;
+}
+
+bool DataFlow::find_connect(uint32_t src_node, uint32_t dst_node)
+{
+    m_mtx.lock();
+    auto flow_by_server = m_flow_info_map.find(dst_node);
+    if (flow_by_server == m_flow_info_map.end()) {
+        m_mtx.unlock();
+        return false;
+    }
+    for (const auto& flow : flow_by_server->second) {
+        if (src_node == flow.second.client->index) {
+            m_mtx.unlock();
+            return true;
+        }
+    }
+    m_mtx.unlock();
+    return false;
 }
 
 void DataFlow::close_all_data_flow(void)
@@ -256,8 +300,9 @@ void DataFlow::close_all_data_flow(void)
 // 测试函数，目前存在删不干净band的情况
 bool DataFlow::delete_all_data_flow(void)
 {
-    int32_t cout = 0;
     bool ret = false;
+    /*
+    int32_t cout = 0;
     for (auto& node : NodeManager::m_node_info_list) {
         while (node.input_band > 0 || node.output_band > 0) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -270,9 +315,6 @@ bool DataFlow::delete_all_data_flow(void)
                         FlowInfo& info = info_it->second;
                         LOG_INFO("exist flow {} -> {} : {} {} {} {}s", info.client->index, info.server->index, info.port, info.type, info.band, info.time);
                         // 现在仍然不知道为什么有没删掉的
-                        uint32_t band_width = band_width_str_to_num(info.band);
-                        info.client->output_band -= band_width;
-                        info.server->input_band -= band_width;
                         // 现状是broken_cmd可能没有关掉ssh，导致没有触发后面的delete流程，可能会内存泄漏
                         info.client_ssh->broken_cmd();
                         info.server_ssh->broken_cmd();
@@ -287,6 +329,7 @@ bool DataFlow::delete_all_data_flow(void)
             }
         }
     }
+    */
     return ret;
 }
 

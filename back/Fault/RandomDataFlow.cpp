@@ -23,20 +23,6 @@ uint32_t RandomNum::range_random_num(uint32_t low, uint32_t high)
     return dist(gen);
 }
 
-bool RandomNum::limit_condition(uint32_t num)
-{
-    return true;
-}
-
-uint32_t RandomNum::limit_random_num(uint32_t lowlimit, uint32_t highlimit)
-{
-    uint32_t num = range_random_num(lowlimit, highlimit);
-    while (!limit_condition(num)) {
-        num = range_random_num(lowlimit, highlimit);
-    }
-    return num;
-}
-
 RandomNum *RandomNum::get_instance(void)
 {
     static RandomNum *p = new RandomNum();
@@ -45,7 +31,7 @@ RandomNum *RandomNum::get_instance(void)
 
 bool RandomNum::get_bool_random(void)
 {
-    return (bool)RandomNum::get_instance()->limit_random_num(0, 1);
+    return (bool)RandomNum::get_instance()->range_random_num(0, 1);
 }
 
 RandomNode* RandomNode::get_instance(void)
@@ -76,29 +62,15 @@ void RandomNode::get_detect_node(void)
 // 生成两个不一样的node节点
 class RandomPairNode : public RandomNode {
 public:
-    uint32_t m_pair_node = -1;
-    bool limit_condition(uint32_t num) override;
     void get_pair_node(uint32_t& client_node, uint32_t& server_node);
 };
 
-
-bool RandomPairNode::limit_condition(uint32_t num)
-{
-    if (m_pair_node < 0) {
-        return true;
-    }
-    if (m_pair_node == num) {
-        return false;
-    }
-    return true;
-}
-
 void RandomPairNode::get_pair_node(uint32_t& client_node, uint32_t& server_node)
 {
-    m_pair_node = RandomNode::get_instance()->get_random_node();
-    client_node = m_pair_node;
-    server_node = RandomNode::get_instance()->get_random_node();
-    m_pair_node = -1;
+    client_node = RandomNode::get_instance()->get_random_node();
+    do {
+        server_node = RandomNode::get_instance()->get_random_node();
+    } while (client_node == server_node);
 }
 
 RandomDataFlow *RandomDataFlow::get_instance(void)
@@ -133,20 +105,26 @@ void RandomDataFlow::generate_pair_flow_thread(void)
     string band_width_str;
 
     while (m_generate_random_flow) {
-        random_node.get_pair_node(node_src_num, node_dst_num);
+        // 由于还需要在添加一次flow信息防止失败的通讯，所以不能同时有两个flow在等待写入json
+        do {
+            random_node.get_pair_node(node_src_num, node_dst_num);
+        } while (DataFlow::get_instance()->find_connect(node_src_num, node_dst_num));
+
         node_src = NodeManager::get_instance()->get_node_info(node_src_num);
         node_dst = NodeManager::get_instance()->get_node_info(node_dst_num);
         if (node_src == nullptr || node_dst == nullptr) {
             continue;
         }
-        band_width = RandomNum::get_instance()->limit_random_num(low_band, high_band);
-        if (node_src->output_band + band_width > max_band || node_dst->input_band + band_width > max_band) {
-            LOG_INFO("node acc band:[{}:{}][{}:{}]", node_src_num, node_src->output_band, node_dst_num, node_dst->input_band);
+        band_width = RandomNum::get_instance()->range_random_num(low_band, high_band);
+        uint32_t output_band = DataFlow::get_instance()->get_output_bandwith(node_src->index);
+        uint32_t input_band = DataFlow::get_instance()->get_input_bandwith(node_dst->index);
+        LOG_INFO("node acc band:[{}:{}]->[{}:{}]", node_src_num, output_band, node_dst_num, input_band);
+        if (output_band + band_width > max_band || input_band + band_width > max_band) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
         band_width_str = to_string(band_width) + string("K");
-        send_time = RandomNum::get_instance()->limit_random_num(10, 30);
+        send_time = RandomNum::get_instance()->range_random_num(10, 30);
         if (RandomNum::get_bool_random() == 1) {
             type_str = "tcp";
         }
@@ -213,8 +191,27 @@ void random_fault(void)
 void random_flow(void)
 {
     RandomDataFlow::get_instance()->generate_pair_flow();
+
+    std::this_thread::sleep_for(std::chrono::seconds(60));
+    uint32_t fault_node = 3;
+    while (fault_node == 3) { // 目前ap节点故障会很麻烦
+        fault_node = RandomNode::get_instance()->get_random_node();
+    }
+    LOG_INFO("------------------------ fault node is {} ------------------------", fault_node);
+    SshSession* ssh = new SshSession(&NodeManager::m_node_info_list[fault_node]);
+    ssh->m_is_root = true; // reboot需要root权限
+    ssh->python_ssh("reboot");
+
     std::this_thread::sleep_for(std::chrono::seconds(60));
     RandomDataFlow::get_instance()->stop_generate_pair_flow();
+    /*
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+    NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+        uint32_t output_band = DataFlow::get_instance()->get_output_bandwith(node->index);
+        uint32_t input_band = DataFlow::get_instance()->get_input_bandwith(node->index);
+        LOG_INFO("node {} bandwith input {} output {}", node->index, input_band, output_band);
+    });
+    */
 }
 
 

@@ -3,6 +3,7 @@
 #include "ShellScript.h"
 #include "Log.h"
 #include "RandomDataFlow.h"
+#include "StringEscaping.h"
 
 using namespace std;
 using namespace web;
@@ -43,18 +44,30 @@ void test_func(void)
 
 void test_func_1(void)
 {
-    NodeManager::NodeInfo *node = &NodeManager::m_node_info_list[13];
+    // ssh->python_ssh("echo yes ^>^> data/temp.txt");
+    // ssh->python_ssh("echo -e \\\"data \\\\n 123 \\\" ^>^> data/temp.txt");
+    // ssh->python_ssh("echo -e ' \\x22 data \\x0a data2 \\x22 ' ^>^> data/temp.txt");
+    // ssh->python_ssh("echo yes+\\% ^>^> data/temp.txt");
+    //string a = "{\"start\":{\"timestamp\":{\"timesecs\":$(date +%s)}}}";
+    string a = " {\"start\":{\"timestamp\":{\"timesecs\":";
+    string b;
+    StringEscaping::get_instance().string_escaping(a, b);
+    // cout << b << endl;
+    NodeManager::NodeInfo *node = &NodeManager::m_node_info_list[14];
+    node->ip = string("192.168.12.138");
     node->detected = true;
-    node->ip = "192.168.12.186";
-    // 还有ip
-    ShellScript::update_monitor_script(node);
-    // ShellScript* ssh = new ShellScript(node);
-    //ssh->copy_monitor_script();
+    SshSession* ssh = new SshSession(node);
+    //string cmd = "echo -e \\\"" + b + "\\\" ^>^> data/temp.txt";
+    string cmd = "echo -ne '" + b + "' ^>^> data/temp.txt;"; // 不换行
+    string cmd2 = "echo -ne \\\"$(date +%s)\\\" ^>^> data/temp.txt;"; // 不换行
+    string cmd3 = "echo \\\"}}}\\\" ^>^> data/temp.txt";
+    string cmd_all = cmd + cmd2 + cmd3;
+    ssh->python_ssh(cmd_all);
 }
 
 void TestFunction::handlerData(http_request& message)
 {
-    int32_t swich_cmd = 4;
+    int32_t swich_cmd = 3;
     switch (swich_cmd) {
         case 0: // 第一次连接
             NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
@@ -70,6 +83,23 @@ void TestFunction::handlerData(http_request& message)
             });break;
         case 3: test_func_1(); break;
         case 4: random_flow(); break;
+        case 5:
+            NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+                ShellScript* ssh = new ShellScript(node);
+                ssh->m_is_root = true;
+                ssh->python_ssh("apt install iftop");
+            });break;
+        case 6: // 添加路由
+            NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+                if (node->type == "ap") { // ap 节点不需要设置
+                    LOG_INFO("ap no need set route");
+                    return;
+                }
+                ShellScript* ssh = new ShellScript(node);
+                ssh->m_is_root = true;
+                ssh->python_ssh("nmcli connection modify \\\"orangepi 1\\\" +ipv4.routes \\\"192.168.12.0/24 192.168.12.1\\\"");
+            });break;
+            
         default: test_func();
     }
 }

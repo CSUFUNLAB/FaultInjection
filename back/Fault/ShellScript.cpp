@@ -67,3 +67,5 @@ void ShellScript::first_connect(void)
     m_send_type = FIRST_CMD;
     python_ssh(string(""));
 }
+
+

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "SshSession.h"
+#include <string>
 
 class ShellScript : public SshSession {
 public:

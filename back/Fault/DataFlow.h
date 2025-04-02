@@ -50,6 +50,9 @@ public:
     int32_t close_data_flow_server(int32_t server_node_num); // 只有服务端崩溃是有意义的，客户端崩溃有可能是主动停止
     int32_t delete_data_flow(DataInfo::FlowId &flow_id); // 先结束消息才能调用这个接口
     uint32_t band_width_str_to_num(std::string band_witdh_str);
+    uint32_t get_input_bandwith(uint32_t node);
+    uint32_t get_output_bandwith(uint32_t node);
+    bool find_connect(uint32_t src_node, uint32_t dst_node);
     bool delete_all_data_flow(void);
 
 private:
@@ -60,6 +63,7 @@ private:
     void send_cmd_thread(FlowInfo* info);
     void save_file_cmd(FlowInfo* info);
     void online_parsing_cmd(FlowInfo* info);
+    void save_flow_info(FlowInfo* info, NodeManager::NodeInfo* node, std::string suffix);
     std::mutex m_mtx;
 };
 

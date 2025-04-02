@@ -7,11 +7,10 @@ class RandomNum {
 public:
     static RandomNum *get_instance(void);
     static bool get_bool_random(void);
-    virtual bool limit_condition(uint32_t num); // 返回true才表示满足limit条件
-    uint32_t limit_random_num(uint32_t low, uint32_t high); // 产生的随机数需要通过limit condtion
     uint32_t range_random_num(uint32_t low, uint32_t high);
 };
 
+// 获取已检测节点的随机节点
 class RandomNode : public RandomNum {
 public:
     static RandomNode *get_instance(void);
@@ -31,7 +30,7 @@ public:
 private:
     void generate_pair_flow_thread(void);
     bool m_generate_random_flow = true;
-    uint32_t max_band = 900;
+    uint32_t max_band = 800;
     uint32_t high_band = 200;
     uint32_t low_band = 50;
 };

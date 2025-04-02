@@ -53,6 +53,7 @@ void ScanNode::handlerData(http_request &message)
             LOG_DEBUG("node[{}] not detected", node.index);
             continue;
         }
+        LOG_INFO("node[{}][{}][{}]", node.index, node.ip, node.mac);
         Json::Value node_json;
         node_json["node"] = node.index;
         node_json["deviceType"] = node.type;

@@ -35,6 +35,7 @@ void InjectDataFlow::handlerData(http_request &message)
         0,
         send_time,
         type,
+        true,
         nullptr,
         nullptr,
     };
@@ -75,7 +76,7 @@ void ScanNode::handlerData(http_request &message)
 
 void GenerateRandomFlow::handlerData(http_request& message)
 {
-    RandomDataFlow::get_instance()->generate_pair_flow();
+    random_flow();
     m_handler_info.code = 200;
     m_handler_info.msg = "success";
 }

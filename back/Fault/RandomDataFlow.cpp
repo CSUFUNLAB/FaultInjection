@@ -138,6 +138,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
             0,
             send_time,
             type_str,
+            true,
             nullptr,
             nullptr,
         };
@@ -192,18 +193,18 @@ void random_flow(void)
 {
     RandomDataFlow::get_instance()->generate_pair_flow();
 
-    std::this_thread::sleep_for(std::chrono::seconds(60));
-    uint32_t fault_node = 3;
-    while (fault_node == 3) { // 目前ap节点故障会很麻烦
-        fault_node = RandomNode::get_instance()->get_random_node();
-    }
-    LOG_INFO("------------------------ fault node is {} ------------------------", fault_node);
-    SshSession* ssh = new SshSession(&NodeManager::m_node_info_list[fault_node]);
-    ssh->m_is_root = true; // reboot需要root权限
-    ssh->python_ssh("reboot");
+    FaultBase* fault = FaultBase::get_fault(
+        FaultBase::TRAFFIC, FaultBase::RANDOM_NODE_EXIT_AP);
+        // FaultBase::TRAFFIC, FaultBase::RANDOM_NODE);
 
-    std::this_thread::sleep_for(std::chrono::seconds(60));
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+
+    fault->fault_injection();
+
+    std::this_thread::sleep_for(std::chrono::seconds(120));
+
     RandomDataFlow::get_instance()->stop_generate_pair_flow();
+    fault->recover_injection();
     /*
     std::this_thread::sleep_for(std::chrono::seconds(30));
     NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {

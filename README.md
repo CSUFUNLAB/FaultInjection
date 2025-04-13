@@ -167,6 +167,16 @@ CSU-WIFI --- 桌面板linux --网线-- 服务器板linux --- 自组网wifi
 
 #### dhcp服务器
 使用dnsmasq作为dhcp服务器
+需要额外设置静态ip
+wired connection 1 是connect name
+设置
+sudo nmcli connection modify "Wired connection 1" \
+    ipv4.method manual \
+    ipv4.addresses 192.168.4.1/24 \
+    ipv4.gateway 192.168.4.1
+
+删除
+sudo nmcli connection modify "Wired connection 1" ipv4.addresses "" ipv4.gateway "" ipv4.dns ""
 
 #### 外网
 板子可以连接csu-wifi来连接外网

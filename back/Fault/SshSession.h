@@ -48,7 +48,9 @@ public:
         FIRST_CMD, // 第一次连接，输入一个yes
     } SshSendType ;
 
-    SshSendType m_send_type = EXEC_CMD; // 默认改为EXEC_CMD将会导致原有libssh Session不再适用
+    // 默认改为EXEC_CMD将会导致原有libssh Session不再适用
+    // 废弃原有的libssh session
+    SshSendType m_send_type = EXEC_CMD;
 
     // python ssh 是用python脚本打开cmd然后使用windows的openssh
     // 不需要再次调用open send等函数

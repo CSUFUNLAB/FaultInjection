@@ -16,7 +16,7 @@ public:
         struct NodeInfo* up_linked;
         int32_t input_band;
         int32_t output_band;
-        bool server_fault; // 不应该使用，目前用于已经不使用的故障flow创建中
+        bool app_down; // 此节点无法创建app
     };
     static std::vector<struct NodeInfo> m_node_info_list;
     // 这个要在使用m_node_info_list之前执行，不放在构造函数里面的原因是，m_node_info_list可以在这之前被调用

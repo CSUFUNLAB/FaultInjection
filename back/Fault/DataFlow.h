@@ -1,4 +1,5 @@
 #pragma once
+#include "DataFlow.h"
 
 #include <map>
 #include <stdint.h>
@@ -29,10 +30,11 @@ public:
         uint32_t port; // port 自动选择 输入填0即可
         uint32_t time; // s
         std::string type; // tcp or udp 小写
+        bool record; // 用于不记录的恶意故障流量
         DataFlowSsh* client_ssh; // 自动结束
         DataFlowSsh* server_ssh; // 自动结束
         uint32_t use_cout; // 用于结束后删除表中存储的此条信息
-        bool begin; // flow的ssh是否开始，未开始不能删除info
+        bool begin; // flow的ssh是否开始，未开始不能删除info；修改了删除方式，已经没用了
     };
 
     typedef enum {

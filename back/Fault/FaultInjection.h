@@ -4,27 +4,53 @@
 #include "SshSession.h"
 
 // 使用ssh注入故障，每次只能注入一个故障，不可重复使用
-class FaultBase {
+class FaultBase : public SshSession {
 public:
-    FaultBase(SshSession* ssh, std::string& para) : m_ssh(ssh), m_para(para) {};
-    ~FaultBase();
-    SshSession *m_ssh;
-    std::string m_para;
-    bool m_is_fault = false;
+    typedef enum {
+        FIX_NODE,
+        RANDOM_NODE,
+        RANDOM_NODE_EXIT_AP, // 一些故障发生在ap节点会很麻烦
+    } FaultNodeType;
 
-    static FaultBase* create_fault(int32_t node_num, std::string& type, std::string& para);
-    virtual int32_t fault_injection(void) = 0;
-    virtual int32_t recover_injection(void) = 0;
+    typedef enum {
+        NODE_CRASH,
+        APP_CRASH,
+        CONGESTION,
+        TRAFFIC,
+    } FaultType;
+
+    using SshSession::SshSession;
+
+    // 如果使用FIX_NODE，需要设置node参数
+    // 可以使用ssh node info获取随机的故障节点
+    static FaultBase* get_fault(FaultType fault_type, FaultNodeType fault_node_type, uint32_t fault_node = 0);
+    // send ssh后不自动delete自身，在recover里面处理
+    void cmd_end(void) override {};
+    virtual void fault_injection(void) = 0; // 一定要覆写
+    virtual void recover_injection(void);
 };
 
 class NodeCrash : public FaultBase {
 public:
     using FaultBase::FaultBase;
-
-    int32_t fault_injection(void) override;
-    int32_t recover_injection(void) override { return 0; }; // crash故障原理是重启，无需恢复
+    void fault_injection(void) override;
 };
 
+// App down 不需要ssh，但是还是需要node节点号
+class AppDown : public FaultBase {
+public:
+    using FaultBase::FaultBase;
+    void fault_injection(void) override;
+    void recover_injection(void);
+};
+
+class MaliciousTraffic : public FaultBase {
+public:
+    using FaultBase::FaultBase;
+    void fault_injection(void) override;
+};
+
+/*
 class NetworkCongestionSsh : public SshSession {
 public:
     NetworkCongestionSsh(NodeManager::NodeInfo* node, std::string *para, bool *is_fault)
@@ -40,16 +66,7 @@ public:
     int32_t fault_injection(void) override;
     int32_t recover_injection(void) override;
 };
-
-// App down 不需要ssh
-class AppDown : public FaultBase {
-public:
-    using FaultBase::FaultBase;
-    int32_t fault_injection(void) override;
-    int32_t recover_injection(void) override;
-};
-
-FaultBase* create_faultssh(int32_t node_num, std::string &type, std::string &para);
+*/
 
 #if 0
 class NodeCrash : public FaultInjection {

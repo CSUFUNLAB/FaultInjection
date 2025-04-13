@@ -4,6 +4,8 @@
 #include "Log.h"
 #include "RandomDataFlow.h"
 #include "StringEscaping.h"
+#include "FaultInjection.h"
+#include "DataFlow.h"
 
 using namespace std;
 using namespace web;
@@ -65,9 +67,25 @@ void test_func_1(void)
     ssh->python_ssh(cmd_all);
 }
 
+void test3_fun(void)
+{
+    struct DataFlow::FlowInfo flow_info = {
+        &NodeManager::m_node_info_list[11],
+        &NodeManager::m_node_info_list[3],
+        "2M",
+        0,
+        10,
+        "udp",
+        true,
+        nullptr,
+        nullptr,
+    };
+    DataFlow::get_instance()->creat_data_flow(flow_info);
+}
+
 void TestFunction::handlerData(http_request& message)
 {
-    int32_t swich_cmd = 3;
+    int32_t swich_cmd = 7;
     switch (swich_cmd) {
         case 0: // 第一次连接
             NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
@@ -99,7 +117,7 @@ void TestFunction::handlerData(http_request& message)
                 ssh->m_is_root = true;
                 ssh->python_ssh("nmcli connection modify \\\"orangepi 1\\\" +ipv4.routes \\\"192.168.12.0/24 192.168.12.1\\\"");
             });break;
-            
-        default: test_func();
+        case 7: test3_fun(); break;
+        default: test_func(); break;
     }
 }

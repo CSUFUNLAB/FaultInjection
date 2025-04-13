@@ -29,12 +29,8 @@ void FaultInject::handlerData(http_request& message)
     int32_t node_num;
     for (const auto &node : nodeJsonDatas) {
         node_num = atoi(node["value"].asString().c_str());
-        fault = FaultBase::create_fault(node_num, fault_type, fault_para);
-        ret = fault->fault_injection();
-        delete fault;
-        if (ret != 0) {
-            break;
-        }
+        // fault = FaultBase::create_fault(node_num, fault_type, fault_para);
+        fault->fault_injection();
     }
     ret = ret == 0 ? 200 : 300 - ret;
     m_handler_info.code = ret;

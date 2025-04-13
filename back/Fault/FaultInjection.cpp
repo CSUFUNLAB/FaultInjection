@@ -1,25 +1,91 @@
 #include "FaultInjection.h"
 #include "NodeManager.h"
 #include "DataFlow.h"
+#include "RandomDataFlow.h"
 #include "Log.h"
 
 using namespace std;
 
-FaultBase::~FaultBase()
+FaultBase *FaultBase::get_fault(FaultType fault_type, FaultNodeType fault_node_type, uint32_t fault_node)
 {
-    if (m_ssh != nullptr) {
-        m_ssh->broken_cmd();
-    }
+    switch (fault_node_type) {
+        case FIX_NODE: break;
+        case RANDOM_NODE:
+            fault_node = RandomNode::get_instance()->get_random_node(); break;
+        case RANDOM_NODE_EXIT_AP:
+            fault_node = 3; // todo: 不写死
+            while (fault_node == 3) {
+                fault_node = RandomNode::get_instance()->get_random_node();
+            }
+            break;
+        default: break;
+    };
+    LOG_INFO("------------------------ fault node {} ------------------------", fault_node);
+    NodeManager::NodeInfo *fault_node_info = &NodeManager::m_node_info_list[fault_node];
+    switch (fault_type) {
+        case NODE_CRASH: 
+            LOG_INFO("------------------------ {} ------------------------", "node_crash");
+            return new NodeCrash(fault_node_info);
+        case APP_CRASH:
+            LOG_INFO("------------------------ {} ------------------------", "app crash");
+            return new AppDown(fault_node_info);
+        case CONGESTION:
+            LOG_INFO("------------------------ {} ------------------------", "congestion");
+            return nullptr;
+        case TRAFFIC:
+            LOG_INFO("------------------------ {} ------------------------", "malicious traffic");
+            return new MaliciousTraffic(fault_node_info);
+        default: return nullptr;
+    };
 }
 
-int32_t NodeCrash::fault_injection(void)
+void FaultBase::recover_injection(void)
 {
-    int32_t ret = m_ssh->open_and_send();
-    ERR_RETURN(ret != 0, -1, "open ssh failed");
-    m_ssh->send_cmd("reboot\n");
-    return 0;
+    delete this;
 }
 
+void NodeCrash::fault_injection(void)
+{
+    LOG_INFO("------------------------ {} ------------------------", "node_crash");
+    m_is_root = true; // reboot需要root权限
+    python_ssh("reboot");
+}
+
+// app down的原理是一个节点无法创建app
+// 目前python ssh无法在运行中关闭iperf，其实可以kill但是看起来很麻烦
+void AppDown::fault_injection(void)
+{
+    LOG_INFO("------------------------ {} ------------------------", "app crash");
+    m_node_info->app_down = true;
+}
+
+void AppDown::recover_injection(void)
+{
+    NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+        node->app_down = false;
+    });
+    delete this;
+}
+
+void MaliciousTraffic::fault_injection(void)
+{
+    LOG_INFO("------------------------ {} ------------------------", "malicious traffic");
+    struct DataFlow::FlowInfo flow_info = {
+        m_node_info,
+        &NodeManager::m_node_info_list[3],
+        "2M",
+        0,
+        120,
+        "udp",
+        false,
+        nullptr,
+        nullptr,
+    };
+    DataFlow::get_instance()->creat_data_flow(flow_info);
+}
+
+
+/*
 int32_t NetworkCongestion::fault_injection(void)
 {
     m_is_fault = true;
@@ -45,48 +111,6 @@ int32_t NetworkCongestion::recover_injection(void)
     m_ssh->send_cmd(string("tc qdisc del dev ") + m_ssh->m_node_info->dev + string(" root\n"));
     return 0;
 }
+*/
 
-// 这里面app down的原理是让某一个节点的app全部无法执行，这是不合理的
-// 应该是app执行到一半，某一个app失效
-//  app down 的错误注入方式应该改为建立连接的客户端和服务端时间不对称
-int32_t AppDown::fault_injection(void)
-{
-    NodeManager::NodeInfo *node = NodeManager::get_instance()->get_node_info(atoi(m_para.c_str()));
-    ERR_RETURN(node == nullptr, -NO_NODE, "get node info failed");
-    LOG_INFO("node[{}] has fault app down", node->index);
-    node->server_fault = true;
-    return DataFlow::get_instance()->close_data_flow_server(node->index);
-
-}
-
-int32_t AppDown::recover_injection(void)
-{
-    NodeManager::NodeInfo *node = NodeManager::get_instance()->get_node_info(atoi(m_para.c_str()));
-    ERR_RETURN(node == nullptr, -NO_NODE, "get node info failed");
-    node->server_fault = false;
-    return 0;
-}
-
-FaultBase* FaultBase::create_fault(int32_t node_num, std::string &type, std::string &para)
-{
-    NodeManager::NodeInfo *node = NodeManager::get_instance()->get_node_info(node_num);
-    ERR_RETURN(node == nullptr, nullptr, "get node info failed");
-    SshSession* ssh = nullptr;
-    LOG_INFO("create fault [{}] {} {}", node_num, type, para);
-    if (type == "congest") {
-        FaultBase *p = new NetworkCongestion(nullptr, para);
-        ssh = new NetworkCongestionSsh(node, &p->m_para, &p->m_is_fault);
-        p->m_ssh = ssh;
-        return p;
-    }
-    if (type == "nodedown") {
-        ssh = new SshSession(node);
-        return new NodeCrash(ssh, para);
-    }
-    if (type == "appdown") {
-        para = to_string(node_num);
-        return new AppDown(nullptr, para);
-    }
-    return nullptr;
-}
 

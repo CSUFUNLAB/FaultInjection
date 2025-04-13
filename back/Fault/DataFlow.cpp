@@ -21,7 +21,8 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     ERR_RETURN(input_info.client == nullptr || input_info.server == nullptr, -NO_NODE, "null node info");
 
     m_mtx.lock();
-    FlowInfo *info = add_data_flow(input_info);
+    FlowInfo* info = nullptr;
+    info = add_data_flow(input_info);
     if (info == nullptr) {
         m_mtx.unlock();
         return -NO_NODE;
@@ -38,8 +39,14 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     info->client_ssh = new DataFlowSsh(flow_id, info->client);
     info->server_ssh = new DataFlowSsh(flow_id, info->server);
     m_mtx.unlock();
-    save_flow_info(info, info->client, "_0.json;");
-    save_flow_info(info, info->server, "_1.json;");
+    LOG_INFO("create flow {} -> {} : {} {} {} {}s",
+        info->client->index, info->server->index, info->port, info->type, info->band, info->time);
+    if (!info->client->app_down) {
+        save_flow_info(info, info->client, "_0.json;");
+    }
+    if (!info->server->app_down) {
+        save_flow_info(info, info->server, "_1.json;");
+    }
 
     #if 0
     int32_t client_ret = info->client_ssh->only_open();
@@ -70,6 +77,7 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
 
 void DataFlow::save_flow_info(FlowInfo* info, NodeManager::NodeInfo *node, string suffix)
 {
+    // echo语句，""由于外层套太多"导致不支持\转义，''则不支持$，所以混着来
     string file_name = string("data/") + to_string(info->client->index) + string("_") + to_string(info->server->index) + suffix;
     string cmd_1_0 = "{\"start\":{\"timestamp\":{\"timesecs\":";
     string cmd_1_1;
@@ -115,27 +123,36 @@ void DataFlow::save_file_cmd(FlowInfo* info)
         }
     }
     //
-    info->server_ssh->python_ssh(
-        string("nohup timeout ") + to_string(info->server_ssh->m_wait) + string(" \\\"") +
-        string(" iperf3 -s -i 1 -p ") + to_string(info->port) +
-        string(" -J --logfile ") + server_file_name +
-        string("\\\""));
+    if (info->server->app_down) {
+        LOG_INFO("server[{}] has app down fault, don't create server", info->server->index);
+        info->server_ssh->python_ssh("echo no iperf create"); // 这里还是发一条消息，用于client server pair结束
+    } else {
+        info->server_ssh->python_ssh(
+            string("nohup timeout ") + to_string(info->server_ssh->m_wait) + string(" \\\"") +
+            string(" iperf3 -s -i 1 -p ") + to_string(info->port) +
+            string(" -J --logfile ") + server_file_name +
+            string("\\\""));
 
-    while (info->server_ssh->m_send_cmd) { // 这行报错可能不是server_ssh不存在，是info不存在了
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        while (info->server_ssh->m_send_cmd) { // 这行报错可能不是server_ssh不存在，是info不存在了
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
     }
 
-    info->client_ssh->python_ssh(
-        string("nohup timeout ") + to_string(info->client_ssh->m_wait) + string(" \\\"") +
-        string("iperf3 -c ") + info->server->ip +
-        string(" -i 1 -p ") + to_string(info->port) +
-        string(" -t ") + to_string(info->time) +
-        string(" -b ") + info->band +
-        len_cmd +
-        udp_cmd +
-        string(" -J --logfile ") + client_file_name +
-        string("\\\""));
-
+    if (info->client->app_down) {
+        LOG_INFO("client[{}] has app down fault, don't create client", info->client->index);
+        info->client_ssh->send_cmd("echo no iperf create"); // 这里还是发一条消息，用于client server pair结束
+    } else {
+        info->client_ssh->python_ssh(
+            string("nohup timeout ") + to_string(info->client_ssh->m_wait) + string(" \\\"") +
+            string("iperf3 -c ") + info->server->ip +
+            string(" -i 1 -p ") + to_string(info->port) +
+            string(" -t ") + to_string(info->time) +
+            string(" -b ") + info->band +
+            len_cmd +
+            udp_cmd +
+            string(" -J --logfile ") + client_file_name +
+            string("\\\""));
+    }
     info->begin = true;
 }
 
@@ -152,8 +169,7 @@ void DataFlow::online_parsing_cmd(FlowInfo *info)
         }
     }
 
-    // 这个故障属于节点所有app崩溃，是不太合理的
-    if (info->server->server_fault) {
+    if (info->server->app_down) {
         LOG_INFO("server[{}] has app down fault, don't create server", info->server->index);
         info->server_ssh->send_cmd("\n"); // 这里还是发一条消息，用于client server pair结束
     } else {
@@ -162,7 +178,7 @@ void DataFlow::online_parsing_cmd(FlowInfo *info)
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
-    if (info->client->server_fault) {
+    if (info->client->app_down) {
         LOG_INFO("client[{}] has app down fault, don't create client", info->client->index);
         info->client_ssh->send_cmd("\n"); // 这里还是发一条消息，用于client server pair结束
     } else {
@@ -242,10 +258,12 @@ uint32_t DataFlow::get_input_bandwith(uint32_t node)
     auto flow_by_server = m_flow_info_map.find(node);
     if (flow_by_server == m_flow_info_map.end()) {
         m_mtx.unlock();
-        return bandwith;
+        return 0;
     }
     for (const auto& flow : flow_by_server->second) {
-        bandwith += band_width_str_to_num(flow.second.band);
+        if (flow.second.record) {
+            bandwith += band_width_str_to_num(flow.second.band);
+        }
     }
     m_mtx.unlock();
     return bandwith;
@@ -258,7 +276,9 @@ uint32_t DataFlow::get_output_bandwith(uint32_t node)
     for (const auto& flow_by_server : m_flow_info_map) {
         for (const auto& flow : flow_by_server.second) {
             if (flow.second.client->index == node) {
-                bandwith += band_width_str_to_num(flow.second.band);
+                if (flow.second.record) {
+                    bandwith += band_width_str_to_num(flow.second.band);
+                }
             }
         }
     }
@@ -334,6 +354,7 @@ bool DataFlow::delete_all_data_flow(void)
 }
 
 // 删除记录的信息，只结束server，因为结束client无法诊断故障，不知道是正常结束还是故障结束
+// 目前python ssh无法运行到一般关闭iperf
 int32_t DataFlow::close_data_flow_server(int32_t server_node_num)
 {
     auto flow_by_server = m_flow_info_map.find(server_node_num);

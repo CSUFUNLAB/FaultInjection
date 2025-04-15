@@ -157,8 +157,10 @@ ip route add 192.168.13.2/32 via 192.168.13.3
 
 ### 创建ap
 orangepi自带脚本，创建ap并且共享eth0的网络，创建出来的网卡为ap0，这个命令不知道怎么后台执行，目前是串口执行然后不动它
+尝试后，可以在root模式下使用nohup
 ```
 sudo create_ap -m nat wlan0 eth0 orangepi orangepi
+nohup create_ap -m nat wlan0 eth0 orangepi orangepi &
 ```
 
 ### 一个桌面板linux作为外网中转

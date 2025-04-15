@@ -30,9 +30,11 @@ public:
 private:
     void generate_pair_flow_thread(void);
     bool m_generate_random_flow = true;
-    uint32_t max_band = 3000;
+    uint32_t max_band = 2000;
     uint32_t high_band = 400;
     uint32_t low_band = 100;
+    uint32_t max_time = 30;
+    uint32_t min_time = 10;
 };
 
 void random_flow(void);

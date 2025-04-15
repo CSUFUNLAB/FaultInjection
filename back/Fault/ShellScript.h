@@ -17,3 +17,13 @@ public:
 private:
     static void update_monitor_script_thread(struct NodeManager::NodeInfo* node);
 };
+
+class GetCpuLoad : public SshSession {
+public:
+    using SshSession::SshSession;
+    float get_cpu_load(void);
+    void read_echo(char *data) override;
+    void cmd_end(void) override {};
+private:
+    float m_cpu_loader;
+};

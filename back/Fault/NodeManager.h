@@ -14,9 +14,8 @@ public:
         uint32_t need_password;
         bool detected;
         struct NodeInfo* up_linked;
-        int32_t input_band;
-        int32_t output_band;
         bool app_down; // 此节点无法创建app
+        bool cpu_over_loader;
     };
     static std::vector<struct NodeInfo> m_node_info_list;
     // 这个要在使用m_node_info_list之前执行，不放在构造函数里面的原因是，m_node_info_list可以在这之前被调用

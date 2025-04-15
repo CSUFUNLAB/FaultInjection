@@ -2,6 +2,7 @@
 #include "NodeManager.h"
 #include "DataFlow.h"
 #include "RandomDataFlow.h"
+#include "ShellScript.h"
 #include "Log.h"
 
 using namespace std;
@@ -35,6 +36,9 @@ FaultBase *FaultBase::get_fault(FaultType fault_type, FaultNodeType fault_node_t
         case TRAFFIC:
             LOG_INFO("------------------------ {} ------------------------", "malicious traffic");
             return new MaliciousTraffic(fault_node_info);
+        case CPU_OVERLOADER:
+            LOG_INFO("------------------------ {} ------------------------", "cpu over loader");
+            return new CpuOverLoad(fault_node_info);
         default: return nullptr;
     };
 }
@@ -84,6 +88,43 @@ void MaliciousTraffic::fault_injection(void)
     DataFlow::get_instance()->creat_data_flow(flow_info);
 }
 
+void CpuOverLoad::fault_injection(void)
+{
+    LOG_INFO("------------------------ {} ------------------------", "cpu over loader");
+    m_node_info->cpu_over_loader = true;
+    m_is_root = true;
+    m_send_type = NO_ECHO_CMD;
+    // 这个脚本-i每10s增加一个线程。-c是最多增加7个线程，
+    // 一共执行时间-i * -c + -t
+    python_ssh("nohup /home/orangepi/monitor_script/cpu_over_load.sh -i 10 -c 7 -t 40 ^&");
+    // python_ssh("nohup /home/orangepi/monitor_script/cpu_over_load.sh -i 1 -c 7 -t 15 ^&");
+}
+
+void CpuOverLoad::recover_injection(void)
+{
+    NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+        node->cpu_over_loader = false;
+    });
+    //while(m_send_cmd) {
+    //    std::this_thread::sleep_for(std::chrono::seconds(1));
+    //}
+    delete this;
+}
+
+std::string CpuOverLoad::bandwith_reduce(std::string band)
+{
+    GetCpuLoad* get_cpu_load = new GetCpuLoad(m_node_info);
+    float cpu_load = get_cpu_load->get_cpu_load();
+    delete get_cpu_load;
+    if (cpu_load < 50) {
+        return band;
+    }
+    uint32_t band_val = atoi(band.c_str());
+    band_val = (uint32_t)(band_val * (100 - cpu_load) / 50);
+    string output = to_string(band_val) + band.c_str()[band.size() - 1];
+    LOG_INFO("reduce band to {}", output);
+    return output;
+}
 
 /*
 int32_t NetworkCongestion::fault_injection(void)

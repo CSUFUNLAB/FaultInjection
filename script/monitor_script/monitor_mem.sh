@@ -11,7 +11,7 @@ while true; do
     top -b -n 1 | head -n 10 >> $OUTPUT_DIR/top_record.txt
     echo "=======================" >> $OUTPUT_DIR/top_record.txt
 
-    sleep 30
+    sleep 1
 done
 
 

@@ -4,6 +4,7 @@
 #include "BeginTime.h"
 #include "StringEscaping.h"
 #include "DataInjectInterface.h"
+#include "FaultInjection.h"
 
 #include <functional>
 #include <cctype>
@@ -66,11 +67,14 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
     info->client_ssh->send_thread();
     info->server_ssh->send_thread();
 
-    std::thread channel_chread(&DataFlow::send_cmd_thread, DataFlow::get_instance(), info);
-    channel_chread.detach();
     #endif
 
+#if 0
+    std::thread channel_chread(&DataFlow::send_cmd_thread, DataFlow::get_instance(), info);
+    channel_chread.detach();
+#else
     save_file_cmd(info);
+#endif
 
     return 0;
 }
@@ -92,13 +96,7 @@ void DataFlow::save_flow_info(FlowInfo* info, NodeManager::NodeInfo *node, strin
 
 void DataFlow::send_cmd_thread(FlowInfo* info)
 {
-    if (m_iperf_type == SAVE_FILE) {
-        save_file_cmd(info);
-    } else if (m_iperf_type == ONLINE_PARSING) {
-        online_parsing_cmd(info);
-    } else {
-        LOG_ERR("err iperf type[{}]", (int)(m_iperf_type));
-    }
+    save_file_cmd(info);
 }
 
 void DataFlow::save_file_cmd(FlowInfo* info)
@@ -114,11 +112,25 @@ void DataFlow::save_file_cmd(FlowInfo* info)
     string base_file_name = string("data/") + to_string(info->client->index) + string("_") + to_string(info->server->index);
     string client_file_name = base_file_name + string("_0.json");
     string server_file_name = base_file_name + string("_1.json");
+
+    // 不能直接改变记录的info的band，这会导致统计节点bandwith降低，然后新增flow
+    struct NodeManager::NodeInfo *cpu_over_loader_node = nullptr;
+    string band = info->band;
+    if (info->client->cpu_over_loader) {
+        cpu_over_loader_node = info->client;
+    } else if (info->server->cpu_over_loader) {
+        cpu_over_loader_node = info->server;
+    }
+    if (cpu_over_loader_node != nullptr) {
+        CpuOverLoad cpu_over_loader(cpu_over_loader_node);
+        band = cpu_over_loader.bandwith_reduce(info->band);
+    }
+
     if (info->type == "udp") {
         udp_cmd = " -u";
     } else { // tcp 过低的带宽要减小缓冲区
-        if (info->band.c_str()[info->band.size() - 1] == 'K') {
-            uint32_t band_val = atoi(info->band.c_str());
+        if (band.c_str()[band.size() - 1] == 'K') {
+            uint32_t band_val = atoi(band.c_str());
             len_cmd = string(" -l ") + to_string(band_val * 128);
         }
     }
@@ -143,15 +155,14 @@ void DataFlow::save_file_cmd(FlowInfo* info)
         info->client_ssh->send_cmd("echo no iperf create"); // 这里还是发一条消息，用于client server pair结束
     } else {
         info->client_ssh->python_ssh(
-            string("nohup timeout ") + to_string(info->client_ssh->m_wait) + string(" \\\"") +
             string("iperf3 -c ") + info->server->ip +
             string(" -i 1 -p ") + to_string(info->port) +
             string(" -t ") + to_string(info->time) +
-            string(" -b ") + info->band +
+            string(" -b ") + band +
             len_cmd +
             udp_cmd +
-            string(" -J --logfile ") + client_file_name +
-            string("\\\""));
+            string(" -J --logfile ") + client_file_name
+            );
     }
     info->begin = true;
 }

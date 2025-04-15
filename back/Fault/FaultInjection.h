@@ -17,6 +17,7 @@ public:
         APP_CRASH,
         CONGESTION,
         TRAFFIC,
+        CPU_OVERLOADER,
     } FaultType;
 
     using SshSession::SshSession;
@@ -41,13 +42,21 @@ class AppDown : public FaultBase {
 public:
     using FaultBase::FaultBase;
     void fault_injection(void) override;
-    void recover_injection(void);
+    void recover_injection(void) override;
 };
 
 class MaliciousTraffic : public FaultBase {
 public:
     using FaultBase::FaultBase;
     void fault_injection(void) override;
+};
+
+class CpuOverLoad : public FaultBase {
+public:
+    using FaultBase::FaultBase;
+    void fault_injection(void) override;
+    void recover_injection(void) override;
+    std::string bandwith_reduce(std::string band);
 };
 
 /*

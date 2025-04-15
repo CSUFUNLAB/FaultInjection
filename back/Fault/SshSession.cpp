@@ -307,6 +307,8 @@ void SshSession::python_ssh(std::string cmd)
         echo_exe = ""; // read会自动等待命令执行完毕，不需要echo等待了
     } else if (m_send_type == FIRST_CMD) {
         need_read = "3 ";
+    } else if (m_send_type == NO_ECHO_CMD) {
+        echo_exe = "";
     }
     int32_t password_loop = NodeManager::get_instance()->get_password_loop(m_node_info);
     if (m_is_root && password_loop == 0) {

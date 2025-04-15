@@ -68,4 +68,31 @@ void ShellScript::first_connect(void)
     python_ssh(string(""));
 }
 
+float GetCpuLoad::get_cpu_load(void)
+{
+    m_send_type = SshSession::SHELL_CMD;
+    python_ssh(". /home/orangepi/monitor_script/get_cpu_load.sh");
+    while(m_send_cmd) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    return m_cpu_loader;
+}
+
+void GetCpuLoad::read_echo(char* data)
+{
+    string result = data;
+    size_t pos = result.find("cpu_load");
+    if (pos == std::string::npos) {
+        return;
+    }
+    size_t start = result.find('[');
+    size_t end = result.find(']');
+
+    if (start == std::string::npos || end == std::string::npos) {
+        return;
+    }
+    std::string numStr = result.substr(start + 1, end - start - 1);
+    m_cpu_loader = std::stof(numStr);
+    LOG_INFO("cpu loader: {}", m_cpu_loader);
+}
 

@@ -124,7 +124,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
             continue;
         }
         band_width_str = to_string(band_width) + string("K");
-        send_time = RandomNum::get_instance()->range_random_num(10, 30);
+        send_time = RandomNum::get_instance()->range_random_num(min_time, max_time);
         if (RandomNum::get_bool_random() == 1) {
             type_str = "tcp";
         }
@@ -194,14 +194,14 @@ void random_flow(void)
     RandomDataFlow::get_instance()->generate_pair_flow();
 
     FaultBase* fault = FaultBase::get_fault(
-        FaultBase::TRAFFIC, FaultBase::RANDOM_NODE_EXIT_AP);
+        FaultBase::CPU_OVERLOADER, FaultBase::RANDOM_NODE_EXIT_AP);
         // FaultBase::TRAFFIC, FaultBase::RANDOM_NODE);
 
     std::this_thread::sleep_for(std::chrono::seconds(30));
 
     fault->fault_injection();
 
-    std::this_thread::sleep_for(std::chrono::seconds(120));
+    std::this_thread::sleep_for(std::chrono::seconds(90));
 
     RandomDataFlow::get_instance()->stop_generate_pair_flow();
     fault->recover_injection();

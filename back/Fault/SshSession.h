@@ -41,11 +41,13 @@ public:
     bool m_broken_cmd = false;
 
     typedef enum {
-        SHELL_CMD, // 打开shell，有交互
+        SHELL_CMD, // 将会等待shell脚本执行完毕，可以用于读取回显，同时需要重载cmd_end防止获取结果后马上自动删除自身
         // 目前python不支持QUEUE_CMD
         QUEUE_CMD, // 将需要发送的命令放入m_cmd_queue逐个发送，无回显
         EXEC_CMD, // 只发送一个命令，一般用于脚本，无回显
         FIRST_CMD, // 第一次连接，输入一个yes
+        // 最开始，希望使用echo cmd_exec来判断命令是否被执行，但是有个nohup命令加了echo却不能执行了
+        NO_ECHO_CMD, // EXEC_CMD不加echo版本
     } SshSendType ;
 
     // 默认改为EXEC_CMD将会导致原有libssh Session不再适用

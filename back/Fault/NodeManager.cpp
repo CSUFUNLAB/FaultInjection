@@ -52,7 +52,9 @@ void NodeManager::init_m_node_info_list(void)
                obj["ip"].get<std::string>(),
                obj["need_password"].get<int32_t>(),
                obj["detected"].get<bool>(),
-               nullptr
+               nullptr,
+               false,
+               false,
             };
             NodeManager::m_node_info_list.push_back(node_info);
         }

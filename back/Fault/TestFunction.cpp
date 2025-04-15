@@ -46,25 +46,22 @@ void test_func(void)
 
 void test_func_1(void)
 {
-    // ssh->python_ssh("echo yes ^>^> data/temp.txt");
-    // ssh->python_ssh("echo -e \\\"data \\\\n 123 \\\" ^>^> data/temp.txt");
-    // ssh->python_ssh("echo -e ' \\x22 data \\x0a data2 \\x22 ' ^>^> data/temp.txt");
-    // ssh->python_ssh("echo yes+\\% ^>^> data/temp.txt");
-    //string a = "{\"start\":{\"timestamp\":{\"timesecs\":$(date +%s)}}}";
-    string a = " {\"start\":{\"timestamp\":{\"timesecs\":";
-    string b;
-    StringEscaping::get_instance().string_escaping(a, b);
-    // cout << b << endl;
-    NodeManager::NodeInfo *node = &NodeManager::m_node_info_list[14];
-    node->ip = string("192.168.12.138");
+    NodeManager::NodeInfo *node = &NodeManager::m_node_info_list[3];
+    node->ip = string("192.168.12.1");
     node->detected = true;
+    CpuOverLoad *cpu_over_load = new CpuOverLoad(node);
+    cpu_over_load->fault_injection();
+    std::this_thread::sleep_for(std::chrono::seconds(20));
+    cpu_over_load->bandwith_reduce("1220M");
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    cpu_over_load->recover_injection();
+    // LOG_INFO("cpu loader: {}", num);
+    /*
     SshSession* ssh = new SshSession(node);
-    //string cmd = "echo -e \\\"" + b + "\\\" ^>^> data/temp.txt";
-    string cmd = "echo -ne '" + b + "' ^>^> data/temp.txt;"; // 不换行
-    string cmd2 = "echo -ne \\\"$(date +%s)\\\" ^>^> data/temp.txt;"; // 不换行
-    string cmd3 = "echo \\\"}}}\\\" ^>^> data/temp.txt";
-    string cmd_all = cmd + cmd2 + cmd3;
+    ssh->m_send_type = SshSession::SHELL_CMD;
+    string cmd_all = ". /home/orangepi/monitor_script/get_cpu_loader.sh";
     ssh->python_ssh(cmd_all);
+    */
 }
 
 void test3_fun(void)
@@ -85,7 +82,7 @@ void test3_fun(void)
 
 void TestFunction::handlerData(http_request& message)
 {
-    int32_t swich_cmd = 7;
+    int32_t swich_cmd = 3;
     switch (swich_cmd) {
         case 0: // 第一次连接
             NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {

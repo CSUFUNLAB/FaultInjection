@@ -7,6 +7,19 @@
 
 using namespace std;
 
+std::string FaultBase::m_fault_str[FaultBase::FAULT_BUTT] = {
+    "nodecrash",
+    "appdown",
+    "congestion",
+    "traffic",
+    "cpuoverloader",
+    "firewall",
+    "signal",
+};
+
+FaultBase::FaultType FaultBase::m_fault_type = FaultBase::FAULT_BUTT;
+uint32_t FaultBase::m_fault_node = 0;
+
 FaultBase *FaultBase::get_fault(FaultType fault_type, FaultNodeType fault_node_type, uint32_t fault_node)
 {
     switch (fault_node_type) {
@@ -21,6 +34,8 @@ FaultBase *FaultBase::get_fault(FaultType fault_type, FaultNodeType fault_node_t
             break;
         default: break;
     };
+    m_fault_node = fault_node;
+    m_fault_type = fault_type;
     LOG_INFO("------------------------ fault node {} ------------------------", fault_node);
     NodeManager::NodeInfo *fault_node_info = &NodeManager::m_node_info_list[fault_node];
     switch (fault_type) {
@@ -39,6 +54,12 @@ FaultBase *FaultBase::get_fault(FaultType fault_type, FaultNodeType fault_node_t
         case CPU_OVERLOADER:
             LOG_INFO("------------------------ {} ------------------------", "cpu over loader");
             return new CpuOverLoad(fault_node_info);
+        case FIRE_WALL:
+            LOG_INFO("------------------------ {} ------------------------", "fire wall error");
+            return new FireWall(fault_node_info);
+        case SIGNAL:
+            LOG_INFO("------------------------ {} ------------------------", "signal");
+            return new FaultBase(fault_node_info);
         default: return nullptr;
     };
 }
@@ -124,6 +145,29 @@ std::string CpuOverLoad::bandwith_reduce(std::string band)
     string output = to_string(band_val) + band.c_str()[band.size() - 1];
     LOG_INFO("reduce band to {}", output);
     return output;
+}
+
+void FireWall::fault_injection(void)
+{
+    m_is_root = true;
+    uint32_t src_node;
+    do {
+        src_node = RandomNode::get_instance()->get_random_node();
+    } while (src_node == 3 || src_node == m_node_info->index);
+    LOG_INFO("------------------------ {} -> {} iptables error ------------------------", src_node, m_node_info->index);
+    string cmd = string("iptables -A FORWARD -s ") +
+        NodeManager::m_node_info_list[src_node].ip + string(" -d ") + m_node_info->ip + string(" -j DROP");
+    python_ssh(cmd);
+}
+
+void FireWall::recover_injection(void)
+{
+    string cmd = string("iptables -F");
+    python_ssh(cmd);
+    while(m_send_cmd) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    delete this;
 }
 
 /*

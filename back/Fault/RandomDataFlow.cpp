@@ -143,7 +143,7 @@ void RandomDataFlow::generate_pair_flow_thread(void)
             nullptr,
         };
         DataFlow::get_instance()->creat_data_flow(flow_info);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     LOG_INFO("end");
 }
@@ -194,14 +194,15 @@ void random_flow(void)
     RandomDataFlow::get_instance()->generate_pair_flow();
 
     FaultBase* fault = FaultBase::get_fault(
-        FaultBase::CPU_OVERLOADER, FaultBase::RANDOM_NODE_EXIT_AP);
+        // FaultBase::SIGNAL, FaultBase::FIX_NODE, 10);
+        FaultBase::NODE_CRASH, FaultBase::RANDOM_NODE_EXIT_AP);
         // FaultBase::TRAFFIC, FaultBase::RANDOM_NODE);
 
     std::this_thread::sleep_for(std::chrono::seconds(30));
 
     fault->fault_injection();
 
-    std::this_thread::sleep_for(std::chrono::seconds(90));
+    std::this_thread::sleep_for(std::chrono::seconds(120));
 
     RandomDataFlow::get_instance()->stop_generate_pair_flow();
     fault->recover_injection();

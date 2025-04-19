@@ -47,6 +47,9 @@ FaultInjection是一个控制开发板产生流量数据的简易自研工具，
         不一定会出现，如果出现了注释掉红框模板
         ![utf8](image/utf8.png)
 
+    * c++ 17
+        filesystem 需要c++17, 并且屏蔽4996告警 
+
 ### Front 前端
 安装npm软件，npm可以直接在cmd中运行验证安装成功。
 

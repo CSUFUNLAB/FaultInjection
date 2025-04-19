@@ -30,6 +30,7 @@ public:
 
     virtual void cmd_end(void); // 覆写使用
     virtual void read_echo(char *data); // 覆写使用
+    void read_result(char *data);
 
     struct NodeManager::NodeInfo* m_node_info = nullptr; // ssh目标节点信息
     int32_t m_nbytes; // 读取ssh返回字节数
@@ -39,6 +40,7 @@ public:
     bool m_always_read = false; // 即便没有返回数据，也会调用一次read echo
     uint32_t m_heart = 0;
     bool m_broken_cmd = false;
+    static uint32_t m_success_times;
 
     typedef enum {
         SHELL_CMD, // 将会等待shell脚本执行完毕，可以用于读取回显，同时需要重载cmd_end防止获取结果后马上自动删除自身
@@ -73,8 +75,6 @@ private:
     std::mutex m_mtx;
     std::queue<std::string> m_cmd_queue;
 
-    char buffer[1024];
-
     struct Credit {
         std::string username;
         std::string password;
@@ -90,8 +90,6 @@ private:
     void send_cmd_thread(void);
     void only_send_cmd_thread(void);
     void python_ssh_thread(void);
-    void concatenate_ssh_cmd(void);
-    void concatenate_scp_cmd(void);
     void exec_cmd_thread(void);
     void initialize_credit_map();
 };

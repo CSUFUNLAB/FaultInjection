@@ -11,6 +11,7 @@ ip route add 192.168.12.0/24 via 192.168.12.1
 /home/orangepi/monitor_script/monitor_ap_signal.sh &
 /home/orangepi/monitor_script/monitor_mem.sh &
 /home/orangepi/monitor_script/monitor_traffic.sh &
+/home/orangepi/monitor_script/monitor_iptables_info.sh &
 
 
 

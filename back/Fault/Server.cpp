@@ -1,5 +1,7 @@
 #include "server.h"
 
+using namespace std;
+
 void Server::ServerStart()
 {
 	try
@@ -33,3 +35,4 @@ void Server::ServerStart()
 	}
 
 }
+

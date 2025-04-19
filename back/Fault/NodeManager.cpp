@@ -143,6 +143,7 @@ uint32_t NodeManager::get_password_loop(struct NodeInfo* node)
 
 void NodeManager::get_detected_node(node_deal_func func)
 {
+    SshSession::m_success_times = 0;
     for (auto& node : NodeManager::m_node_info_list) {
         if (node.detected) {
             func(&node);

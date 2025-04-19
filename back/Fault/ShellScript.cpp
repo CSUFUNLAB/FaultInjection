@@ -1,7 +1,10 @@
 #include "ShellScript.h"
+#include "FaultInjection.h"
 #include "Log.h"
 #include <string>
+// #include <filesystem>
 
+namespace fs = std::filesystem;
 using namespace std;
 
 void ShellScript::monitor_init(void)
@@ -18,48 +21,43 @@ void ShellScript::kill_monitor(void)
     python_ssh(cmd);
 }
 
-void ShellScript::collect_data(void)
+void UpdateScript::copy_monitor_script(void)
 {
-    // cmd递归删除文件夹太复杂了，还是手动删除吧
-    string remote_path = string("/home/orangepi/data");
-    string local_path = string("../../data/node_") + to_string(m_node_info->index);
-    python_scp(remote_path, local_path, 0);
-}
-
-void ShellScript::copy_monitor_script(void)
-{
-    // cmd递归删除文件夹太复杂了，还是手动删除吧
     string remote_path = string("/home/orangepi/");
     string local_path = string("../../script/monitor_script");
     python_scp(remote_path, local_path, 1);
 }
 
-void ShellScript::chmod_monitor_script(void)
+void UpdateScript::chmod_monitor_script(void)
 {
     m_is_root = true;
     string cmd = "chmod 777 /home/orangepi/monitor_script/*";
     python_ssh(cmd);
 }
 
-void ShellScript::update_monitor_script_thread(struct NodeManager::NodeInfo* node)
+void UpdateScript::update_monitor_script_thread(void)
 {
     LOG_INFO("copy_monitor_script");
-    ShellScript* ssh = new ShellScript(node);
-    ssh->copy_monitor_script();
-    ssh->m_wait = 2; // 防止下面防止到之前ssh自动注销
-    while (ssh->m_send_cmd) {
+    copy_monitor_script();
+    while (m_send_cmd) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     LOG_INFO("chmod_monitor_script");
-    ShellScript* ssh_1 = new ShellScript(node);
-    ssh_1->chmod_monitor_script();
+    chmod_monitor_script();
+    while (m_send_cmd) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    delete this;
 }
 
-void ShellScript::update_monitor_script(struct NodeManager::NodeInfo* node)
+void UpdateScript::update_monitor_script(struct NodeManager::NodeInfo* node)
 {
-    std::thread channel_chread(&ShellScript::update_monitor_script_thread, node);
+    UpdateScript* ssh = new UpdateScript(node);
+    std::thread channel_chread(&UpdateScript::update_monitor_script_thread, ssh);
     channel_chread.detach();
 }
+
+
 
 // 如果用了公钥，proxy jump 导致yes次数和密码次数不匹配，要手动连接这些板子
 void ShellScript::first_connect(void)
@@ -94,5 +92,31 @@ void GetCpuLoad::read_echo(char* data)
     std::string numStr = result.substr(start + 1, end - start - 1);
     m_cpu_loader = std::stof(numStr);
     LOG_INFO("cpu loader: {}", m_cpu_loader);
+}
+
+uint32_t DownLoadData::m_folder_index[20] = { 0 };
+std::string DownLoadData::m_file_folder;
+
+void DownLoadData::get_folder(void)
+{
+    string fault_type = FaultBase::m_fault_str[FaultBase::m_fault_type];
+    string file_folder;
+    do {
+        uint32_t& index = m_folder_index[FaultBase::m_fault_node];
+        file_folder = string("../../data/data_") + fault_type + string("_node_") + to_string(FaultBase::m_fault_node)
+            + string("_") + to_string(index);
+        index++;
+    } while (fs::exists(file_folder));
+    fs::create_directory(file_folder);
+    LOG_INFO("create folder {}", file_folder);
+    m_file_folder = file_folder;
+}
+
+void DownLoadData::download_data(void)
+{
+    // cmd递归删除文件夹太复杂了，还是手动删除吧，实际上由于做多次实验，只能手动删除
+    string remote_path = string("/home/orangepi/data");
+    string local_path = m_file_folder + string("/node_") + to_string(m_node_info->index);
+    python_scp(remote_path, local_path, 0);
 }
 

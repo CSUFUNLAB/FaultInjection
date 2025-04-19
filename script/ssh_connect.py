@@ -11,6 +11,8 @@ password_loop = sys.argv[2]
 password = sys.argv[3]
 cmd = sys.argv[4]
 
+# need_read_int = 3 表示第一次连接
+
 need_read_int = int(need_read)
 password_loop_int = int(password_loop)
 
@@ -41,9 +43,9 @@ for i in range(password_loop_int):
         child.sendline(password)
         #print("sended password")        
     except wexpect.EOF:
-        print("ssh end")
+        print("ssh_EOF")
     except wexpect.TIMEOUT:
-        print("password wait timeout")
+        print("password_wait_timeout")
 
 # sendline在后台执行，如果此时close会导致ssh命令不一定执行
 # cmd_has_exec表明检测到后命令已经被执行了
@@ -51,14 +53,14 @@ for i in range(password_loop_int):
 
 if need_read_int == 0:
     try:
-        child.expect('cmd_has_exec')
+        child.expect('cmd_has_exec', timeout=10)
+        print("cmd_success")
     except wexpect.EOF:
-        print("ssh end")
+        print("ssh_EOF")
     except wexpect.TIMEOUT:
-        print("cmd end wait timeout")
+        print("wait_timeout")
 else:
     print(child.read())
- 
-print("cmd has exec！")
+    print("cmd_success")
 
 child.close()

@@ -15,6 +15,8 @@ struct SshSession::Credit SshSession::error_credit = {
     "none", // password
 };
 
+uint32_t SshSession::m_success_times = 0;
+
 SshSession::SshSession(struct NodeManager::NodeInfo *node)
 {
     //初始化credit_map
@@ -151,6 +153,29 @@ void SshSession::read_echo(char* buff)
     return;
 }
 
+void SshSession::read_result(char* buff)
+{
+    read_echo(buff);
+    string result = buff;
+    size_t pos = result.find("cmd_success");
+    if (pos != std::string::npos) {
+        LOG_INFO("[{}][{}]cmd_success[{}]: {}", m_node_info->index, m_node_info->ip, m_success_times, m_cmd.c_str());
+        m_success_times++;
+        return;
+    }
+    pos = result.find("wait_timeout");
+    if (pos != std::string::npos) {
+        LOG_ERR("[{}][{}] {} : {}", m_node_info->index, m_node_info->ip, buff, m_cmd.c_str());
+        return;
+    }
+    pos = result.find("ssh_EOF");
+    if (pos != std::string::npos) {
+        LOG_ERR("[{}][{}] ssh read eof: {}", m_node_info->index, m_node_info->ip, m_cmd.c_str());
+        return;
+    }
+    return;
+}
+
 void SshSession::broken_cmd(void)
 {
     m_broken_cmd = true;
@@ -166,6 +191,7 @@ void SshSession::send_cmd_thread(void)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    char buffer[1024];
     while (1) {
         if (m_send_cmd) {
             ret = ssh_channel_write(m_channel, m_cmd.c_str(), m_cmd.size());
@@ -355,7 +381,7 @@ void SshSession::python_scp(string& remote_path, string& local_path, int dir)
 
 void SshSession::python_ssh_thread(void)
 {
-    LOG_INFO("[{}][{}] popen cmd: {}", m_node_info->index, m_node_info->ip, m_cmd.c_str());
+    // LOG_INFO("[{}][{}] popen cmd: {}", m_node_info->index, m_node_info->ip, m_cmd.c_str());
 
     // 执行命令并打开管道
     LOG_DEBUG("[{}][{}] begin send", m_node_info->index, m_node_info->ip);
@@ -372,8 +398,8 @@ void SshSession::python_ssh_thread(void)
     // 如果不需要读取，不覆写read_echo即可
     char buffer[256];
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        LOG_INFO("[{}][{}]fgets: {}", m_node_info->index, m_node_info->ip, buffer);
-        read_echo(buffer);
+        // LOG_INFO("[{}][{}]fgets: {}", m_node_info->index, m_node_info->ip, buffer);
+        read_result(buffer);
     }
 
     m_send_cmd = false;

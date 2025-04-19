@@ -49,19 +49,8 @@ void test_func_1(void)
     NodeManager::NodeInfo *node = &NodeManager::m_node_info_list[3];
     node->ip = string("192.168.12.1");
     node->detected = true;
-    CpuOverLoad *cpu_over_load = new CpuOverLoad(node);
-    cpu_over_load->fault_injection();
-    std::this_thread::sleep_for(std::chrono::seconds(20));
-    cpu_over_load->bandwith_reduce("1220M");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    cpu_over_load->recover_injection();
-    // LOG_INFO("cpu loader: {}", num);
-    /*
-    SshSession* ssh = new SshSession(node);
-    ssh->m_send_type = SshSession::SHELL_CMD;
-    string cmd_all = ". /home/orangepi/monitor_script/get_cpu_loader.sh";
-    ssh->python_ssh(cmd_all);
-    */
+    DownLoadData *ssh = new DownLoadData(node);
+    FaultBase::m_fault_type = FaultBase::NODE_CRASH;
 }
 
 void test3_fun(void)
@@ -82,7 +71,7 @@ void test3_fun(void)
 
 void TestFunction::handlerData(http_request& message)
 {
-    int32_t swich_cmd = 3;
+    int32_t swich_cmd = 1;
     switch (swich_cmd) {
         case 0: // 第一次连接
             NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
@@ -90,7 +79,7 @@ void TestFunction::handlerData(http_request& message)
                 ssh->first_connect();
             });break;
         case 1: // 更新脚本
-            NodeManager::get_instance()->get_detected_node(ShellScript::update_monitor_script);break;
+            NodeManager::get_instance()->get_detected_node(UpdateScript::update_monitor_script);
         case 2: // 测试命令
             NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
                 ShellScript* ssh = new ShellScript(node);

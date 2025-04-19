@@ -16,6 +16,8 @@
 #include <comutil.h>
 #pragma comment(lib, "comsuppw.lib")
 
+using namespace std;
+
 CommandHandle::CommandHandle(string_t url) : myListener(url)
 {
 	// 添加对POST请求的支持

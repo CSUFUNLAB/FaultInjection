@@ -15,8 +15,6 @@ using namespace web::json;
 using namespace http;
 using namespace utility;
 using namespace http::experimental::listener;
-using namespace std;
-
 
 class CommandHandle
 {
@@ -38,5 +36,4 @@ private:
 	// 处理POST请求函数
 	void HandlePost(http_request message);
 	void HandleGet(http_request message);
-
 };

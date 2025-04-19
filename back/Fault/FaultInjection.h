@@ -18,6 +18,9 @@ public:
         CONGESTION,
         TRAFFIC,
         CPU_OVERLOADER,
+        FIRE_WALL,
+        SIGNAL,
+        FAULT_BUTT,
     } FaultType;
 
     using SshSession::SshSession;
@@ -27,8 +30,12 @@ public:
     static FaultBase* get_fault(FaultType fault_type, FaultNodeType fault_node_type, uint32_t fault_node = 0);
     // send ssh后不自动delete自身，在recover里面处理
     void cmd_end(void) override {};
-    virtual void fault_injection(void) = 0; // 一定要覆写
-    virtual void recover_injection(void);
+    virtual void fault_injection(void) {}; // 一定要覆写
+    virtual void recover_injection(void); // 在此处删除自身
+
+    static FaultType m_fault_type;
+    static uint32_t m_fault_node;
+    static std::string m_fault_str[FAULT_BUTT];
 };
 
 class NodeCrash : public FaultBase {
@@ -57,6 +64,13 @@ public:
     void fault_injection(void) override;
     void recover_injection(void) override;
     std::string bandwith_reduce(std::string band);
+};
+
+class FireWall : public FaultBase {
+public:
+    using FaultBase::FaultBase;
+    void fault_injection(void) override;
+    void recover_injection(void) override;
 };
 
 /*

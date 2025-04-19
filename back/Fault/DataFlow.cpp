@@ -69,7 +69,7 @@ int32_t DataFlow::creat_data_flow(struct FlowInfo& input_info)
 
     #endif
 
-#if 0
+#if 1
     std::thread channel_chread(&DataFlow::send_cmd_thread, DataFlow::get_instance(), info);
     channel_chread.detach();
 #else
@@ -101,10 +101,11 @@ void DataFlow::send_cmd_thread(FlowInfo* info)
 
 void DataFlow::save_file_cmd(FlowInfo* info)
 {
-    // app down故障在此处理
-    // m_wait用于nohup结束时间，也是ssh结束时间
+    // ssh链接使用nohup马上结束
+    // m_wait用于nohup结束时间，也是ssh wait时间，之后自动delete flow
+    // info time是iperf结束时间
     info->client_ssh->m_wait = info->time + 2; // 多2s防止误差
-    info->server_ssh->m_wait = info->time + 2 + 8; // server先建立，从经验看需要额外8s
+    info->server_ssh->m_wait = info->time + 2 + 10; // server先建立，从经验看需要额外8s
 
     string udp_cmd = "";
     string len_cmd = "";

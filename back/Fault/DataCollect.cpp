@@ -9,9 +9,10 @@ using namespace web::http;
 
 void DataCollectCopy::handlerData(http_request& message)
 {
+    DownLoadData::get_folder();
     NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node){
-        ShellScript *ssh = new ShellScript(node);
-        ssh->collect_data();
+        DownLoadData *ssh = new DownLoadData(node);
+        ssh->download_data();
     });
 }
 

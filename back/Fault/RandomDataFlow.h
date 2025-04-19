@@ -16,8 +16,6 @@ public:
     static RandomNode *get_instance(void);
     void get_detect_node(void); // 这个函数需要在检测节点后调用
     uint32_t get_random_node(void);
-
-private:
     std::vector<uint32_t> m_node_index; // 被检测到的节点vector
 };
 
@@ -30,7 +28,7 @@ public:
 private:
     void generate_pair_flow_thread(void);
     bool m_generate_random_flow = true;
-    uint32_t max_band = 2000;
+    uint32_t max_band = 1000;
     uint32_t high_band = 400;
     uint32_t low_band = 100;
     uint32_t max_time = 30;

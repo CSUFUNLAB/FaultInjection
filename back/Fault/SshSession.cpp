@@ -159,8 +159,8 @@ void SshSession::read_result(char* buff)
     string result = buff;
     size_t pos = result.find("cmd_success");
     if (pos != std::string::npos) {
-        LOG_INFO("[{}][{}]cmd_success[{}]: {}", m_node_info->index, m_node_info->ip, m_success_times, m_cmd.c_str());
         m_success_times++;
+        LOG_INFO("[{}][{}]cmd_success[{}]: {}", m_node_info->index, m_node_info->ip, m_success_times, m_cmd.c_str());
         return;
     }
     pos = result.find("wait_timeout");
@@ -168,9 +168,9 @@ void SshSession::read_result(char* buff)
         LOG_ERR("[{}][{}] {} : {}", m_node_info->index, m_node_info->ip, buff, m_cmd.c_str());
         return;
     }
-    pos = result.find("ssh_EOF");
+    pos = result.find("EOF");
     if (pos != std::string::npos) {
-        LOG_ERR("[{}][{}] ssh read eof: {}", m_node_info->index, m_node_info->ip, m_cmd.c_str());
+        LOG_ERR("[{}][{}] {}: {}", m_node_info->index, m_node_info->ip, buff, m_cmd.c_str());
         return;
     }
     return;
@@ -326,14 +326,17 @@ void SshSession::initialize_credit_map() {
 void SshSession::python_ssh(std::string cmd)
 {
     string username = m_is_root ? string("root") : m_username;
-    string need_read = "0 ";
+    string need_read;
     string echo_exe = string("echo cmd_has_exec;"); // 脚本里面会expect cmd_has_exec
-    if (m_send_type == SHELL_CMD) {
+    if (m_send_type == EXEC_CMD) {
+        need_read = "0 ";
+    } else if (m_send_type == SHELL_CMD) {
         need_read = "1 ";
         echo_exe = ""; // read会自动等待命令执行完毕，不需要echo等待了
     } else if (m_send_type == FIRST_CMD) {
-        need_read = "3 ";
+        need_read = "2 ";
     } else if (m_send_type == NO_ECHO_CMD) {
+        need_read = to_string(m_need_read) + string(" ");
         echo_exe = "";
     }
     int32_t password_loop = NodeManager::get_instance()->get_password_loop(m_node_info);
@@ -416,3 +419,11 @@ void SshSession::python_ssh_thread(void)
     LOG_DEBUG("[{}][{}] cmd end", m_node_info->index, m_node_info->ip);
     cmd_end();
 }
+
+void SshSession::wait_cmd(void)
+{
+    while(m_send_cmd) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+

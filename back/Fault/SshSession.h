@@ -26,7 +26,7 @@ public:
     void queue_send_cmd(const std::string &cmd); // 用于大量命令发送的场景
     void send_thread(void);
     void broken_cmd(void);
-    void close(void); // 非阻塞read返回数据时close会崩溃
+    void close(void); // 发送消息后会自动delete自身，如果需要等待发送完成并获取结果，需要override close删除里面的delete
 
     virtual void cmd_end(void); // 覆写使用
     virtual void read_echo(char *data); // 覆写使用
@@ -35,11 +35,13 @@ public:
     struct NodeManager::NodeInfo* m_node_info = nullptr; // ssh目标节点信息
     int32_t m_nbytes; // 读取ssh返回字节数
     int32_t m_wait = 0; // 至少等待时间
-    bool m_send_cmd = false; // 是否有待发送消息，发送后会置false
+    bool m_send_cmd = false; // 消息是否发送完毕，发送后会置false，同时记得override close里面的delete
     bool m_last_cmd = true; // 默认只发一条消息
     bool m_always_read = false; // 即便没有返回数据，也会调用一次read echo
     uint32_t m_heart = 0;
     bool m_broken_cmd = false;
+    // need read 3 表示 apt install
+    uint32_t m_need_read = 0;
     static uint32_t m_success_times;
 
     typedef enum {
@@ -63,6 +65,8 @@ public:
     void python_ssh(std::string cmd);
     void python_scp(std::string& remote_path, std::string& local_path, int dir); // dir 0: remote->local; 1: local->remote
     bool m_is_root = false; // 对于添加了sudo命令的，需要root权限登录
+
+    void wait_cmd(void);
 
 private:
     std::string m_host;

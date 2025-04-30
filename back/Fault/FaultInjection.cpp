@@ -8,11 +8,12 @@
 using namespace std;
 
 std::string FaultBase::m_fault_str[FaultBase::FAULT_BUTT] = {
+    "normal",
     "nodecrash",
     "appdown",
     "congestion",
     "traffic",
-    "cpuoverloader",
+    "cpuoverload",
     "firewall",
     "signal",
 };
@@ -39,6 +40,9 @@ FaultBase *FaultBase::get_fault(FaultType fault_type, FaultNodeType fault_node_t
     LOG_INFO("------------------------ fault node {} ------------------------", fault_node);
     NodeManager::NodeInfo *fault_node_info = &NodeManager::m_node_info_list[fault_node];
     switch (fault_type) {
+        case NORMAL: 
+            LOG_INFO("------------------------ {} ------------------------", "normal");
+            return new NoFault(fault_node_info);
         case NODE_CRASH: 
             LOG_INFO("------------------------ {} ------------------------", "node_crash");
             return new NodeCrash(fault_node_info);
@@ -82,11 +86,18 @@ void AppDown::fault_injection(void)
 {
     LOG_INFO("------------------------ {} ------------------------", "app crash");
     m_node_info->app_down = true;
+    m_is_root = true;
+    m_send_type = NO_ECHO_CMD;
+    // 这个脚本-i每10s增加一个线程。-c是最多增加7个线程，
+    // 一共执行时间-i * -c + -t
+    python_ssh("nohup /home/orangepi/monitor_script/mem_leak.sh -m 200 -s 10 -i 1 -t 30 ^&");
 }
 
 void AppDown::recover_injection(void)
 {
-    NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+    python_ssh("pkill stress-ng");
+    wait_cmd();
+    NodeManager::get_instance()->deal_detected_node([](struct NodeManager::NodeInfo* node) {
         node->app_down = false;
     });
     delete this;
@@ -117,18 +128,17 @@ void CpuOverLoad::fault_injection(void)
     m_send_type = NO_ECHO_CMD;
     // 这个脚本-i每10s增加一个线程。-c是最多增加7个线程，
     // 一共执行时间-i * -c + -t
-    python_ssh("nohup /home/orangepi/monitor_script/cpu_over_load.sh -i 10 -c 7 -t 40 ^&");
+    python_ssh("nohup /home/orangepi/monitor_script/cpu_over_load.sh -c 7 -i 1 -t 40 ^&");
     // python_ssh("nohup /home/orangepi/monitor_script/cpu_over_load.sh -i 1 -c 7 -t 15 ^&");
 }
 
 void CpuOverLoad::recover_injection(void)
 {
-    NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+    python_ssh("pkill cpu_over_load.s");
+    wait_cmd();
+    NodeManager::get_instance()->deal_detected_node([](struct NodeManager::NodeInfo* node) {
         node->cpu_over_loader = false;
     });
-    //while(m_send_cmd) {
-    //    std::this_thread::sleep_for(std::chrono::seconds(1));
-    //}
     delete this;
 }
 
@@ -164,9 +174,7 @@ void FireWall::recover_injection(void)
 {
     string cmd = string("iptables -F");
     python_ssh(cmd);
-    while(m_send_cmd) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    wait_cmd();
     delete this;
 }
 

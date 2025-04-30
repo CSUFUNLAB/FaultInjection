@@ -14,6 +14,14 @@ void ShellScript::monitor_init(void)
     python_ssh(cmd);
 }
 
+void ShellScript::apt_install(string cmd)
+{
+    m_is_root = true;
+    m_send_type = NO_ECHO_CMD;
+    m_need_read = 3;
+    python_ssh(cmd);
+}
+
 void ShellScript::kill_monitor(void)
 {
     m_is_root = true;
@@ -56,8 +64,6 @@ void UpdateScript::update_monitor_script(struct NodeManager::NodeInfo* node)
     std::thread channel_chread(&UpdateScript::update_monitor_script_thread, ssh);
     channel_chread.detach();
 }
-
-
 
 // 如果用了公钥，proxy jump 导致yes次数和密码次数不匹配，要手动连接这些板子
 void ShellScript::first_connect(void)

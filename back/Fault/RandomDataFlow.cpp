@@ -194,15 +194,16 @@ void random_flow(void)
     RandomDataFlow::get_instance()->generate_pair_flow();
 
     FaultBase* fault = FaultBase::get_fault(
-        // FaultBase::SIGNAL, FaultBase::FIX_NODE, 10);
-        FaultBase::NODE_CRASH, FaultBase::RANDOM_NODE_EXIT_AP);
-        // FaultBase::TRAFFIC, FaultBase::RANDOM_NODE);
+        // FaultBase::SIGNAL, FaultBase::FIX_NODE, 11);
+        FaultBase::CPU_OVERLOADER, FaultBase::RANDOM_NODE_EXIT_AP);
+        // FaultBase::NORMAL, FaultBase::FIX_NODE, 0);
+        // FaultBase::NORMAL, FaultBase::RANDOM_NODE);
 
-    std::this_thread::sleep_for(std::chrono::seconds(30));
+    std::this_thread::sleep_for(std::chrono::seconds(60));
 
     fault->fault_injection();
 
-    std::this_thread::sleep_for(std::chrono::seconds(120));
+    std::this_thread::sleep_for(std::chrono::seconds(60));
 
     RandomDataFlow::get_instance()->stop_generate_pair_flow();
     fault->recover_injection();

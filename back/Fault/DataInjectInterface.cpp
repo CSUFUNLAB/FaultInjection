@@ -4,6 +4,7 @@
 #include "RandomDataFlow.h"
 #include "FaultClient.h"
 #include "DataFlow.h"
+#include "GenerateData.h"
 
 #include "Log.h"
 
@@ -76,7 +77,8 @@ void ScanNode::handlerData(http_request &message)
 
 void GenerateRandomFlow::handlerData(http_request& message)
 {
-    random_flow();
+    // random_flow();
+    GenerateData::get_instance()->generate_data();
     m_handler_info.code = 200;
     m_handler_info.msg = "success";
 }

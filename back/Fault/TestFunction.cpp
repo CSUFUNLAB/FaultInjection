@@ -46,11 +46,29 @@ void test_func(void)
 
 void test_func_1(void)
 {
-    NodeManager::NodeInfo *node = &NodeManager::m_node_info_list[3];
-    node->ip = string("192.168.12.1");
+    NodeManager::NodeInfo *node = &NodeManager::m_node_info_list[13];
+    node->ip = string("192.168.12.186");
     node->detected = true;
-    DownLoadData *ssh = new DownLoadData(node);
-    FaultBase::m_fault_type = FaultBase::NODE_CRASH;
+    ShellScript* ssh = new ShellScript(node);
+    ssh->m_is_root = true;
+    // ssh->m_need_read = 1;
+    ssh->m_send_type = SshSession::EXEC_CMD;
+    ssh->python_ssh("nohup /home/orangepi/monitor_script/mem_leak.sh -m 200 -s 10 -i 1 -t 30 ^&");
+    // ssh->python_ssh("nohup /home/orangepi/monitor_script/cpu_over_load.sh -i 5 -c 4 -t 10 ^&");
+
+    // FaultBase* fault = FaultBase::get_fault(
+    //     // FaultBase::SIGNAL, FaultBase::FIX_NODE, 10);
+    //     FaultBase::APP_CRASH, FaultBase::FIX_NODE, 13);
+    //     // FaultBase::TRAFFIC, FaultBase::RANDOM_NODE);
+
+    // std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    // fault->fault_injection();
+
+    // std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    // fault->recover_injection();
+
 }
 
 void test3_fun(void)
@@ -74,27 +92,33 @@ void TestFunction::handlerData(http_request& message)
     int32_t swich_cmd = 1;
     switch (swich_cmd) {
         case 0: // 第一次连接
-            NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+            NodeManager::get_instance()->deal_detected_node([](struct NodeManager::NodeInfo* node) {
                 ShellScript* ssh = new ShellScript(node);
                 ssh->first_connect();
             });break;
         case 1: // 更新脚本
-            NodeManager::get_instance()->get_detected_node(UpdateScript::update_monitor_script);
-        case 2: // 测试命令
-            NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+            NodeManager::get_instance()->deal_detected_node(UpdateScript::update_monitor_script); break;
+        case 2: // 全体安装软件
+            NodeManager::get_instance()->deal_detected_node([](struct NodeManager::NodeInfo* node) {
                 ShellScript* ssh = new ShellScript(node);
-                ssh->python_ssh("rm -rf /home/orangepi/monitor_script");
+                // ssh->python_ssh("rm -rf /home/orangepi/monitor_script");
+                ssh->apt_install("apt install stress-ng");
             });break;
-        case 3: test_func_1(); break;
-        case 4: random_flow(); break;
+        case 3: // 全节点功能测试
+            NodeManager::get_instance()->deal_detected_node([](struct NodeManager::NodeInfo* node) {
+                SshSession* ssh = new SshSession(node);
+                ssh->m_send_type = SshSession::SHELL_CMD;
+                ssh->python_ssh("stress-ng");
+            });break;
+        case 4: test_func_1(); break;
         case 5:
-            NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+            NodeManager::get_instance()->deal_detected_node([](struct NodeManager::NodeInfo* node) {
                 ShellScript* ssh = new ShellScript(node);
                 ssh->m_is_root = true;
                 ssh->python_ssh("apt install iftop");
             });break;
         case 6: // 添加路由
-            NodeManager::get_instance()->get_detected_node([](struct NodeManager::NodeInfo* node) {
+            NodeManager::get_instance()->deal_detected_node([](struct NodeManager::NodeInfo* node) {
                 if (node->type == "ap") { // ap 节点不需要设置
                     LOG_INFO("ap no need set route");
                     return;

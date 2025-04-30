@@ -29,15 +29,17 @@ public:
     struct NodeInfo* get_node_info(int32_t node_num); // 内部会判断node是否被检测到
 
     using node_deal_func = void(*)(struct NodeInfo* node);
-    void get_detected_node(node_deal_func func);
+    void deal_detected_node(node_deal_func func);
 
     std::string& node_num_to_ip(int32_t node_num);
     int32_t node_mac_to_num(std::string mac);
     void get_all_sta_ip(void);
+    uint32_t m_detected_num;
 
 private:
     static std::string m_error_return;
     void get_sta_ip(NodeInfo& info);
     void get_adhoc_ip(NodeInfo& info);
+    void get_detect_node_num(void);
 };
 

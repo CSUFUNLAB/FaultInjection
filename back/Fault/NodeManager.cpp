@@ -141,7 +141,7 @@ uint32_t NodeManager::get_password_loop(struct NodeInfo* node)
     return node->need_password + get_password_loop(node->up_linked);
 }
 
-void NodeManager::get_detected_node(node_deal_func func)
+void NodeManager::deal_detected_node(node_deal_func func)
 {
     SshSession::m_success_times = 0;
     for (auto& node : NodeManager::m_node_info_list) {
@@ -155,15 +155,9 @@ class NodeManagerSsh : public SshSession {
 public:
     using SshSession::SshSession;
     void read_echo(char* data) override;
-    void cmd_end(void) override;
+    void cmd_end(void) override {};
     virtual int32_t data_deal(int32_t cout, char* buff) = 0;
 };
-
-void NodeManagerSsh::cmd_end(void)
-{
-    // ssh关的快，不能自动删除自己
-    close();
-}
 
 void NodeManagerSsh::read_echo(char* buff)
 {
@@ -317,6 +311,17 @@ void NodeManager::get_adhoc_ip(NodeInfo& info)
     delete arp_ssh;
 }
 
+void NodeManager::get_detect_node_num(void)
+{
+    m_detected_num = 0;
+    for (auto &it : m_node_info_list) {
+        if (it.detected) {
+            m_detected_num++;
+        }
+    }
+    LOG_INFO("detected num {}", m_detected_num);
+}
+
 void NodeManager::get_all_sta_ip(void)
 {
     m_node_info_list[0].up_linked = &m_node_info_list[0];
@@ -342,6 +347,7 @@ void NodeManager::get_all_sta_ip(void)
             LOG_INFO("scan node[{}]", node.index);
         }
     }
+    get_detect_node_num();
 #endif
     RandomNode::get_instance()->get_detect_node();
 }

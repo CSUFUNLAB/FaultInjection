@@ -13,6 +13,7 @@ public:
     } FaultNodeType;
 
     typedef enum {
+        NORMAL,
         NODE_CRASH,
         APP_CRASH,
         CONGESTION,
@@ -36,6 +37,12 @@ public:
     static FaultType m_fault_type;
     static uint32_t m_fault_node;
     static std::string m_fault_str[FAULT_BUTT];
+};
+
+class NoFault : public FaultBase {
+public:
+    using FaultBase::FaultBase;
+    void fault_injection(void) override {};
 };
 
 class NodeCrash : public FaultBase {

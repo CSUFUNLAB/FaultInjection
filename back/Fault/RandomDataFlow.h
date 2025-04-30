@@ -28,11 +28,11 @@ public:
 private:
     void generate_pair_flow_thread(void);
     bool m_generate_random_flow = true;
-    uint32_t max_band = 1000;
-    uint32_t high_band = 400;
-    uint32_t low_band = 100;
+    uint32_t max_band = 650;
+    uint32_t high_band = 210;
+    uint32_t low_band = 200;
     uint32_t max_time = 30;
-    uint32_t min_time = 10;
+    uint32_t min_time = 20;
 };
 
 void random_flow(void);

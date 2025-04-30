@@ -6,7 +6,7 @@
 # 作者 马孝宇
 
 # 默认值
-INTERVAL=5  # 默认间隔 5 秒
+INTERVAL=1
 
 # 定义输出文件名
 NMCLI_OUTPUT="/home/orangepi/data/nmcli_list.txt"
@@ -27,11 +27,8 @@ do
     sudo iwlist wlan0 scan | sed -n '6p' >> "$IWLIST_OUTPUT"
 #    echo "iwlist 结果（第5行）已保存到: $(pwd)/$IWLIST_OUTPUT"
 
-    # 如果不是最后一次，就等待指定间隔
-    if [ $i -lt $TIMES ]; then
-#        echo "扫描完成，$INTERVAL 秒后进行下一次扫描..."
-        sleep $INTERVAL
-    fi
+	sleep $INTERVAL
+
 done
 
 # echo "所有 $TIMES 次扫描完成！"

@@ -105,6 +105,9 @@
     <ClCompile Include="StringEscaping.cpp">
       <Filter>源文件\Tools</Filter>
     </ClCompile>
+    <ClCompile Include="GenerateData.cpp">
+      <Filter>源文件\Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -166,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="StringEscaping.h">
       <Filter>头文件\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="GenerateData.h">
+      <Filter>头文件\Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

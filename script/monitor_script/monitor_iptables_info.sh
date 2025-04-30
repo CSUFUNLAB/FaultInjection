@@ -12,6 +12,6 @@ while true; do
 	# 获取iptables信息
 	echo "$(iptables -L -v -n)" >> "$output_file"
 	echo "=======================" >> "$output_file"
-	sleep 30	
+	sleep 10
 done
 

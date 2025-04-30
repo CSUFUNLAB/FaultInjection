@@ -8,6 +8,7 @@ class ShellScript : public SshSession {
 public:
     using SshSession::SshSession;
     void monitor_init(void);
+    void apt_install(std::string cmd);
     void kill_monitor(void);
     void first_connect(void); // 电脑第一次连接某个板子的ssh的时候需要输入一个yes，手动连接可以看到
 private:
